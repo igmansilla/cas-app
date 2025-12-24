@@ -18,7 +18,7 @@ import { format } from "date-fns";
 interface TablaCuotasProps {
   cuotas: Cuota[];
   onPagar: (cuota: Cuota) => void;
-  pagandoId: number | null; // ID of the installment currently being processed
+  pagandoId: number | null; // secuencia of the installment currently being processed
 }
 
 export function TablaCuotas({ cuotas, onPagar, pagandoId }: TablaCuotasProps) {
@@ -29,8 +29,7 @@ export function TablaCuotas({ cuotas, onPagar, pagandoId }: TablaCuotasProps) {
           <TableRow>
             <TableHead>Cuota #</TableHead>
             <TableHead>Vencimiento</TableHead>
-            <TableHead>Monto Recalculado</TableHead>
-            <TableHead>Monto Original</TableHead>
+            <TableHead>Monto</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead>Fecha Pago</TableHead>
             <TableHead className="text-right">Acción</TableHead>
@@ -39,21 +38,18 @@ export function TablaCuotas({ cuotas, onPagar, pagandoId }: TablaCuotasProps) {
         <TableBody>
           {cuotas.length === 0 ? (
              <TableRow>
-                <TableCell colSpan={7} className="text-center h-24">
+                <TableCell colSpan={6} className="text-center h-24">
                     No hay cuotas generadas.
                 </TableCell>
              </TableRow>
           ) : (
              cuotas.map((cuota) => (
-              <TableRow key={cuota.nroCuota}>
-                <TableCell className="font-medium">{cuota.nroCuota}</TableCell>
+              <TableRow key={cuota.secuencia}>
+                <TableCell className="font-medium">{cuota.secuencia}</TableCell>
                 <TableCell>
-                    {cuota.vencimiento ? format(new Date(cuota.vencimiento), 'dd/MM/yyyy') : '-'}
+                    {cuota.fechaVencimiento ? format(new Date(cuota.fechaVencimiento), 'dd/MM/yyyy') : '-'}
                 </TableCell>
-                <TableCell className="font-bold">${cuota.montoActual.toLocaleString()}</TableCell>
-                <TableCell className="text-muted-foreground line-through text-xs">
-                    ${cuota.montoOriginal.toLocaleString()}
-                </TableCell>
+                <TableCell className="font-bold">${Number(cuota.monto).toLocaleString('es-AR')}</TableCell>
                 <TableCell>
                   <Badge variant={
                     cuota.estado === 'PAGADA' ? 'default' :
@@ -66,13 +62,13 @@ export function TablaCuotas({ cuotas, onPagar, pagandoId }: TablaCuotasProps) {
                     {cuota.fechaPago ? format(new Date(cuota.fechaPago), 'dd/MM/yyyy HH:mm') : '-'}
                 </TableCell>
                 <TableCell className="text-right">
-                  {cuota.estado === 'PENDIENTE' || cuota.estado === 'VENCIDA' ? (
+                  {cuota.estado === 'PENDIENTE' || cuota.estado === 'VENCIDA' || cuota.estado === 'PLANIFICADA' ? (
                      <Button 
                         size="sm" 
                         onClick={() => onPagar(cuota)}
-                        disabled={pagandoId === cuota.nroCuota}
+                        disabled={pagandoId === cuota.secuencia}
                      >
-                        {pagandoId === cuota.nroCuota ? "Procesando..." : "Pagar"}
+                        {pagandoId === cuota.secuencia ? "Procesando..." : "Pagar"}
                      </Button>
                   ) : (
                      <span className="text-green-600 font-medium text-sm">Pagado</span>
@@ -86,3 +82,4 @@ export function TablaCuotas({ cuotas, onPagar, pagandoId }: TablaCuotasProps) {
     </div>
   );
 }
+

@@ -113,12 +113,23 @@ export type PlanPagoRequest = InferOutput<typeof PlanPagoRequestSchema>;
 // ============================================
 
 export const CuotaSchema = object({
-  nroCuota: number(),
-  vencimiento: string(), // ISO Date
-  montoOriginal: number(),
-  montoActual: number(),
-  estado: string(), // 'PENDIENTE', 'PAGADA', 'VENCIDA'
-  fechaPago: optional(string()),
+  id: optional(number()),
+  secuencia: number(), // Backend usa "secuencia", no "nroCuota"
+  fechaVencimiento: string(), // Backend usa "fechaVencimiento", no "vencimiento"
+  monto: union([
+    number(), 
+    pipe(
+      MoneyJsonSchema,
+      transform((input) => input.parsedValue)
+    )
+  ]),
+  estado: string(), // 'PLANIFICADA', 'PENDIENTE', 'PAGADA', 'VENCIDA'
+  fechaPago: optional(nullable(string())),
+  metodoPago: optional(nullable(string())),
+  notasAdministrativas: optional(nullable(string())),
+  
+  // Alias para compatibilidad con componentes existentes
+  nroCuota: optional(number()), // Deprecated, usar secuencia
 });
 
 export type Cuota = InferOutput<typeof CuotaSchema>;
@@ -129,10 +140,51 @@ export type Cuota = InferOutput<typeof CuotaSchema>;
 
 export const InscripcionSchema = object({
   idInscripcion: number(),
-  plan: PlanPagoSchema,
-  estado: string(),
-  fechaInscripcion: string(),
   cuotas: array(CuotaSchema),
+  estado: string(),
+  
+  // Información del plan
+  nombrePlan: optional(string()),
+  codigoPlan: optional(string()),
+  montoTotal: optional(union([
+    number(), 
+    pipe(
+      MoneyJsonSchema,
+      transform((input) => input.parsedValue)
+    )
+  ])),
+  totalCuotas: optional(number()),
+  // mesAlta puede venir como string ("DECEMBER") o número (12)
+  mesAlta: optional(union([string(), number()])),
+  
+  // Estadísticas de progreso
+  cuotasPagadas: optional(number()),
+  cuotasPendientes: optional(number()),
+  cuotasVencidas: optional(number()),
+  montoPagado: optional(union([
+    number(), 
+    pipe(
+      MoneyJsonSchema,
+      transform((input) => input.parsedValue)
+    )
+  ])),
+  montoRestante: optional(union([
+    number(), 
+    pipe(
+      MoneyJsonSchema,
+      transform((input) => input.parsedValue)
+    )
+  ])),
+  
+  // Reglas de transición (solo para Plan A)
+  mesInicioControlAtraso: optional(nullable(number())),
+  cuotasMinimasAntesControl: optional(nullable(number())),
+  mesesAtrasoParaTransicion: optional(nullable(number())),
+  planDestinoCodigo: optional(nullable(string())),
+  
+  // Legacy fields for backwards compatibility
+  plan: optional(PlanPagoSchema),
+  fechaInscripcion: optional(string()),
 });
 
 export type Inscripcion = InferOutput<typeof InscripcionSchema>;
@@ -154,19 +206,27 @@ export type InscripcionRequest = InferOutput<typeof InscripcionRequestSchema>;
 // Schemas: Intención de Pago
 // ============================================
 
+// Enum for Payment Methods matching backend
+export enum MetodoPago {
+  EFECTIVO = 'EFECTIVO',
+  MERCADOPAGO = 'MERCADOPAGO'
+}
+
 export const IntencionPagoRequestSchema = object({
   idInscripcion: number(),
-  nroCuota: number(),
+  idsCuotas: array(number()), // Backend expects list of IDs
+  metodo: enum_(MetodoPago)
 });
 
 export type IntencionPagoRequest = InferOutput<typeof IntencionPagoRequestSchema>;
 
 export const IntencionPagoResponseSchema = object({
   id: number(),
-  preferenceId: optional(string()),
-  urlRedireccion: optional(string()), // For MP Redirect
-  monto: number(),
+  preferenceId: optional(nullable(string())),
+  urlRedireccion: optional(nullable(string())), 
+  monto: optional(number()), // Backend does not return this currently
   idInscripcion: number(),
+  estado: optional(string())
 });
 
 export type IntencionPagoResponse = InferOutput<typeof IntencionPagoResponseSchema>;
