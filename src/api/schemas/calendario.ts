@@ -10,6 +10,8 @@ import {
   array, 
   pipe, 
   minLength,
+  check,
+  forward,
   type InferOutput 
 } from 'valibot';
 
@@ -63,7 +65,7 @@ export type Evento = InferOutput<typeof EventoSchema>;
 /**
  * Schema para validación del formulario de evento
  */
-export const EventoFormSchema = object({
+export const EventoFieldSchema = object({
   titulo: pipe(string(), minLength(3, 'El título debe tener al menos 3 caracteres')),
   descripcion: string(),
   tipo: pipe(string(), minLength(1, 'Debes seleccionar un tipo')),
@@ -71,6 +73,21 @@ export const EventoFormSchema = object({
   fechaFin: pipe(string(), minLength(1, 'Fecha fin requerida')),
   ubicacion: string(),
 });
+
+export const EventoFormSchema = pipe(
+  EventoFieldSchema,
+  forward(
+    check(
+      (input) => {
+        const inicio = new Date(input.fechaInicio);
+        const fin = new Date(input.fechaFin);
+        return fin > inicio;
+      },
+      'La fecha de fin debe ser posterior a la fecha de inicio'
+    ),
+    ['fechaFin']
+  )
+);
 
 export type EventoFormData = InferOutput<typeof EventoFormSchema>;
 

@@ -6,7 +6,7 @@
 
 import { useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
-import { EventoFormSchema, type EventoFormData, type EventoRequest, type TipoEvento } from "../../api/schemas/calendario";
+import { EventoFormSchema, EventoFieldSchema, type EventoFormData, type EventoRequest, type TipoEvento } from "../../api/schemas/calendario";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -55,6 +55,9 @@ export function EventoFormularioModal({
       fechaFin: "",
       ubicacion: "",
     } as EventoFormData,
+    validators: {
+      onChange: EventoFormSchema,
+    },
     onSubmit: async ({ value }) => {
       // Convertir fechas a ISO
       const payload = {
@@ -108,7 +111,7 @@ export function EventoFormularioModal({
           <form.Field
             name="titulo"
             validators={{
-              onChange: EventoFormSchema.entries.titulo,
+              onChange: EventoFieldSchema.entries.titulo,
             }}
           >
             {(field) => (
@@ -150,7 +153,7 @@ export function EventoFormularioModal({
           <form.Field
             name="tipo"
             validators={{
-              onChange: EventoFormSchema.entries.tipo,
+              onChange: EventoFieldSchema.entries.tipo,
             }}
           >
             {(field) => (
@@ -184,7 +187,7 @@ export function EventoFormularioModal({
             <form.Field
               name="fechaInicio"
               validators={{
-                onChange: EventoFormSchema.entries.fechaInicio,
+                onChange: EventoFieldSchema.entries.fechaInicio,
               }}
             >
               {(field) => (
@@ -209,7 +212,7 @@ export function EventoFormularioModal({
             <form.Field
               name="fechaFin"
               validators={{
-                onChange: EventoFormSchema.entries.fechaFin,
+                onChange: EventoFieldSchema.entries.fechaFin,
               }}
             >
               {(field) => (

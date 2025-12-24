@@ -89,8 +89,8 @@ export const calendarioService = {
     const response = await client.get(`/calendario/eventos${query}`);
     
     // Handle HATEOAS or standard JSON response
-    if (response.data?._embedded?.eventoCalendarioModelList) {
-      return parse(EventosSchema, response.data._embedded.eventoCalendarioModelList);
+    if (response.data?._embedded?.eventoCalendarioModels) {
+      return parse(EventosSchema, response.data._embedded.eventoCalendarioModels);
     }
     
     if (Array.isArray(response.data)) {
