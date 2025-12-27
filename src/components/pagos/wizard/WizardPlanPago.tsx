@@ -11,8 +11,6 @@
 
 import React, { useState } from 'react';
 import { useForm } from "@tanstack/react-form";
-import { defineStepper } from "@stepperize/react";
-import { object } from "valibot";
 import { type PlanPagoRequest, EstrategiaPlan, AudienciaPlan } from "../../../api/schemas/pagos";
 
 import { Button } from "../../ui/button";
@@ -21,7 +19,7 @@ import { Separator } from "../../ui/separator";
 import { LayoutList, DollarSign, GitBranch, Undo2, FileCheck, CalendarDays, CheckCircle2, ChevronRight } from "lucide-react";
 
 import { PLAN_A_SUBSTEPS } from './wizard-types';
-import { PlanBSchema, MigracionSchema, DevolucionSchema } from './wizard-schemas';
+import { GlobalStepper } from './wizard-stepper';
 import {
     StepPlanADatos,
     StepPlanAVigencia,
@@ -31,15 +29,6 @@ import {
     StepDevolucion,
     StepRevision,
 } from './steps';
-
-// Stepper definition
-const GlobalStepper = defineStepper(
-    { id: "planA", title: "Plan A", schema: object({}) },
-    { id: "planB", title: "Plan B", schema: PlanBSchema },
-    { id: "migracion", title: "Migración", schema: MigracionSchema },
-    { id: "devolucion", title: "Devolución", schema: DevolucionSchema },
-    { id: "revision", title: "Revisión", schema: object({}) }
-);
 
 const STEP_ICONS = {
     planA: LayoutList,
@@ -112,15 +101,18 @@ function WizardPlanPagoContent({ abierto, onCerrar, onGuardar, cargando }: Wizar
         finalData.minCuotas = totalMonths;
         finalData.maxCuotas = totalMonths;
 
-        // Generar código único basado en el nombre (normalizado) + año
+        // Generar código único basado en: nombre + audiencia + año
         const nombreNormalizado = finalData.nombreParaMostrar
             .toUpperCase()
             .replace(/\s+/g, '-')
             .replace(/[^A-Z0-9-]/g, '')
             .substring(0, 20);
 
-        if (!finalData.codigo) finalData.codigo = `${nombreNormalizado}-A-${finalData.anio}`;
-        if (!finalData.codigoPlanB) finalData.codigoPlanB = `${nombreNormalizado}-B-${finalData.anio}`;
+        // Incluir audiencia en el código para evitar colisiones
+        const audienciaPrefix = finalData.audiencia ? finalData.audiencia.substring(0, 3) : 'GEN';
+
+        if (!finalData.codigo) finalData.codigo = `${nombreNormalizado}-${audienciaPrefix}-A-${finalData.anio}`;
+        if (!finalData.codigoPlanB) finalData.codigoPlanB = `${nombreNormalizado}-${audienciaPrefix}-B-${finalData.anio}`;
         if (!finalData.nombrePlanB) finalData.nombrePlanB = `${finalData.nombreParaMostrar} (Plan B)`;
         return finalData;
     };

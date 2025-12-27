@@ -9,7 +9,7 @@ import {
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { type PlanPago } from "../../api/schemas/pagos";
+import { type PlanPago, AudienciaPlan } from "../../api/schemas/pagos";
 import { PencilIcon, PowerIcon, MoreHorizontal, CalendarIcon } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { getAudienciaInfo } from "./utils/audienciaUtils";
 
 interface TablaPlanesProps {
   planes: PlanPago[];
@@ -40,11 +41,11 @@ export function TablaPlanes({ planes, onEditar, onToggleEstado }: TablaPlanesPro
       {/* Mobile View (Cards) */}
       <div className="md:hidden space-y-4">
         {planes.map((plan) => (
-          <PlanCard 
-            key={plan.codigo} 
-            plan={plan} 
-            onEditar={onEditar} 
-            onToggleEstado={onToggleEstado} 
+          <PlanCard
+            key={plan.codigo}
+            plan={plan}
+            onEditar={onEditar}
+            onToggleEstado={onToggleEstado}
           />
         ))}
       </div>
@@ -56,6 +57,7 @@ export function TablaPlanes({ planes, onEditar, onToggleEstado }: TablaPlanesPro
             <TableRow>
               <TableHead>Código</TableHead>
               <TableHead>Nombre</TableHead>
+              <TableHead>Audiencia</TableHead>
               <TableHead>Año</TableHead>
               <TableHead>Cuotas</TableHead>
               <TableHead>Monto Total</TableHead>
@@ -65,28 +67,41 @@ export function TablaPlanes({ planes, onEditar, onToggleEstado }: TablaPlanesPro
             </TableRow>
           </TableHeader>
           <TableBody>
-            {planes.map((plan) => (
-              <TableRow key={plan.codigo}>
-                <TableCell className="font-medium">{plan.codigo}</TableCell>
-                <TableCell>{plan.nombre}</TableCell>
-                <TableCell>{plan.anio}</TableCell>
-                <TableCell>
-                  {plan.minCuotas === plan.maxCuotas 
-                    ? plan.maxCuotas 
-                    : `${plan.minCuotas} - ${plan.maxCuotas}`}
-                </TableCell>
-                <TableCell>${plan.montoTotal.toLocaleString()}</TableCell>
-                <TableCell>{plan.mesInicio} - {plan.mesFin}</TableCell>
-                <TableCell>
-                  <Badge variant={plan.activo ? "default" : "secondary"}>
-                    {plan.activo ? "Activo" : "Inactivo"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <ActionsMenu plan={plan} onEditar={onEditar} onToggleEstado={onToggleEstado} />
-                </TableCell>
-              </TableRow>
-            ))}
+            {planes.map((plan) => {
+              const audienciaInfo = getAudienciaInfo(plan.audiencia as AudienciaPlan | undefined);
+              const AudienciaIcon = audienciaInfo.icon;
+              return (
+                <TableRow key={plan.codigo}>
+                  <TableCell className="font-medium">{plan.codigo}</TableCell>
+                  <TableCell>{plan.nombre}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={`${audienciaInfo.bgClass} ${audienciaInfo.textClass} ${audienciaInfo.borderClass} flex items-center gap-1 w-fit`}
+                    >
+                      <AudienciaIcon className="w-3 h-3" />
+                      {audienciaInfo.label}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{plan.anio}</TableCell>
+                  <TableCell>
+                    {plan.minCuotas === plan.maxCuotas
+                      ? plan.maxCuotas
+                      : `${plan.minCuotas} - ${plan.maxCuotas}`}
+                  </TableCell>
+                  <TableCell>${plan.montoTotal.toLocaleString()}</TableCell>
+                  <TableCell>{plan.mesInicio} - {plan.mesFin}</TableCell>
+                  <TableCell>
+                    <Badge variant={plan.activo ? "default" : "secondary"}>
+                      {plan.activo ? "Activo" : "Inactivo"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <ActionsMenu plan={plan} onEditar={onEditar} onToggleEstado={onToggleEstado} />
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </div>
@@ -95,6 +110,8 @@ export function TablaPlanes({ planes, onEditar, onToggleEstado }: TablaPlanesPro
 }
 
 function PlanCard({ plan, onEditar, onToggleEstado }: { plan: PlanPago } & Omit<TablaPlanesProps, 'planes'>) {
+  const audienciaInfo = getAudienciaInfo(plan.audiencia as AudienciaPlan | undefined);
+  const AudienciaIcon = audienciaInfo.icon;
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
@@ -111,17 +128,25 @@ function PlanCard({ plan, onEditar, onToggleEstado }: { plan: PlanPago } & Omit<
             <span className="font-medium">${plan.montoTotal.toLocaleString()}</span>
           </div>
           <div className="flex flex-col">
-             <span className="text-muted-foreground text-xs">Cuotas</span>
-             <span>{plan.minCuotas === plan.maxCuotas ? plan.maxCuotas : `${plan.minCuotas}-${plan.maxCuotas}`} avail.</span>
+            <span className="text-muted-foreground text-xs">Cuotas</span>
+            <span>{plan.minCuotas === plan.maxCuotas ? plan.maxCuotas : `${plan.minCuotas}-${plan.maxCuotas}`} avail.</span>
           </div>
           <div className="col-span-2 flex items-center gap-2 mt-2 pt-2 border-t text-muted-foreground text-xs">
             <CalendarIcon className="w-3 h-3" />
             <span>Vigencia: {plan.mesInicio} - {plan.mesFin}</span>
           </div>
-          <div className="col-span-2 mt-1">
-             <Badge variant={plan.activo ? "default" : "secondary"} className="w-fit">
-                {plan.activo ? "Activo" : "Inactivo"}
-             </Badge>
+          <div className="col-span-2 mt-1 flex flex-wrap gap-2">
+            <Badge variant={plan.activo ? "default" : "secondary"} className="w-fit">
+              {plan.activo ? "Activo" : "Inactivo"}
+            </Badge>
+            {/* Chip de Audiencia */}
+            <Badge
+              variant="outline"
+              className={`${audienciaInfo.bgClass} ${audienciaInfo.textClass} ${audienciaInfo.borderClass} flex items-center gap-1 w-fit`}
+            >
+              <AudienciaIcon className="w-3 h-3" />
+              {audienciaInfo.label}
+            </Badge>
           </div>
         </div>
       </CardContent>
