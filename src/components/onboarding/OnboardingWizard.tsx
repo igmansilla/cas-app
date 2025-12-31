@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Tent, Users, ArrowLeft, Loader2 } from "lucide-react";
+import { Tent, Users, ArrowLeft, Loader2, Copy, Check, Share2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
@@ -8,55 +8,67 @@ import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useCrearFamilia, useUnirseConCodigo, useValidarCodigo } from "../../hooks/useFamilia";
 import { toast } from "sonner";
+import type { MiFamilia } from "../../api/schemas/familia";
 
-type OnboardingStep = "select" | "acampante" | "familiar";
-
-// Roles para acampantes (quienes crean la familia)
-const ROLES_ACAMPANTE = [
-    { value: "HIJO", label: "Hijo" },
-    { value: "HIJA", label: "Hija" },
+type OnboardingStep = "select" | "crear" | "unirse" | "success";
+// Roles disponibles al crear familia
+const ROLES_CREADOR = [
+    { value: "PADRE", label: "Soy Padre/Madre/Tutor" },
+    { value: "HIJO", label: "Soy Acampante (hijo/a)" },
 ];
 
-// Roles para familiares (quienes se unen)
-const ROLES_FAMILIAR = [
+// Roles disponibles al unirse a familia
+const ROLES_UNIRSE = [
     { value: "PADRE", label: "Padre" },
     { value: "MADRE", label: "Madre" },
     { value: "TUTOR_LEGAL", label: "Tutor Legal" },
-    { value: "ABUELO", label: "Abuelo" },
-    { value: "ABUELA", label: "Abuela" },
-    { value: "HIJO", label: "Hijo/a (hermano)" },
+    { value: "HIJO", label: "Hijo/a" },
+    { value: "ABUELO", label: "Abuelo/a" },
     { value: "OTRO", label: "Otro familiar" },
 ];
 
-export function OnboardingWizard() {
-    const [step, setStep] = useState<OnboardingStep>("select");
+interface OnboardingWizardProps {
+    codigoInicial?: string;
+}
+
+export function OnboardingWizard({ codigoInicial }: OnboardingWizardProps) {
+    // Si viene con código, ir directo al paso de unirse
+    const [step, setStep] = useState<OnboardingStep>(codigoInicial ? "unirse" : "select");
+    const [familiaCreada, setFamiliaCreada] = useState<MiFamilia | null>(null);
     const navigate = useNavigate();
 
     return (
         <div className="min-h-[80vh] flex items-center justify-center p-4">
             <div className="w-full max-w-lg">
                 {step === "select" && (
-                    <SelectionStep 
-                        onAcampante={() => setStep("acampante")} 
-                        onFamiliar={() => setStep("familiar")} 
+                    <SelectionStep
+                        onCrear={() => setStep("crear")}
+                        onUnirse={() => setStep("unirse")}
                     />
                 )}
-                {step === "acampante" && (
-                    <AcampanteStep 
-                        onBack={() => setStep("select")} 
-                        onSuccess={() => {
-                            toast.success("¡Familia creada! Comparte el código con tus padres.");
-                            navigate({ to: "/dashboard" });
+                {step === "crear" && (
+                    <CrearFamiliaStep
+                        onBack={() => setStep("select")}
+                        onSuccess={(familia) => {
+                            setFamiliaCreada(familia);
+                            setStep("success");
                         }}
                     />
                 )}
-                {step === "familiar" && (
-                    <FamiliarStep 
-                        onBack={() => setStep("select")} 
+                {step === "unirse" && (
+                    <UnirseStep
+                        codigoInicial={codigoInicial}
+                        onBack={() => setStep("select")}
                         onSuccess={() => {
                             toast.success("¡Te has unido a la familia!");
                             navigate({ to: "/dashboard" });
                         }}
+                    />
+                )}
+                {step === "success" && familiaCreada && (
+                    <SuccessStep
+                        familia={familiaCreada}
+                        onContinue={() => navigate({ to: "/dashboard" })}
                     />
                 )}
             </div>
@@ -65,7 +77,7 @@ export function OnboardingWizard() {
 }
 
 // Step 1: Selection
-function SelectionStep({ onAcampante, onFamiliar }: { onAcampante: () => void; onFamiliar: () => void }) {
+function SelectionStep({ onCrear, onUnirse }: { onCrear: () => void; onUnirse: () => void }) {
     return (
         <div className="space-y-6 animate-in fade-in duration-300">
             <div className="text-center space-y-3">
@@ -74,41 +86,40 @@ function SelectionStep({ onAcampante, onFamiliar }: { onAcampante: () => void; o
                     ¡Bienvenido al Campamento!
                 </h1>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                    Antes de empezar, vamos a conectarte con tu familia. Esto nos ayuda a mantener 
-                    informados a tus padres sobre tus aventuras en el campamento.
+                    Esta app te ayuda a gestionar inscripciones y pagos.
+                    Primero, vamos a conectarte con tu familia.
                 </p>
             </div>
 
             <div className="grid gap-4">
-                <Card 
+                <Card
                     className="cursor-pointer transition-all hover:shadow-lg hover:border-emerald-400 group border-2"
-                    onClick={onAcampante}
+                    onClick={onCrear}
                 >
                     <CardHeader className="pb-3">
                         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg">
                             <Tent className="w-7 h-7 text-white" />
                         </div>
-                        <CardTitle className="text-xl">¡Quiero ser Acampante! 🎒</CardTitle>
+                        <CardTitle className="text-xl">Crear grupo familiar ✨</CardTitle>
                         <CardDescription className="text-sm leading-relaxed">
-                            Crea tu grupo familiar y recibirás un <strong>código único</strong> de 6 caracteres. 
-                            Compartíselo con tus padres o tutores para que ellos también puedan 
-                            acceder a la app y seguir tu experiencia.
+                            Creá tu grupo familiar y recibí un <strong>código único</strong> de 6 caracteres
+                            para compartir con el resto de tu familia.
                         </CardDescription>
                     </CardHeader>
                 </Card>
 
-                <Card 
+                <Card
                     className="cursor-pointer transition-all hover:shadow-lg hover:border-blue-400 group border-2"
-                    onClick={onFamiliar}
+                    onClick={onUnirse}
                 >
                     <CardHeader className="pb-3">
                         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg">
                             <Users className="w-7 h-7 text-white" />
                         </div>
-                        <CardTitle className="text-xl">Soy Papá, Mamá o Tutor 👨‍👩‍👧</CardTitle>
+                        <CardTitle className="text-xl">Ya tengo un código �</CardTitle>
                         <CardDescription className="text-sm leading-relaxed">
-                            ¿Tu hijo/a ya se registró? Pedile el <strong>código de 6 caracteres</strong> que 
-                            le dieron y usalo acá para vincularte a su grupo familiar.
+                            ¿Alguien de tu familia ya creó el grupo? Ingresá el <strong>código de 6 caracteres</strong> que
+                            te compartieron para vincularte.
                         </CardDescription>
                     </CardHeader>
                 </Card>
@@ -117,10 +128,10 @@ function SelectionStep({ onAcampante, onFamiliar }: { onAcampante: () => void; o
     );
 }
 
-// Step 2A: Acampante crea familia
-function AcampanteStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: () => void }) {
+// Step 2A: Crear grupo familiar
+function CrearFamiliaStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: (familia: MiFamilia) => void }) {
     const [apellidoFamilia, setApellidoFamilia] = useState("");
-    const [rol, setRol] = useState("HIJO");
+    const [rol, setRol] = useState("PADRE");
     const crearFamilia = useCrearFamilia();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -133,20 +144,28 @@ function AcampanteStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: (
         const nombreFamilia = `Familia ${apellidoFamilia.trim()}`;
 
         try {
-            await crearFamilia.mutateAsync({ nombreFamilia, rol });
-            onSuccess();
-        } catch (error) {
+            const familia = await crearFamilia.mutateAsync({ nombreFamilia });
+            onSuccess(familia);
+        } catch (error: unknown) {
             console.error("Error creando familia:", error);
-            toast.error("Error al crear la familia. Intenta nuevamente.");
+            const message = error instanceof Error ? error.message : "";
+            if (message.includes("ya pertenece") || message.includes("ya tiene")) {
+                toast.error("Ya perteneces a una familia. Redirigiendo...");
+                setTimeout(() => {
+                    window.location.href = "/dashboard";
+                }, 1500);
+            } else {
+                toast.error("Error al crear la familia. Intenta nuevamente.");
+            }
         }
     };
 
     return (
         <Card className="animate-in fade-in slide-in-from-right-4 duration-300">
             <CardHeader>
-                <Button 
-                    variant="ghost" 
-                    size="sm" 
+                <Button
+                    variant="ghost"
+                    size="sm"
                     className="w-fit -ml-2 mb-2"
                     onClick={onBack}
                 >
@@ -154,17 +173,32 @@ function AcampanteStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: (
                     Volver
                 </Button>
                 <div className="text-3xl mb-1">🎉</div>
-                <CardTitle>¡Genial! Creemos tu grupo familiar</CardTitle>
+                <CardTitle>Creemos tu grupo familiar</CardTitle>
                 <CardDescription className="leading-relaxed">
-                    Una vez creado, vas a recibir un <strong>código único</strong> que podés compartir 
-                    con tus papás por WhatsApp. Ellos lo usarán para conectarse a tu cuenta y estar 
-                    al tanto de todo lo del campamento.
+                    Una vez creado, vas a recibir un <strong>código único</strong> para compartir
+                    con el resto de tu familia.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="apellidoFamilia">¿Cuál es tu apellido?</Label>
+                        <Label htmlFor="rol">¿Quién sos en la familia?</Label>
+                        <Select value={rol} onValueChange={setRol} disabled={crearFamilia.isPending}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona tu rol" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ROLES_CREADOR.map((r) => (
+                                    <SelectItem key={r.value} value={r.value}>
+                                        {r.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="apellidoFamilia">¿Cuál es el apellido familiar?</Label>
                         <Input
                             id="apellidoFamilia"
                             placeholder="Ej: García, López, Martínez"
@@ -180,24 +214,8 @@ function AcampanteStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: (
                         )}
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="rol">¿Sos hijo o hija?</Label>
-                        <Select value={rol} onValueChange={setRol} disabled={crearFamilia.isPending}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ROLES_ACAMPANTE.map((r) => (
-                                    <SelectItem key={r.value} value={r.value}>
-                                        {r.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <Button 
-                        type="submit" 
+                    <Button
+                        type="submit"
                         className="w-full h-12 text-base"
                         disabled={crearFamilia.isPending || !apellidoFamilia.trim()}
                     >
@@ -216,10 +234,112 @@ function AcampanteStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: (
     );
 }
 
+// Step Success: Shows the family code
+function SuccessStep({ familia, onContinue }: { familia: MiFamilia; onContinue: () => void }) {
+    const [copied, setCopied] = useState(false);
+    const codigo = familia.codigoVinculacion || "";
 
-// Step 2B: Familiar se une con código
-function FamiliarStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: () => void }) {
-    const [codigo, setCodigo] = useState("");
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(codigo);
+            setCopied(true);
+            toast.success("¡Código copiado!");
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            toast.error("No se pudo copiar");
+        }
+    };
+
+    const handleShare = () => {
+        // URL con el código como parámetro - cuando el familiar haga click, irá directo al onboarding con el código
+        const inviteUrl = `${window.location.origin}/onboarding?codigo=${codigo}`;
+
+        // Formato optimizado para WhatsApp - link primero para mejor clickeabilidad
+        const shareText = `🏕️ *Campamento - Vinculación Familiar*
+
+Usá este link para vincularte:
+👉 ${inviteUrl}
+
+Código: *${codigo}*`;
+
+        // Abrimos WhatsApp con el mensaje preparado
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+        window.open(whatsappUrl, '_blank');
+    };
+
+    return (
+        <Card className="animate-in fade-in zoom-in-95 duration-500">
+            <CardHeader className="text-center pb-2">
+                <div className="text-6xl mb-4">🎊</div>
+                <CardTitle className="text-2xl">¡Listo! Tu familia está creada</CardTitle>
+                <CardDescription className="text-base leading-relaxed">
+                    Compartí este código con tus papás para que puedan vincularse a tu cuenta.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {/* Código prominente */}
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-950 rounded-xl p-6 text-center border-2 border-emerald-200 dark:border-emerald-800">
+                    <p className="text-sm text-muted-foreground mb-2">Tu código familiar es:</p>
+                    <div className="text-4xl md:text-5xl font-mono font-bold tracking-[0.3em] text-emerald-700 dark:text-emerald-400">
+                        {codigo}
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-3"
+                        onClick={handleCopy}
+                    >
+                        {copied ? (
+                            <>
+                                <Check className="w-4 h-4 mr-1 text-emerald-600" />
+                                ¡Copiado!
+                            </>
+                        ) : (
+                            <>
+                                <Copy className="w-4 h-4 mr-1" />
+                                Copiar código
+                            </>
+                        )}
+                    </Button>
+                </div>
+
+                {/* Instrucciones */}
+                <div className="text-sm text-muted-foreground space-y-2 bg-muted/50 rounded-lg p-4">
+                    <p className="font-medium text-foreground">📱 ¿Cómo lo comparto?</p>
+                    <ol className="list-decimal list-inside space-y-1 ml-1">
+                        <li>Copiá o compartí el código con tus papás</li>
+                        <li>Ellos entran a la app y eligen "Soy Papá/Mamá"</li>
+                        <li>Ingresan este código y listo, quedan vinculados</li>
+                    </ol>
+                </div>
+
+                {/* Botones de acción */}
+                <div className="space-y-3">
+                    <Button
+                        variant="outline"
+                        className="w-full h-12"
+                        onClick={handleShare}
+                    >
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Compartir por WhatsApp
+                    </Button>
+
+                    <Button
+                        className="w-full h-12 text-base"
+                        onClick={onContinue}
+                    >
+                        ✨ Continuar a la App
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+
+// Step 2B: Unirse a familia con código
+function UnirseStep({ codigoInicial, onBack, onSuccess }: { codigoInicial?: string; onBack: () => void; onSuccess: () => void }) {
+    const [codigo, setCodigo] = useState(codigoInicial?.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6) || "");
     const [rol, setRol] = useState("PADRE");
     const validacion = useValidarCodigo(codigo);
     const unirse = useUnirseConCodigo();
@@ -259,9 +379,9 @@ function FamiliarStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: ()
     return (
         <Card className="animate-in fade-in slide-in-from-right-4 duration-300">
             <CardHeader>
-                <Button 
-                    variant="ghost" 
-                    size="sm" 
+                <Button
+                    variant="ghost"
+                    size="sm"
                     className="w-fit -ml-2 mb-2"
                     onClick={onBack}
                 >
@@ -271,7 +391,7 @@ function FamiliarStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: ()
                 <div className="text-3xl mb-1">👨‍👩‍👧</div>
                 <CardTitle>Vinculación Familiar</CardTitle>
                 <CardDescription className="leading-relaxed">
-                    Tu hijo/a debería haberte compartido un <strong>código de 6 caracteres</strong> (letras y números). 
+                    Tu hijo/a debería haberte compartido un <strong>código de 6 caracteres</strong> (letras y números).
                     Ingresalo abajo para conectarte a su grupo familiar y poder seguir su experiencia en el campamento.
                 </CardDescription>
             </CardHeader>
@@ -288,7 +408,7 @@ function FamiliarStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: ()
                             className="text-center text-2xl font-mono tracking-widest"
                             maxLength={6}
                         />
-                        
+
                         {/* Validación en tiempo real */}
                         {codigo.length === 6 && (
                             <div className="text-sm">
@@ -319,7 +439,7 @@ function FamiliarStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: ()
                                 <SelectValue placeholder="Selecciona tu rol" />
                             </SelectTrigger>
                             <SelectContent>
-                                {ROLES_FAMILIAR.map((r) => (
+                                {ROLES_UNIRSE.map((r) => (
                                     <SelectItem key={r.value} value={r.value}>
                                         {r.label}
                                     </SelectItem>
@@ -328,8 +448,8 @@ function FamiliarStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: ()
                         </Select>
                     </div>
 
-                    <Button 
-                        type="submit" 
+                    <Button
+                        type="submit"
                         className="w-full h-12 text-base"
                         disabled={unirse.isPending || codigo.length !== 6 || !codigoValido}
                     >
@@ -347,4 +467,3 @@ function FamiliarStep({ onBack, onSuccess }: { onBack: () => void; onSuccess: ()
         </Card>
     );
 }
-

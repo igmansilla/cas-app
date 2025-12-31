@@ -20,6 +20,9 @@ function AuthLayout() {
     const navigate = useNavigate();
     const { data: usuario, isLoading: isLoadingUsuario } = useUsuarioActual();
 
+    // Ocultar navegación durante onboarding
+    const isOnboarding = location.pathname === "/onboarding";
+
     // Redirect to login if not authenticated
     useEffect(() => {
         if (!oidc.isUserLoggedIn) {
@@ -75,10 +78,10 @@ function AuthLayout() {
 
     return (
         <div className="min-h-dvh bg-white">
-            <div className="h-full grid grid-rows-[auto_auto_1fr] md:grid-rows-[auto_1fr]">
-                <MobileHeader />
-                <MobileFooter />
-                <main className="overflow-auto pb-24 md:pb-6">
+            <div className={`h-full ${isOnboarding ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_auto_1fr] md:grid-rows-[auto_1fr]'}`}>
+                {!isOnboarding && <MobileHeader />}
+                {!isOnboarding && <MobileFooter />}
+                <main className={`overflow-auto ${isOnboarding ? '' : 'pb-24 md:pb-6'}`}>
                     <Outlet />
                 </main>
             </div>
