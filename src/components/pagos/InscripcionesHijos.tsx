@@ -29,13 +29,15 @@ import { Users, CreditCard, CheckCircle2, AlertCircle, Clock } from 'lucide-reac
 function getEstadoBadge(estado: string) {
   switch (estado?.toUpperCase()) {
     case 'PAGADA':
+    case 'REGULARIZADA':
       return <Badge variant="default" className="bg-green-600"><CheckCircle2 className="w-3 h-3 mr-1" /> Pagada</Badge>;
-    case 'VENCIDA':
-      return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" /> Vencida</Badge>;
-    case 'PENDIENTE':
+    case 'ATRASADA':
+      return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" /> Atrasada</Badge>;
+    case 'HABILITADA':
+      return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Del mes</Badge>;
     case 'PLANIFICADA':
     default:
-      return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Pendiente</Badge>;
+      return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" /> Planificada</Badge>;
   }
 }
 
@@ -121,7 +123,7 @@ export function InscripcionesHijos() {
                   </div>
                   <div className="flex items-center gap-2">
                     {inscripcion.cuotasVencidas && inscripcion.cuotasVencidas > 0 ? (
-                      <Badge variant="destructive">{inscripcion.cuotasVencidas} vencidas</Badge>
+                      <Badge variant="destructive">{inscripcion.cuotasVencidas} atrasadas</Badge>
                     ) : (
                       <Badge variant="outline" className="bg-green-50 text-green-700">Al día</Badge>
                     )}
@@ -147,7 +149,7 @@ export function InscripcionesHijos() {
                         <TableCell>{formatMoney(cuota.monto)}</TableCell>
                         <TableCell>{getEstadoBadge(cuota.estado)}</TableCell>
                         <TableCell className="text-right">
-                          {cuota.estado?.toUpperCase() !== 'PAGADA' && (
+                          {cuota.estado?.toUpperCase() !== 'PAGADA' && cuota.estado?.toUpperCase() !== 'REGULARIZADA' && cuota.estado?.toUpperCase() !== 'ATRASADA' && (
                             <Button
                               size="sm"
                               onClick={() => handlePagarCuota(cuota, inscripcion.idInscripcion)}

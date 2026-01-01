@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, AlertCircle, Banknote } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Banknote, FileCheck } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { type Cuota } from '../../api/schemas/pagos';
@@ -7,13 +7,18 @@ import { cn } from '../../lib/utils';
 interface TimelineCuotasProps {
   cuotas: Cuota[];
   onPagarManual: (cuota: Cuota) => void;
+  onRegularizar?: (cuota: Cuota) => void; // Para cuotas atrasadas
 }
 
 /**
  * Vertical timeline showing chronological installments.
  * Each installment shows status, dates, amounts, and payment actions.
  */
-export function TimelineCuotas({ cuotas, onPagarManual }: TimelineCuotasProps) {
+export function TimelineCuotas({ cuotas, onPagarManual, onRegularizar }: TimelineCuotasProps) {
+  // Helper para determinar si una cuota es pagable
+  const esCuotaPagable = (estado: string): boolean => {
+    return estado === 'PLANIFICADA' || estado === 'HABILITADA';
+  };
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('es-AR', {
@@ -34,11 +39,13 @@ export function TimelineCuotas({ cuotas, onPagarManual }: TimelineCuotasProps) {
   const getStatusIcon = (estado: string) => {
     switch (estado) {
       case 'PAGADA':
+      case 'REGULARIZADA':
         return <CheckCircle2 className="w-6 h-6 text-green-600" />;
-      case 'VENCIDA':
+      case 'ATRASADA':
         return <AlertCircle className="w-6 h-6 text-red-600" />;
+      case 'HABILITADA':
+        return <Clock className="w-6 h-6 text-blue-500" />;
       case 'PLANIFICADA':
-      case 'PENDIENTE':
       default:
         return <Clock className="w-6 h-6 text-gray-400" />;
     }
@@ -48,12 +55,14 @@ export function TimelineCuotas({ cuotas, onPagarManual }: TimelineCuotasProps) {
     switch (estado) {
       case 'PAGADA':
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">✅ Pagada</Badge>;
-      case 'VENCIDA':
-        return <Badge variant="destructive">🔴 Vencida</Badge>;
+      case 'REGULARIZADA':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">✅ Regularizada</Badge>;
+      case 'ATRASADA':
+        return <Badge variant="destructive">🔴 Atrasada</Badge>;
+      case 'HABILITADA':
+        return <Badge variant="secondary">📅 Del mes</Badge>;
       case 'PLANIFICADA':
-        return <Badge variant="secondary">📅 Planificada</Badge>;
-      case 'PENDIENTE':
-        return <Badge variant="outline">⏳ Pendiente</Badge>;
+        return <Badge variant="outline">⏳ Planificada</Badge>;
       default:
         return <Badge variant="outline">{estado}</Badge>;
     }
@@ -101,8 +110,8 @@ export function TimelineCuotas({ cuotas, onPagarManual }: TimelineCuotasProps) {
             {/* Content card */}
             <div className={cn(
               "border rounded-lg p-4",
-              cuota.estado === 'VENCIDA' && "border-red-200 bg-red-50/50",
-              cuota.estado === 'PAGADA' && "border-green-200 bg-green-50/50"
+              cuota.estado === 'ATRASADA' && "border-red-200 bg-red-50/50",
+              (cuota.estado === 'PAGADA' || cuota.estado === 'REGULARIZADA') && "border-green-200 bg-green-50/50"
             )}>
               {/* Header: Cuota number + badge + action */}
               <div className="flex items-center justify-between gap-2 mb-3">
@@ -112,7 +121,7 @@ export function TimelineCuotas({ cuotas, onPagarManual }: TimelineCuotasProps) {
                 </div>
                 
                 {/* Action button for unpaid - inline on mobile */}
-                {(cuota.estado === 'PLANIFICADA' || cuota.estado === 'VENCIDA' || cuota.estado === 'PENDIENTE') && (
+                {esCuotaPagable(cuota.estado) && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -121,6 +130,19 @@ export function TimelineCuotas({ cuotas, onPagarManual }: TimelineCuotasProps) {
                   >
                     <Banknote className="w-4 h-4 sm:mr-1" />
                     <span className="hidden sm:inline">Pagar</span>
+                  </Button>
+                )}
+                
+                {/* Botón de regularización para cuotas atrasadas */}
+                {cuota.estado === 'ATRASADA' && onRegularizar && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onRegularizar(cuota)}
+                    className="shrink-0 border-orange-300 text-orange-700 hover:bg-orange-50"
+                  >
+                    <FileCheck className="w-4 h-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Regularizar</span>
                   </Button>
                 )}
               </div>
@@ -136,7 +158,7 @@ export function TimelineCuotas({ cuotas, onPagarManual }: TimelineCuotasProps) {
                   <span className="font-medium">{formatCurrency(cuota.monto)}</span>
                 </div>
                 
-                {cuota.estado === 'PAGADA' && (
+                {(cuota.estado === 'PAGADA' || cuota.estado === 'REGULARIZADA') && (
                   <>
                     <div>
                       <span className="text-muted-foreground block text-xs">Fecha pago</span>
@@ -150,9 +172,9 @@ export function TimelineCuotas({ cuotas, onPagarManual }: TimelineCuotasProps) {
                 )}
               </div>
 
-              {cuota.notasAdministrativas && (
+              {cuota.notasAdmin && (
                 <div className="mt-3 pt-3 border-t text-sm text-muted-foreground italic">
-                  "{cuota.notasAdministrativas}"
+                  "{cuota.notasAdmin}"
                 </div>
               )}
             </div>

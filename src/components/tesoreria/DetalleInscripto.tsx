@@ -11,6 +11,7 @@ import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { TimelineCuotas } from './TimelineCuotas';
 import { ModalPagoManual } from './ModalPagoManual';
+import { ModalRegularizacion } from './ModalRegularizacion';
 import { useCuotas } from '../../hooks/usePagos';
 import { Skeleton } from '../ui/skeleton';
 import { 
@@ -33,6 +34,7 @@ interface DetalleInscriptoProps {
 export function DetalleInscripto({ inscripcion, open, onClose }: DetalleInscriptoProps) {
   const { cuotas, cargando: cargandoCuotas } = useCuotas(inscripcion?.idInscripcion || null);
   const [cuotaParaPagar, setCuotaParaPagar] = useState<Cuota | null>(null);
+  const [cuotaParaRegularizar, setCuotaParaRegularizar] = useState<Cuota | null>(null);
 
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '—';
@@ -53,6 +55,7 @@ export function DetalleInscripto({ inscripcion, open, onClose }: DetalleInscript
 
   const handleClose = () => {
     setCuotaParaPagar(null);
+    setCuotaParaRegularizar(null);
     onClose();
   };
 
@@ -187,25 +190,33 @@ export function DetalleInscripto({ inscripcion, open, onClose }: DetalleInscript
               <h3 className="text-sm font-semibold text-muted-foreground mb-3">
                 Resumen de Pagos
               </h3>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="bg-green-50 rounded-lg p-3">
-                  <p className="text-2xl font-bold text-green-600">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-green-50 rounded-lg p-3 text-center">
+                  <p className="text-xl font-bold text-green-600">
                     {formatCurrency(inscripcion.montoPagado)}
                   </p>
                   <p className="text-xs text-muted-foreground">Pagado</p>
                 </div>
-                <div className="bg-amber-50 rounded-lg p-3">
-                  <p className="text-2xl font-bold text-amber-600">
+                <div className="bg-amber-50 rounded-lg p-3 text-center">
+                  <p className="text-xl font-bold text-amber-600">
                     {formatCurrency(inscripcion.montoRestante)}
                   </p>
                   <p className="text-xs text-muted-foreground">Restante</p>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <p className="text-2xl font-bold text-blue-600">
+                <div className="bg-blue-50 rounded-lg p-3 text-center">
+                  <p className="text-xl font-bold text-blue-600">
                     {inscripcion.cuotasPagadas}/{inscripcion.totalCuotas}
                   </p>
-                  <p className="text-xs text-muted-foreground">Cuotas</p>
+                  <p className="text-xs text-muted-foreground">Cuotas pagadas</p>
                 </div>
+                {inscripcion.cuotasVencidas > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                    <p className="text-xl font-bold text-red-600">
+                      {inscripcion.cuotasVencidas}
+                    </p>
+                    <p className="text-xs text-red-600 font-medium">Atrasadas</p>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -225,7 +236,8 @@ export function DetalleInscripto({ inscripcion, open, onClose }: DetalleInscript
               ) : (
                 <TimelineCuotas 
                   cuotas={cuotas} 
-                  onPagarManual={setCuotaParaPagar} 
+                  onPagarManual={setCuotaParaPagar}
+                  onRegularizar={setCuotaParaRegularizar}
                 />
               )}
             </section>
@@ -238,6 +250,13 @@ export function DetalleInscripto({ inscripcion, open, onClose }: DetalleInscript
         cuota={cuotaParaPagar}
         open={!!cuotaParaPagar}
         onClose={() => setCuotaParaPagar(null)}
+      />
+
+      {/* Regularization modal for overdue installments */}
+      <ModalRegularizacion
+        cuota={cuotaParaRegularizar}
+        open={!!cuotaParaRegularizar}
+        onClose={() => setCuotaParaRegularizar(null)}
       />
     </>
   );

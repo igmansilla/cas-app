@@ -128,8 +128,8 @@ export function TablaInscripcionesAdmin({
                       {inscripcion.cuotasPagadas}/{inscripcion.totalCuotas}
                     </span>
                     {inscripcion.cuotasVencidas > 0 && (
-                      <span className="text-red-600 text-xs">
-                        ({inscripcion.cuotasVencidas} venc.)
+                      <span className="text-red-600 text-xs font-medium">
+                        ({inscripcion.cuotasVencidas} atras.)
                       </span>
                     )}
                   </div>
@@ -192,9 +192,9 @@ export function TablaInscripcionesAdmin({
                     {inscripcion.cuotasPagadas}/{inscripcion.totalCuotas}
                   </span>
                   {inscripcion.cuotasVencidas > 0 && (
-                    <span className="text-red-600 ml-1 text-sm">
-                      ({inscripcion.cuotasVencidas} vencidas)
-                    </span>
+                    <Badge variant="destructive" className="ml-2 text-xs">
+                      {inscripcion.cuotasVencidas} atrasadas
+                    </Badge>
                   )}
                 </TableCell>
                 <TableCell>

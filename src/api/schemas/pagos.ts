@@ -147,10 +147,11 @@ export const CuotaSchema = object({
       transform((input) => input.parsedValue)
     )
   ]),
-  estado: string(), // 'PLANIFICADA', 'PENDIENTE', 'PAGADA', 'VENCIDA'
+  estado: string(), // 'PLANIFICADA', 'HABILITADA', 'ATRASADA', 'PAGADA', 'REGULARIZADA'
   fechaPago: optional(nullable(string())),
   metodoPago: optional(nullable(string())),
-  notasAdministrativas: optional(nullable(string())),
+  notasAdmin: optional(nullable(string())), // Backend cambió nombre de notasAdministrativas
+  esPagable: optional(boolean()), // Nuevo campo que indica si la cuota puede ser pagada
 
   // Alias para compatibilidad con componentes existentes
   nroCuota: optional(number()), // Deprecated, usar secuencia

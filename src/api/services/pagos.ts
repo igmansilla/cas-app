@@ -257,6 +257,15 @@ export const pagosService = {
     await client.post('/admin/pagos/manual', request);
   },
 
+  /**
+   * Regulariza una cuota atrasada (solo tesorero/admin)
+   * Cambia el estado de ATRASADA a REGULARIZADA y decrementa el contador
+   */
+  regularizarCuota: async (idCuota: number, metodo: string, notas?: string): Promise<Cuota> => {
+    const response = await client.put(`/admin/cuotas/${idCuota}/regularizar`, { metodo, notas });
+    return parse(CuotaSchema, response.data);
+  },
+
   // ============================================
   // Solicitudes de Baja
   // ============================================

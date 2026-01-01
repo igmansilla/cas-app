@@ -16,18 +16,55 @@ interface ListaPlanesDisponiblesProps {
 }
 
 export function ListaPlanesDisponibles({ planes, onInscribirse }: ListaPlanesDisponiblesProps) {
-  if (planes.length === 0) {
+  // Filtrar planes cuyo período de inscripción ya cerró
+  const hoy = new Date();
+  const anioActual = hoy.getFullYear();
+  const mesActual = hoy.getMonth() + 1; // 1-12
+
+  const planesVigentes = planes.filter(plan => {
+    // Si no tiene año definido, mostrar por defecto
+    if (!plan.anio) return true;
+    
+    // Si el plan es de un año futuro, mostrar
+    if (plan.anio > anioActual) return true;
+    
+    // Si el plan es de un año pasado, ocultar
+    if (plan.anio < anioActual) return false;
+    
+    // Mismo año: verificar mes límite de inscripción
+    const mesLimite = plan.mesLimiteInscripcion;
+    if (mesLimite === undefined || mesLimite === null) return true;
+    
+    // Si ya pasó el mes límite, ocultar
+    return mesActual <= mesLimite;
+  });
+
+  if (planesVigentes.length === 0) {
     return (
-      <div className="text-center p-8 border rounded-lg bg-muted/20">
-        <h3 className="text-lg font-medium">No hay planes disponibles</h3>
-        <p className="text-muted-foreground">En este momento no hay planes de pago habilitados para inscripción.</p>
+      <div className="flex flex-col items-center justify-center py-12 px-4 border-2 border-dashed border-muted-foreground/2 rounded-xl bg-muted/5 text-center space-y-6">
+        <div className="relative">
+          <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-amber-500/20 rounded-full blur-xl opacity-50 animate-pulse" />
+          <div className="relative p-6 bg-background rounded-full shadow-sm border">
+            <Crown className="w-10 h-10 text-primary" />
+          </div>
+        </div>
+        
+        <div className="space-y-2 max-w-md">
+          <h3 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-amber-600 bg-clip-text text-transparent">
+            Próximamente Temporada {anioActual}
+          </h3>
+          <p className="text-muted-foreground">
+            Estamos terminando de definir los planes para este año. 
+            ¡Muy pronto vas a poder inscribirte!
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {planes.map((plan) => {
+      {planesVigentes.map((plan) => {
         const esPlanA = plan.estrategia === 'PLAN_A';
         const audienciaInfo = getAudienciaInfo(plan.audiencia as AudienciaPlan | undefined);
         const AudienciaIcon = audienciaInfo.icon;

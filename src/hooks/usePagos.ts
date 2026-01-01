@@ -282,3 +282,29 @@ export function useRegistrarPagoManual() {
     reset: mutation.reset
   };
 }
+
+/**
+ * Hook para regularizar una cuota atrasada.
+ * Solo puede ser usado por tesoreros/admins.
+ */
+export function useRegularizarCuota() {
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: ({ idCuota, metodo, notas }: { idCuota: number; metodo: string; notas?: string }) => 
+      pagosService.regularizarCuota(idCuota, metodo, notas),
+    onSuccess: () => {
+      // Invalidar queries para refrescar datos
+      queryClient.invalidateQueries({ queryKey: ['admin', 'inscripciones'] });
+      queryClient.invalidateQueries({ queryKey: pagosKeys.inscripciones.mis });
+    }
+  });
+
+  return {
+    regularizar: mutation.mutateAsync,
+    cargando: mutation.isPending,
+    error: mutation.error,
+    reset: mutation.reset
+  };
+}
+

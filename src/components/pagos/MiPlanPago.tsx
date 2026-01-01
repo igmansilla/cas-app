@@ -186,7 +186,7 @@ function ResumenPlan({
             <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-medium text-orange-800 dark:text-orange-200">
-                Tenés {cuotasVencidas} cuota{cuotasVencidas > 1 ? 's' : ''} vencida{cuotasVencidas > 1 ? 's' : ''}
+                Tenés {cuotasVencidas} cuota{cuotasVencidas > 1 ? 's' : ''} atrasada{cuotasVencidas > 1 ? 's' : ''}
               </p>
               <p className="text-sm text-orange-700 dark:text-orange-300">
                 Te recomendamos regularizar tu situación lo antes posible.
@@ -431,8 +431,8 @@ function CuotaCard({
   onPagar: (cuota: Cuota) => void;
   pagando: boolean;
 }) {
-  const isPagada = cuota.estado === 'PAGADA';
-  const isVencida = cuota.estado === 'VENCIDA';
+  const isPagada = cuota.estado === 'PAGADA' || cuota.estado === 'REGULARIZADA';
+  const isAtrasada = cuota.estado === 'ATRASADA';
 
   const fechaVenc = cuota.fechaVencimiento
     ? format(new Date(cuota.fechaVencimiento), "d 'de' MMMM", { locale: es })
@@ -445,7 +445,7 @@ function CuotaCard({
   return (
     <div className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${isPagada
       ? 'bg-green-50/50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
-      : isVencida
+      : isAtrasada
         ? 'bg-orange-50/50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-800'
         : 'bg-card border-border hover:bg-muted/50'
       }`}>
@@ -453,7 +453,7 @@ function CuotaCard({
         {/* Número de cuota */}
         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${isPagada
           ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-          : isVencida
+          : isAtrasada
             ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
             : 'bg-primary/10 text-primary'
           }`}>
@@ -491,11 +491,11 @@ function CuotaCard({
         ) : (
           <Button
             size="sm"
-            variant={isVencida ? "destructive" : "default"}
+            variant={isAtrasada ? "destructive" : "default"}
             onClick={() => onPagar(cuota)}
-            disabled={pagando}
+            disabled={pagando || isAtrasada}
           >
-            {pagando ? "Procesando..." : "Pagar"}
+            {pagando ? "Procesando..." : isAtrasada ? "Atrasada" : "Pagar"}
           </Button>
         )}
       </div>
