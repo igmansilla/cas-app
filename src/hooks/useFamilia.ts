@@ -38,9 +38,17 @@ export function useCrearFamilia() {
     
     return useMutation({
         mutationFn: (data: CrearFamiliaRequest) => familiasService.crearConPerfil(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['mi-familia'] });
-            queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+        onSuccess: async () => {
+            // Invalidar y esperar que se refetch para que los datos estén actualizados
+            // antes de navegar (esto actualiza perfilCompleto)
+            await queryClient.invalidateQueries({ 
+                queryKey: ['currentUser'],
+                refetchType: 'all'
+            });
+            await queryClient.invalidateQueries({ 
+                queryKey: ['mi-familia'],
+                refetchType: 'all'
+            });
         },
     });
 }
@@ -54,9 +62,16 @@ export function useUnirseConCodigo() {
     
     return useMutation({
         mutationFn: (data: UnirseConCodigoRequest) => familiasService.unirseConCodigo(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['mi-familia'] });
-            queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+        onSuccess: async () => {
+            // Invalidar y esperar refetch para actualizar perfilCompleto
+            await queryClient.invalidateQueries({ 
+                queryKey: ['currentUser'],
+                refetchType: 'all'
+            });
+            await queryClient.invalidateQueries({ 
+                queryKey: ['mi-familia'],
+                refetchType: 'all'
+            });
         },
     });
 }
