@@ -76,6 +76,10 @@ export const TipoDocumentoSchema = object({
   // Template PDF asociado (opcional)
   pdfTemplateId: optional(nullable(number())),
   pdfTemplateCodigo: optional(nullable(string())),
+  // Fechas de vencimiento
+  fechaLimiteFormulario: optional(nullable(string())),
+  fechaLimiteEntregaFisica: optional(nullable(string())),
+  crearEventoCalendario: optional(boolean()),
 });
 
 export type TipoDocumento = InferOutput<typeof TipoDocumentoSchema>;
@@ -219,6 +223,10 @@ export const CrearTipoDocumentoRequestSchema = object({
   ordenVisualizacion: optional(number()),
   campos: optional(array(CampoRequestSchema)),
   adjuntos: optional(array(AdjuntoRequestSchema)),
+  // Fechas de vencimiento
+  fechaLimiteFormulario: optional(nullable(string())),
+  fechaLimiteEntregaFisica: optional(nullable(string())),
+  crearEventoCalendario: optional(boolean()),
 });
 
 export type CrearTipoDocumentoRequest = InferOutput<typeof CrearTipoDocumentoRequestSchema>;

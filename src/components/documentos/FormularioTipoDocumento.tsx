@@ -19,6 +19,7 @@ import {
   Settings,
   Paperclip,
   FilePen,
+  Calendar,
 } from 'lucide-react';
 import { useActualizarTipoDocumento, useCrearTipoDocumento } from '../../hooks/useDocumentos';
 import type {
@@ -79,6 +80,17 @@ export function FormularioTipoDocumento({
   const [requiereFirma, setRequiereFirma] = useState(tipoDocumento?.requiereFirma ?? false);
   const [pdfTemplateId, setPdfTemplateId] = useState<number | null>(tipoDocumento?.pdfTemplateId ?? null);
   const [templatesDisponibles, setTemplatesDisponibles] = useState<PdfTemplateResponse[]>([]);
+  
+  // Estado del formulario - Fechas de vencimiento
+  const [fechaLimiteFormulario, setFechaLimiteFormulario] = useState<string>(
+    tipoDocumento?.fechaLimiteFormulario || ''
+  );
+  const [fechaLimiteEntregaFisica, setFechaLimiteEntregaFisica] = useState<string>(
+    tipoDocumento?.fechaLimiteEntregaFisica || ''
+  );
+  const [crearEventoCalendario, setCrearEventoCalendario] = useState(
+    tipoDocumento?.crearEventoCalendario ?? true
+  );
 
   // Cargar templates disponibles
   useEffect(() => {
@@ -141,6 +153,9 @@ export function FormularioTipoDocumento({
       campos: campos.map((c, i) => ({ ...c, ordenVisualizacion: i })),
       adjuntos: adjuntos.map((a, i) => ({ ...a, ordenVisualizacion: i })),
       pdfTemplateId: pdfTemplateId || null,
+      fechaLimiteFormulario: fechaLimiteFormulario || null,
+      fechaLimiteEntregaFisica: fechaLimiteEntregaFisica || null,
+      crearEventoCalendario,
     };
 
     try {
@@ -304,6 +319,12 @@ export function FormularioTipoDocumento({
               pdfTemplateId={pdfTemplateId}
               setPdfTemplateId={setPdfTemplateId}
               templatesDisponibles={templatesDisponibles}
+              fechaLimiteFormulario={fechaLimiteFormulario}
+              setFechaLimiteFormulario={setFechaLimiteFormulario}
+              fechaLimiteEntregaFisica={fechaLimiteEntregaFisica}
+              setFechaLimiteEntregaFisica={setFechaLimiteEntregaFisica}
+              crearEventoCalendario={crearEventoCalendario}
+              setCrearEventoCalendario={setCrearEventoCalendario}
             />
           )}
 
@@ -375,6 +396,13 @@ interface TabGeneralProps {
   pdfTemplateId: number | null;
   setPdfTemplateId: (v: number | null) => void;
   templatesDisponibles: PdfTemplateResponse[];
+  // Fechas de vencimiento
+  fechaLimiteFormulario: string;
+  setFechaLimiteFormulario: (v: string) => void;
+  fechaLimiteEntregaFisica: string;
+  setFechaLimiteEntregaFisica: (v: string) => void;
+  crearEventoCalendario: boolean;
+  setCrearEventoCalendario: (v: boolean) => void;
 }
 
 function TabGeneral({
@@ -394,6 +422,12 @@ function TabGeneral({
   pdfTemplateId,
   setPdfTemplateId,
   templatesDisponibles,
+  fechaLimiteFormulario,
+  setFechaLimiteFormulario,
+  fechaLimiteEntregaFisica,
+  setFechaLimiteEntregaFisica,
+  crearEventoCalendario,
+  setCrearEventoCalendario,
 }: TabGeneralProps) {
   return (
     <div className="space-y-6 max-w-2xl">
@@ -536,6 +570,57 @@ function TabGeneral({
           ))}
         </select>
         <p className="text-xs text-gray-400 mt-1">Opcional: asociar un template para generar PDFs pre-llenados</p>
+      </div>
+
+      {/* Fechas de Vencimiento */}
+      <div className="border-t border-gray-200 pt-6">
+        <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-orange-500" />
+          Fechas de Vencimiento
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha límite para formulario
+            </label>
+            <input
+              type="date"
+              value={fechaLimiteFormulario}
+              onChange={(e) => setFechaLimiteFormulario(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-400 mt-1">Fecha límite para completar el formulario digital</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha límite para entrega física
+            </label>
+            <input
+              type="date"
+              value={fechaLimiteEntregaFisica}
+              onChange={(e) => setFechaLimiteEntregaFisica(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-400 mt-1">Fecha límite para entregar documentos físicos</p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={crearEventoCalendario}
+              onChange={(e) => setCrearEventoCalendario(e.target.checked)}
+              className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
+            />
+            <div>
+              <span className="text-sm text-gray-700">Crear eventos en calendario</span>
+              <p className="text-xs text-gray-400">Los vencimientos aparecerán automáticamente en el calendario de la comunidad</p>
+            </div>
+          </label>
+        </div>
       </div>
     </div>
   );
