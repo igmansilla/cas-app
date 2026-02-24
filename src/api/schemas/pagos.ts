@@ -95,6 +95,17 @@ export type PlanPago = InferOutput<typeof PlanPagoSchema>;
 // Schemas: Plan de Pago (Request / Form)
 // ============================================
 
+export const ReglaTransicionRequestSchema = object({
+  montoTotalDestino: number(),
+  codigoDestino: optional(string()),
+  nombreDestino: optional(string()),
+  mesInicioControl: number(),
+  cuotasMinimasRequeridas: number(),
+  mesesAtrasoParaMigrar: number(),
+});
+
+export type ReglaTransicionRequest = InferOutput<typeof ReglaTransicionRequestSchema>;
+
 export const PlanPagoRequestSchema = object({
   codigo: string(),
   anio: number(),
@@ -112,15 +123,8 @@ export const PlanPagoRequestSchema = object({
   // Audiencia del plan
   audiencia: optional(enum_(AudienciaPlan)),
 
-  // Campos para crear Plan B automáticamente (solo cuando estrategia = PLAN_A)
-  montoTotalPlanB: optional(number()),
-  codigoPlanB: optional(string()),
-  nombrePlanB: optional(string()),
-
-  // Reglas de transición
-  mesInicioControlAtraso: optional(number()),      // Mes a partir del cual aplica control de atraso (ej: 7 = Julio)
-  cuotasMinimasAntesControl: optional(number()),   // Cuotas mínimas antes del mes de control
-  mesesAtrasoParaTransicion: optional(number()),   // Meses de atraso para activar transición (default: 2)
+  // Reglas de transición dinámicas
+  reglasTransicion: optional(array(ReglaTransicionRequestSchema)),
 
   // Política de devoluc ión por baja
   mesLimiteDevolucion100: optional(number()),      // Hasta este mes: 100% devolución

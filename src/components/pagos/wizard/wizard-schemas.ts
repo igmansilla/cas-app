@@ -10,6 +10,7 @@ import {
     object,
     boolean,
     optional,
+    array,
 } from "valibot";
 
 // Plan A: Datos básicos
@@ -31,18 +32,20 @@ export const PlanAMontoSchema = object({
     activo: boolean(),
 });
 
-// Plan B
-export const PlanBSchema = object({
-    montoTotalPlanB: pipe(number(), minValue(0, 'El monto no puede ser negativo')),
-    nombrePlanB: optional(string()),
-    codigoPlanB: optional(string()),
-});
-
-// Migración
-export const MigracionSchema = object({
-    mesInicioControlAtraso: number(),
-    cuotasMinimasAntesControl: pipe(number(), minValue(1, 'Mínimo 1 cuota')),
-    mesesAtrasoParaTransicion: pipe(number(), minValue(1, 'Mínimo 1 mes')),
+// Reglas de Transición (Múltiples planes de contingencia)
+export const ReglasTransicionSchema = object({
+    reglasTransicion: optional(
+        array(
+            object({
+                montoTotalDestino: pipe(number(), minValue(0, 'El monto no puede ser negativo')),
+                codigoDestino: optional(string()),
+                nombreDestino: optional(string()),
+                mesInicioControl: number(),
+                cuotasMinimasRequeridas: pipe(number(), minValue(1, 'Mínimo 1 cuota')),
+                mesesAtrasoParaMigrar: pipe(number(), minValue(1, 'Mínimo 1 mes')),
+            })
+        )
+    )
 });
 
 // Devolución

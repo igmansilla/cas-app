@@ -1,32 +1,29 @@
 /**
- * Step Migración - Políticas de transición (Diseño simplificado).
- * 
- * Muestra:
- * 1. Gráfico interactivo que visualiza el ciclo completo
- * 2. Resumen dinámico en una línea
- * 3. Controles para ajustar mes de control
+ * Step Migración - Builder dinámico de políticas de transición.
  */
 import { Label } from '../../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
-import { Card, CardContent } from '../../../ui/card';
-import { GitBranch, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../ui/card';
+import { GitBranch, Plus, Trash2 } from 'lucide-react';
+import { Button } from '../../../ui/button';
+import { Separator } from '../../../ui/separator';
+import { Input } from '../../../ui/input';
 import type { WizardStepProps } from '../wizard-types';
-import { MESES, ultimoDiaMes } from '../wizard-types';
+import { MESES } from '../wizard-types';
 import { PlanTimelineChart } from '../../charts/PlanTimelineChart';
-
-
+import { type ReglaTransicionRequest } from '../../../../api/schemas/pagos';
 
 export function StepMigracion({ form }: WizardStepProps) {
     return (
         <div className="grid gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            {/* Header compacto */}
+            {/* Header */}
             <div className="flex items-center gap-2 pb-2 border-b">
                 <div className="p-2 rounded-full bg-violet-100 text-violet-600">
                     <GitBranch className="w-5 h-5" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-medium">Control de Pagos</h3>
-                    <p className="text-xs text-muted-foreground">Define cuándo y cómo se verifica el cumplimiento</p>
+                    <h3 className="text-lg font-medium">Control de Pagos y Migraciones</h3>
+                    <p className="text-xs text-muted-foreground">Define reglas automáticas para morosos</p>
                 </div>
             </div>
 
@@ -34,88 +31,170 @@ export function StepMigracion({ form }: WizardStepProps) {
                 {(values: any) => {
                     const mesInicio = values.mesInicioHabilitado || 3;
                     const mesFin = values.mesFinHabilitado || 1;
-                    const mesControl = values.mesInicioControlAtraso || 7;
-                    const cuotasMinimas = mesControl - mesInicio;
-                    const mesLimite = mesControl - 1;
 
                     return (
                         <>
-                            {/* Gráfico principal - la estrella */}
-                            <Card className="border-2">
+                            {/* Gráfico principal */}
+                            <Card className="border-2 mb-4">
                                 <CardContent className="pt-4">
                                     <PlanTimelineChart
                                         mesInicio={mesInicio}
                                         mesFin={mesFin}
-                                        mesControl={mesControl}
+                                        reglas={values.reglasTransicion || []}
                                         interactivo={true}
                                     />
-                                    
-                                    {/* Resumen visual compacto con FECHAS EXACTAS */}
-                                    <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-                                        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-2">
-                                            <Calendar className="w-4 h-4 mx-auto text-green-600 mb-1" />
-                                            <p className="text-muted-foreground">Inscripción abierta</p>
-                                            <p className="font-bold text-green-700 dark:text-green-400">
-                                                1/{mesInicio} → {ultimoDiaMes(mesLimite)}/{mesLimite}
-                                            </p>
-                                            <p className="text-[10px] text-muted-foreground">
-                                                Cierra {MESES.find(m => m.val === mesLimite)?.label} 23:59
-                                            </p>
-                                        </div>
-                                        <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-2">
-                                            <AlertTriangle className="w-4 h-4 mx-auto text-red-600 mb-1" />
-                                            <p className="text-muted-foreground">Inicia control</p>
-                                            <p className="font-bold text-red-700 dark:text-red-400">
-                                                1 de {MESES.find(m => m.val === mesControl)?.label}
-                                            </p>
-                                            <p className="text-[10px] text-muted-foreground">
-                                                Se verifica {cuotasMinimas} cuotas pagas
-                                            </p>
-                                        </div>
-                                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2">
-                                            <CheckCircle className="w-4 h-4 mx-auto text-blue-600 mb-1" />
-                                            <p className="text-muted-foreground">Última cuota</p>
-                                            <p className="font-bold text-blue-700 dark:text-blue-400">
-                                                {MESES.find(m => m.val === mesFin)?.label}
-                                            </p>
-                                            <p className="text-[10px] text-muted-foreground">
-                                                {mesFin < mesInicio ? "(año sig.)" : ""}
-                                            </p>
-                                        </div>
-                                    </div>
                                 </CardContent>
                             </Card>
 
-                            {/* Control único: Mes de control */}
-                            <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                                <form.Field name="mesInicioControlAtraso">
-                                    {(field: any) => (
-                                        <div className="flex items-center gap-3 flex-1">
-                                            <Label className="whitespace-nowrap font-medium">
-                                                🔴 Mes de control:
-                                            </Label>
-                                            <Select 
-                                                value={String(field.state.value)} 
-                                                onValueChange={(v) => field.handleChange(Number(v))}
-                                            >
-                                                <SelectTrigger className="w-40">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {MESES.map(m => (
-                                                        <SelectItem key={m.val} value={String(m.val)}>
-                                                            {m.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <span className="text-xs text-muted-foreground">
-                                                (inscripciones cierran en {MESES.find(m => m.val === mesLimite)?.label})
-                                            </span>
-                                        </div>
-                                    )}
-                                </form.Field>
-                            </div>
+                            <form.Field name="reglasTransicion" mode="array">
+                                {(field: any) => (
+                                    <div className="space-y-4">
+                                        {field.state.value?.map((_: any, i: number) => (
+                                            <Card key={i} className="border border-violet-200 shadow-sm relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 w-1 h-full bg-violet-500" />
+                                                <CardHeader className="py-3 px-4 flex flex-row items-center justify-between bg-violet-50/50">
+                                                    <div>
+                                                        <CardTitle className="text-sm font-medium text-violet-900 border-none">
+                                                            Regla {i + 1}
+                                                        </CardTitle>
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 shadow-none text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                        onClick={() => field.removeValue(i)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </CardHeader>
+                                                <CardContent className="p-4 grid gap-4 sm:grid-cols-2">
+                                                    
+                                                    {/* Destino */}
+                                                    <div className="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+                                                        <form.Field name={`reglasTransicion[${i}].montoTotalDestino`}>
+                                                            {(subField: any) => (
+                                                                <div className="space-y-1 z-10">
+                                                                    <Label className="text-xs font-semibold">Monto Total ($)</Label>
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={subField.state.value || ''}
+                                                                        onChange={(e) => subField.handleChange(Number(e.target.value))}
+                                                                        placeholder="Ej: 500000"
+                                                                    />
+                                                                    {subField.state.meta.errors ? (
+                                                                        <p className="text-[10px] text-red-500 mt-1">{subField.state.meta.errors.join(', ')}</p>
+                                                                    ) : null}
+                                                                </div>
+                                                            )}
+                                                        </form.Field>
+
+                                                        <form.Field name={`reglasTransicion[${i}].codigoDestino`}>
+                                                            {(subField: any) => (
+                                                                <div className="space-y-1 z-10">
+                                                                    <Label className="text-xs font-semibold">Código Plan (Opcional)</Label>
+                                                                    <Input
+                                                                        value={subField.state.value || ''}
+                                                                        onChange={(e) => subField.handleChange(e.target.value)}
+                                                                        placeholder="Ej: PLAN-B-2025"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </form.Field>
+                                                    </div>
+
+                                                    <Separator className="sm:col-span-2 my-1" />
+
+                                                    {/* Condiciones */}
+                                                    <form.Field name={`reglasTransicion[${i}].mesInicioControl`}>
+                                                        {(subField: any) => (
+                                                            <div className="space-y-1 z-10 w-full pt-1">
+                                                                <Label className="text-xs font-semibold">A partir del mes...</Label>
+                                                                <Select 
+                                                                    value={subField.state.value ? String(subField.state.value) : undefined} 
+                                                                    onValueChange={(v) => subField.handleChange(Number(v))}
+                                                                >
+                                                                    <SelectTrigger className="w-full">
+                                                                        <SelectValue placeholder="Mes" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {MESES.map(m => (
+                                                                            <SelectItem key={m.val} value={String(m.val)}>
+                                                                                {m.label}
+                                                                            </SelectItem>
+                                                                        ))}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                                {subField.state.meta.errors ? (
+                                                                    <p className="text-[10px] text-red-500 mt-1">{subField.state.meta.errors.join(', ')}</p>
+                                                                ) : null}
+                                                            </div>
+                                                        )}
+                                                    </form.Field>
+
+                                                    <form.Field name={`reglasTransicion[${i}].mesesAtrasoParaMigrar`}>
+                                                        {(subField: any) => (
+                                                            <div className="space-y-1 z-10 w-full pt-1">
+                                                                <Label className="text-xs font-semibold">Con atrasos de...</Label>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={subField.state.value || ''}
+                                                                        onChange={(e) => subField.handleChange(Number(e.target.value))}
+                                                                        className="w-20"
+                                                                    />
+                                                                    <span className="text-sm text-muted-foreground whitespace-nowrap">Meses o más</span>
+                                                                </div>
+                                                                {subField.state.meta.errors ? (
+                                                                    <p className="text-[10px] text-red-500 mt-1">{subField.state.meta.errors.join(', ')}</p>
+                                                                ) : null}
+                                                            </div>
+                                                        )}
+                                                    </form.Field>
+
+                                                    <form.Field name={`reglasTransicion[${i}].cuotasMinimasRequeridas`}>
+                                                        {(subField: any) => (
+                                                            <div className="space-y-1 sm:col-span-2 z-10">
+                                                                <Label className="text-xs font-semibold">Exigir pago mínimo inicial de...</Label>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={subField.state.value || ''}
+                                                                        onChange={(e) => subField.handleChange(Number(e.target.value))}
+                                                                        className="w-20"
+                                                                    />
+                                                                    <span className="text-sm text-muted-foreground whitespace-nowrap">Cuotas en el mes de control</span>
+                                                                </div>
+                                                                 {subField.state.meta.errors ? (
+                                                                    <p className="text-[10px] text-red-500 mt-1">{subField.state.meta.errors.join(', ')}</p>
+                                                                ) : null}
+                                                            </div>
+                                                        )}
+                                                    </form.Field>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => field.pushValue({
+                                                montoTotalDestino: 0,
+                                                mesInicioControl: 7,
+                                                cuotasMinimasRequeridas: 4,
+                                                mesesAtrasoParaMigrar: 2
+                                            } as ReglaTransicionRequest)}
+                                            className="w-full border-dashed py-6"
+                                        >
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Agregar Regla de Contingencia
+                                        </Button>
+                                    </div>
+                                )}
+                            </form.Field>
                         </>
                     );
                 }}

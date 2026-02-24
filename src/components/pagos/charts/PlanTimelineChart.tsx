@@ -21,14 +21,14 @@ import {
     ReferenceLine,
     Cell,
 } from 'recharts';
+import { type ReglaTransicionRequest } from '../../../api/schemas/pagos';
 
 const MESES_LABEL = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 interface PlanTimelineChartProps {
     mesInicio: number;      // 1-12
     mesFin: number;         // 1-12 (puede ser < mesInicio si cruza año)
-    mesControl: number;     // 1-12
-    cuotasMinimas?: number; // Calculado automáticamente si no se pasa
+    reglas?: ReglaTransicionRequest[];
     interactivo?: boolean;  // Mostrar tooltips
     className?: string;
 }
@@ -39,20 +39,33 @@ interface MesData {
     valor: number;
     tipo: 'inscripcion' | 'control' | 'planB';
     esSigAnio: boolean;    // Para indicar "Ene '27" etc.
+    reglasActivas: ReglaTransicionRequest[]; // Rules triggering this month
 }
 
 export function PlanTimelineChart({
     mesInicio,
     mesFin,
-    mesControl,
-    cuotasMinimas,
+    reglas = [],
     interactivo = true,
     className = '',
 }: PlanTimelineChartProps) {
     const data = useMemo(() => {
         const result: MesData[] = [];
-        const cuotasCalc = cuotasMinimas ?? (mesControl - mesInicio);
-        const mesLimite = mesControl - 1;
+
+        // Helper: Find earliest control month in the cycle
+        const EarliestControl = () => {
+             if (!reglas || reglas.length === 0) return null;
+             let earliest = reglas[0].mesInicioControl;
+             for (const rule of reglas) {
+                 if (esMesAntesDe(rule.mesInicioControl, earliest, mesInicio)) {
+                     earliest = rule.mesInicioControl;
+                 }
+             }
+             return earliest;
+        };
+
+        const earliestControl = EarliestControl();
+        const firstLimit = earliestControl ? (earliestControl === 1 ? 12 : earliestControl - 1) : null;
 
         // Generar array de meses EN ORDEN DEL CICLO
         let m = mesInicio;
@@ -64,10 +77,12 @@ export function PlanTimelineChart({
             
             const esSigAnio = m < mesInicio; // Si es < inicio, es del año siguiente
             
+            const reglasActivas = reglas ? reglas.filter(r => r.mesInicioControl === m) : [];
             let tipo: MesData['tipo'];
-            if (m === mesControl) {
+            
+            if (reglasActivas.length > 0) {
                 tipo = 'control';
-            } else if (esMesAntesDe(m, mesControl, mesInicio)) {
+            } else if (!earliestControl || esMesAntesDe(m, earliestControl, mesInicio)) {
                 tipo = 'inscripcion';
             } else {
                 tipo = 'planB';
@@ -84,6 +99,7 @@ export function PlanTimelineChart({
                 valor: 1,
                 tipo,
                 esSigAnio,
+                reglasActivas
             });
 
             // Avanzar al siguiente mes
@@ -95,10 +111,10 @@ export function PlanTimelineChart({
         }
 
         // Encontrar índice del mes límite en el array
-        const mesLimiteIndex = result.findIndex(r => r.mesNum === mesLimite);
+        const mesLimiteIndex = firstLimit ? result.findIndex(r => r.mesNum === firstLimit) : -1;
 
-        return { meses: result, mesLimite, mesLimiteIndex, cuotasCalc };
-    }, [mesInicio, mesFin, mesControl, cuotasMinimas]);
+        return { meses: result, mesLimiteIndex };
+    }, [mesInicio, mesFin, reglas]);
 
     const getColor = (tipo: MesData['tipo']) => {
         switch (tipo) {
@@ -115,20 +131,21 @@ export function PlanTimelineChart({
         let mensaje = '';
         switch (d.tipo) {
             case 'inscripcion':
-                mensaje = `✅ Inscripción abierta`;
+                mensaje = `✅ Inscripción abierta (Fase inicial)`;
                 break;
             case 'control':
-                mensaje = `⚠️ Mes de control - Se verifica ${data.cuotasCalc} cuotas mínimas`;
+                const ruleNames = d.reglasActivas.map(r => r.codigoDestino ? r.codigoDestino : `Plan de ${r.cuotasMinimasRequeridas} cuotas mín.`).join(', ');
+                mensaje = `⚠️ Control de morosidad activo (${ruleNames})`;
                 break;
             case 'planB':
-                mensaje = `⬜ Plan B si no cumple mínimo`;
+                mensaje = `⬜ Fase posterior a controles iniciales`;
                 break;
         }
 
         return (
-            <div className="bg-background border rounded-lg shadow-lg p-2 text-xs">
+            <div className="bg-background border rounded-lg shadow-lg p-2 text-xs max-w-[200px]">
                 <p className="font-medium">{d.esSigAnio ? `${MESES_LABEL[d.mesNum - 1]} (año sig.)` : MESES_LABEL[d.mesNum - 1]}</p>
-                <p className="text-muted-foreground">{mensaje}</p>
+                <p className="text-muted-foreground break-words">{mensaje}</p>
             </div>
         );
     };

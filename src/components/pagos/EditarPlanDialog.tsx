@@ -95,11 +95,6 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
         mesInicioHabilitado: monthToNum(plan.mesInicio),
         mesFinHabilitado: monthToNum(plan.mesFin),
         activo: plan.activo,
-
-        // Reglas (solo si existen en el plan original)
-        mesInicioControlAtraso: plan.mesInicioControlAtraso || null,
-        cuotasMinimasAntesControl: plan.cuotasMinimasAntesControl || null,
-        mesesAtrasoParaTransicion: plan.mesesAtrasoParaTransicion || null,
       } as unknown as PlanPagoRequest)
     }
   }, [plan, open, reset])
@@ -121,8 +116,6 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
   }
 
   if (!plan) return null
-
-  const isPlanB = plan.estrategia === EstrategiaPlan.PLAN_B
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
@@ -254,46 +247,7 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
             </div>
           </div>
 
-          {/* Transition Rules (Only for Plan A usually) */}
-          {!isPlanB && (
-            <div className="border rounded-md p-4 bg-muted/20 space-y-4">
-              <h4 className="font-medium text-sm">Reglas de Control y Transición</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs">Mes Inicio Control</Label>
-                  <Select
-                    onValueChange={(v) => setValue("mesInicioControlAtraso", Number(v))}
-                    defaultValue={plan.mesInicioControlAtraso ? String(plan.mesInicioControlAtraso) : undefined}
-                  >
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Opcional" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MESES.map(m => (
-                        <SelectItem key={m.val} value={String(m.val)}>{m.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Cuotas Mínimas (antes de control)</Label>
-                  <Input
-                    type="number"
-                    className="h-8 text-xs"
-                    {...register("cuotasMinimasAntesControl", { valueAsNumber: true })}
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label className="text-xs">Meses Atraso (para transición)</Label>
-                  <Input
-                    type="number"
-                    className="h-8 text-xs"
-                    {...register("mesesAtrasoParaTransicion", { valueAsNumber: true })}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Reglas de Transición omitidas de la edición simple por ahora */}
 
           <div className="flex items-center space-x-2 pt-2">
             <Checkbox

@@ -11,7 +11,7 @@
 
 import React, { useState } from 'react';
 import { useForm } from "@tanstack/react-form";
-import { type PlanPagoRequest, EstrategiaPlan, AudienciaPlan } from "../../../api/schemas/pagos";
+import { type PlanPagoRequest, type ReglaTransicionRequest, EstrategiaPlan, AudienciaPlan } from "../../../api/schemas/pagos";
 
 import { Button } from "../../ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../ui/dialog";
@@ -24,7 +24,6 @@ import {
     StepPlanADatos,
     StepPlanAVigencia,
     StepPlanAMonto,
-    StepPlanB,
     StepMigracion,
     StepDevolucion,
     StepRevision,
@@ -32,8 +31,7 @@ import {
 
 const STEP_ICONS = {
     planA: LayoutList,
-    planB: DollarSign,
-    migracion: GitBranch,
+    reglas: GitBranch,
     devolucion: Undo2,
     revision: FileCheck,
 };
@@ -81,15 +79,10 @@ function WizardPlanPagoContent({ abierto, onCerrar, onGuardar, cargando }: Wizar
             minCuotas: 10,
             maxCuotas: 10,
             activo: true,
-            montoTotalPlanB: 0,
-            codigoPlanB: "",
-            nombrePlanB: "",
-            mesInicioControlAtraso: 7,
-            cuotasMinimasAntesControl: 4,
-            mesesAtrasoParaTransicion: 2,
+            reglasTransicion: [],
             mesLimiteDevolucion100: 9,
             mesLimiteDevolucion50: 10,
-            mesLimiteInscripcion: 10, // Por defecto ACAMPANTE
+            mesLimiteInscripcion: 10, 
         } as PlanPagoRequest,
         onSubmit: async ({ value }) => {
             onGuardar(prepareData(value));
@@ -104,12 +97,18 @@ function WizardPlanPagoContent({ abierto, onCerrar, onGuardar, cargando }: Wizar
         finalData.minCuotas = totalMonths;
         finalData.maxCuotas = totalMonths;
 
-        // Incluir audiencia en el código para evitar colisiones
         const audienciaPrefix = finalData.audiencia ? finalData.audiencia.substring(0, 3).toUpperCase() : 'GEN';
 
         if (!finalData.codigo) finalData.codigo = `PLAN-A-${audienciaPrefix}-${finalData.anio}`;
-        if (!finalData.codigoPlanB) finalData.codigoPlanB = `PLAN-B-${audienciaPrefix}-${finalData.anio}`;
-        if (!finalData.nombrePlanB) finalData.nombrePlanB = "Plan B";
+        
+        // Asignamos codigos y nombres automáticos a los planes B si no existen
+        if (finalData.reglasTransicion) {
+            finalData.reglasTransicion.forEach((regla: ReglaTransicionRequest, index: number) => {
+                if (!regla.codigoDestino) regla.codigoDestino = `PLAN-B${index + 1}-${audienciaPrefix}-${finalData.anio}`;
+                if (!regla.nombreDestino) regla.nombreDestino = `Plan Contingencia ${index + 1}`;
+            });
+        }
+        
         return finalData;
     };
 
@@ -159,11 +158,8 @@ function WizardPlanPagoContent({ abierto, onCerrar, onGuardar, cargando }: Wizar
             case 'planA':
                 stepFieldsToValidate = ['nombreParaMostrar', 'anio', 'montoTotal'];
                 break;
-            case 'planB':
-                stepFieldsToValidate = ['montoTotalPlanB'];
-                break;
-            case 'migracion':
-                stepFieldsToValidate = ['mesInicioControlAtraso', 'cuotasMinimasAntesControl'];
+            case 'reglas':
+                stepFieldsToValidate = ['reglasTransicion'];
                 break;
         }
 
@@ -300,8 +296,7 @@ function WizardPlanPagoContent({ abierto, onCerrar, onGuardar, cargando }: Wizar
                             if (planASubStep === 1) return <StepPlanAVigencia form={form} />;
                             return <StepPlanAMonto form={form} />;
                         },
-                        planB: () => <StepPlanB form={form} />,
-                        migracion: () => <StepMigracion form={form} />,
+                        reglas: () => <StepMigracion form={form} />,
                         devolucion: () => <StepDevolucion form={form} />,
                         revision: () => <StepRevision form={form} />,
                     })}

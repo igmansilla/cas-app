@@ -4,6 +4,7 @@
 import { CheckCircle2 } from 'lucide-react';
 import type { WizardStepProps } from '../wizard-types';
 import { MESES, ultimoDiaMes } from '../wizard-types';
+import { type ReglaTransicionRequest } from '../../../../api/schemas/pagos';
 
 export function StepRevision({ form }: WizardStepProps) {
     const formatCurrency = (val: number) => {
@@ -44,48 +45,46 @@ export function StepRevision({ form }: WizardStepProps) {
                                 <div className="flex justify-between">
                                     <dt className="text-muted-foreground">Vigencia</dt>
                                     <dd className="font-medium">
-                                        {MESES.find(m => m.val === values.mesInicioHabilitado)?.label} - {MESES.find(m => m.val === values.mesFinHabilitado)?.label}
+                                        {MESES.find((m: any) => m.val === values.mesInicioHabilitado)?.label} - {MESES.find((m: any) => m.val === values.mesFinHabilitado)?.label}
                                     </dd>
                                 </div>
                             </dl>
                         </div>
 
-                        {/* Plan B */}
-                        <div className="p-4 rounded-lg border bg-card">
-                            <h4 className="font-semibold text-orange-600 mb-3 flex items-center gap-2">
-                                <span className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-xs">B</span>
-                                Plan B
-                            </h4>
-                            <dl className="space-y-1 text-sm">
-                                <div className="flex justify-between">
-                                    <dt className="text-muted-foreground">Monto Total</dt>
-                                    <dd className="font-medium text-orange-600">${formatCurrency(values.montoTotalPlanB)}</dd>
+                        {/* Reglas de Transición */}
+                        {values.reglasTransicion && values.reglasTransicion.length > 0 && (
+                            <div className="md:col-span-2 space-y-4">
+                                <h4 className="font-semibold text-violet-600 border-b pb-2">Reglas de Transición (Planes de Contingencia)</h4>
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    {values.reglasTransicion.map((regla: ReglaTransicionRequest, i: number) => (
+                                        <div key={i} className="p-4 rounded-lg border bg-violet-50/30">
+                                            <h5 className="font-semibold text-violet-800 mb-2 font-sm flex items-center gap-2">
+                                                <span className="w-5 h-5 rounded-full bg-violet-200 flex items-center justify-center text-[10px]">{i + 1}</span>
+                                                Destino: {regla.codigoDestino || 'Auto-generado'}
+                                            </h5>
+                                            <dl className="space-y-1 text-sm">
+                                                <div className="flex justify-between">
+                                                    <dt className="text-muted-foreground">Monto Total</dt>
+                                                    <dd className="font-medium text-violet-700">${formatCurrency(regla.montoTotalDestino)}</dd>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <dt className="text-muted-foreground">Control desde</dt>
+                                                    <dd className="font-medium">{MESES.find(m => m.val === regla.mesInicioControl)?.label}</dd>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <dt className="text-muted-foreground">Cuotas exigibles</dt>
+                                                    <dd className="font-medium">{regla.cuotasMinimasRequeridas}</dd>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <dt className="text-muted-foreground">Meses de atraso</dt>
+                                                    <dd className="font-medium text-red-600">{regla.mesesAtrasoParaMigrar} o más</dd>
+                                                </div>
+                                            </dl>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="flex justify-between">
-                                    <dt className="text-muted-foreground">Recargo</dt>
-                                    <dd className="font-medium">+${formatCurrency((values.montoTotalPlanB || 0) - (values.montoTotal || 0))}</dd>
-                                </div>
-                            </dl>
-                        </div>
-
-                        {/* Migración */}
-                        <div className="p-4 rounded-lg border bg-card">
-                            <h4 className="font-semibold text-violet-600 mb-3">Políticas de Migración</h4>
-                            <dl className="space-y-1 text-sm">
-                                <div className="flex justify-between">
-                                    <dt className="text-muted-foreground">Control desde</dt>
-                                    <dd className="font-medium">{MESES.find(m => m.val === values.mesInicioControlAtraso)?.label}</dd>
-                                </div>
-                                <div className="flex justify-between">
-                                    <dt className="text-muted-foreground">Cuotas mínimas</dt>
-                                    <dd className="font-medium">{values.cuotasMinimasAntesControl}</dd>
-                                </div>
-                                <div className="flex justify-between">
-                                    <dt className="text-muted-foreground">Tolerancia</dt>
-                                    <dd className="font-medium">{values.mesesAtrasoParaTransicion} meses</dd>
-                                </div>
-                            </dl>
-                        </div>
+                            </div>
+                        )}
 
                         {/* Devolución */}
                         <div className="p-4 rounded-lg border bg-card">
