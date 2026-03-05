@@ -167,40 +167,42 @@ function TemplateEditorPage() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 flex items-center gap-4">
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-3 sm:p-4 flex flex-wrap items-center gap-3 sm:gap-4">
         <button
           onClick={handleVolver}
-          className="p-2 hover:bg-white/10 rounded-lg"
+          className="p-2 hover:bg-white/10 rounded-lg shrink-0"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">
+        <div className="flex-1 min-w-[200px]">
+          <h1 className="text-base sm:text-lg font-semibold truncate">
             {viewMode === 'list' ? 'Templates PDF' : templateEditar ? `Editando: ${templateEditar.nombre}` : 'Nuevo Template'}
           </h1>
-          <div className="flex items-center gap-2 text-sm text-white/80">
-            <span>{viewMode === 'list' ? 'Gestionar templates para generación de documentos' : 'Posicioná los campos sobre el PDF'}</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-white/80">
+            <span className="truncate">{viewMode === 'list' ? 'Gestionar templates para generación de documentos' : 'Posicioná los campos sobre el PDF'}</span>
             {tipoDocumentoNombre && (
-              <span className="px-2 py-0.5 bg-white/20 rounded-full text-xs">
+              <span className="px-2 py-0.5 bg-white/20 rounded-full text-xs whitespace-nowrap">
                 📋 {tipoDocumentoNombre}
               </span>
             )}
           </div>
         </div>
-        {viewMode === 'list' && (
-          <button
-            onClick={handleNuevoTemplate}
-            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo template
-          </button>
-        )}
-        {saved && (
-          <div className="bg-green-500 px-4 py-2 rounded-lg text-sm">
-            ✓ Template guardado
-          </div>
-        )}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {viewMode === 'list' && (
+            <button
+              onClick={handleNuevoTemplate}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4" />
+              Nuevo
+            </button>
+          )}
+          {saved && (
+            <div className="bg-green-500 px-4 py-2 rounded-lg text-sm whitespace-nowrap">
+              ✓ Guardado
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -223,33 +225,37 @@ function TemplateEditorPage() {
               {templates.map(template => (
                 <div
                   key={template.codigo}
-                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-4 hover:shadow-md transition-shadow"
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-md transition-shadow"
                 >
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-6 h-6 text-orange-600" />
+                  <div className="flex items-center gap-4 w-full sm:w-auto flex-1">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 truncate">{template.nombre}</h3>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">{template.codigo}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 truncate">{template.nombre}</h3>
-                    <p className="text-sm text-gray-500">{template.codigo}</p>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {template.campos.length} campos
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleEditarTemplate(template)}
-                      className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg"
-                      title="Editar"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleEliminarTemplate(template.codigo)}
-                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0">
+                    <div className="text-xs text-gray-400">
+                      {template.campos.length} campos
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEditarTemplate(template)}
+                        className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg"
+                        title="Editar"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEliminarTemplate(template.codigo)}
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                        title="Eliminar"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

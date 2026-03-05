@@ -39,7 +39,8 @@ export default defineConfig(({ mode }) => {
           name: appName,
           short_name: shortName,
           description: 'Campamento Andino Sayhueque App',
-          theme_color: '#ffffff',
+          theme_color: '#ea580c',
+          background_color: '#ffffff',
           icons: [
             {
               src: 'pwa-64x64.png',
@@ -72,6 +73,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      host: true, // Expone el servidor a la red local
       allowedHosts: true, // Permite acceso desde cualquier host (ngrok, cloudflare tunnel, etc.)
     },
   }

@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { FileText, Plus, ChevronDown, ChevronUp, Settings, Eye, Pencil, Trash2 } from 'lucide-react';
+import { FileText, Plus, ChevronDown, ChevronUp, Eye, Pencil, Trash2 } from 'lucide-react';
 import { useTiposDocumento, useDesactivarTipoDocumento } from '../../hooks/useDocumentos';
 import type { TipoDocumento, CampoFormulario } from '../../api/schemas/documentos';
 import { FormularioTipoDocumento } from './FormularioTipoDocumento';
@@ -55,7 +55,7 @@ export function AdminDocumentos() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Tipos de Documento</h2>
           <p className="text-sm text-gray-500">
@@ -63,7 +63,7 @@ export function AdminDocumentos() {
           </p>
         </div>
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors w-full sm:w-auto"
           onClick={() => setMostrarCrear(true)}
         >
           <Plus className="w-4 h-4" />
@@ -99,18 +99,6 @@ export function AdminDocumentos() {
         )}
       </div>
 
-      {/* Nota sobre PDF */}
-      <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-        <div className="flex items-start gap-3">
-          <Settings className="w-5 h-5 text-amber-600 mt-0.5" />
-          <div>
-            <h4 className="font-medium text-amber-800">Módulo PDF pendiente</h4>
-            <p className="text-sm text-amber-700 mt-1">
-              La funcionalidad para generar un PDF con la información del acampante para que el padre solo tenga que venir a firmar está planificada para una próxima versión.
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Modal de creación */}
       {mostrarCrear && (
@@ -156,69 +144,74 @@ function TipoDocumentoCard({ tipo, isExpanded, onToggle, onEdit, onDelete, isDel
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-gray-50 transition-colors gap-4 sm:gap-0">
         <button
           onClick={onToggle}
-          className="flex items-center gap-4 flex-1 text-left"
+          className="flex items-center gap-4 flex-1 text-left w-full"
         >
-          <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
             <FileText className="w-5 h-5 text-orange-600" />
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-900">{tipo.nombre}</h3>
-            <p className="text-sm text-gray-500">
+          <div className="min-w-0"> {/* Helps with text truncation if needed */}
+            <h3 className="font-semibold text-gray-900 truncate">{tipo.nombre}</h3>
+            <p className="text-sm text-gray-500 truncate">
               {tipo.codigo} • {tipo.campos.length} campos • {tipo.adjuntosRequeridos.length} adjuntos
             </p>
           </div>
         </button>
-        <div className="flex items-center gap-3">
-          <span className={`px-2 py-1 text-xs rounded-full ${
-            tipo.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-          }`}>
-            {tipo.activo ? 'Activo' : 'Inactivo'}
-          </span>
-          <div className="flex gap-1 flex-wrap">
-            {tipo.audiencias.map((aud) => (
-              <span key={aud} className={`px-2 py-0.5 text-xs rounded-full ${
-                aud === 'TODOS' ? 'bg-blue-100 text-blue-700' : 
-                aud === 'ACAMPANTE' ? 'bg-purple-100 text-purple-700' : 
-                aud === 'DIRIGENTE' ? 'bg-teal-100 text-teal-700' :
-                'bg-amber-100 text-amber-700'
-              }`}>
-                {aud === 'TODOS' ? 'Todos' : 
-                 aud === 'ACAMPANTE' ? 'Acampantes' : 
-                 aud === 'DIRIGENTE' ? 'Dirigentes' : 'Padres'}
-              </span>
-            ))}
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center gap-2 flex-wrap order-2 sm:order-1 flex-1 sm:flex-none">
+            <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${
+              tipo.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+            }`}>
+              {tipo.activo ? 'Activo' : 'Inactivo'}
+            </span>
+            <div className="flex gap-1 flex-wrap">
+              {tipo.audiencias.map((aud) => (
+                <span key={aud} className={`px-2 py-0.5 text-xs rounded-full whitespace-nowrap border ${
+                  aud === 'TODOS' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                  aud === 'ACAMPANTE' ? 'bg-purple-50 text-purple-700 border-purple-200' : 
+                  aud === 'DIRIGENTE' ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                  'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>
+                  {aud === 'TODOS' ? 'Todos' : 
+                   aud === 'ACAMPANTE' ? 'Acampantes' : 
+                   aud === 'DIRIGENTE' ? 'Dirigentes' : 'Padres'}
+                </span>
+              ))}
+            </div>
           </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors"
-            title="Editar tipo de documento"
-          >
-            <Pencil className="w-4 h-4" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-            title="Eliminar tipo de documento"
-            disabled={isDeleting}
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-          <button onClick={onToggle}>
-            {isExpanded ? (
-              <ChevronUp className="w-5 h-5 text-gray-400" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-gray-400" />
-            )}
-          </button>
+          
+          <div className="flex items-center gap-1 order-1 sm:order-2 shrink-0">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors"
+              title="Editar tipo de documento"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              title="Eliminar tipo de documento"
+              disabled={isDeleting}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+            <button onClick={onToggle} className="p-2">
+              {isExpanded ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

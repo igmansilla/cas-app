@@ -61,24 +61,24 @@ function DocumentosPage() {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <header className="mb-8">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-2">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-xl">
+              <div className="p-2 bg-orange-100 rounded-xl shrink-0">
                 <FileText className="w-6 h-6 text-orange-600" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Documentación</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Documentación</h1>
             </div>
             {puedeConfigurar && (
               <Link
                 to="/template-editor"
-                className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm w-full sm:w-auto shrink-0 transition-colors"
               >
                 <FilePen className="w-4 h-4" />
                 Editor de Templates
               </Link>
             )}
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm md:text-base">
             Completa los documentos requeridos para el campamento
           </p>
         </header>
@@ -86,18 +86,18 @@ function DocumentosPage() {
         {/* Contenido con tabs */}
         {esAdmin ? (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6">
-              <TabsTrigger value="mis-documentos" className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
+            <TabsList className="mb-6 flex flex-wrap h-auto w-full justify-start gap-1 p-1 bg-white md:bg-gray-100/50">
+              <TabsTrigger value="mis-documentos" className="flex items-center gap-2 flex-1 md:flex-none text-xs md:text-sm">
+                <FileText className="w-4 h-4 hidden sm:block" />
                 Mis Documentos
               </TabsTrigger>
-              <TabsTrigger value="reportes" className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
+              <TabsTrigger value="reportes" className="flex items-center gap-2 flex-1 md:flex-none text-xs md:text-sm">
+                <BarChart3 className="w-4 h-4 hidden sm:block" />
                 Reportes
               </TabsTrigger>
               {puedeConfigurar && (
-                <TabsTrigger value="admin" className="flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
+                <TabsTrigger value="admin" className="flex items-center gap-2 flex-1 md:flex-none text-xs md:text-sm">
+                  <Settings className="w-4 h-4 hidden sm:block" />
                   Configuración
                 </TabsTrigger>
               )}
