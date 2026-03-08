@@ -66,7 +66,7 @@ export function ModalPlanPago({
       codigo: "",
       anio: new Date().getFullYear(),
       nombreParaMostrar: "",
-      montoTotal: 0,
+      montoTotal: 1000000,
       moneda: "ARS",
       estrategia: EstrategiaPlan.PLAN_A,
       diaVencimiento: 10,

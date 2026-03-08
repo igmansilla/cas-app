@@ -86,11 +86,19 @@ export function AdminEquipo() {
 
         <div className="space-y-2">
           {categorias.map((cat) => (
-            <button
+            <div
               key={cat.id}
+              role="button"
+              tabIndex={0}
               onClick={() => setCategoriaSeleccionada(cat)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setCategoriaSeleccionada(cat);
+                }
+              }}
               className={cn(
-                'w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left',
+                'w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2',
                 categoriaActiva?.id === cat.id
                   ? 'border-orange-500 bg-orange-50 border-l-4'
                   : 'border-gray-200 hover:border-gray-300 bg-white'
@@ -108,12 +116,12 @@ export function AdminEquipo() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setModalCategoria({ open: true, editar: cat })}>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setModalCategoria({ open: true, editar: cat }); }}>
                     <Pencil className="w-4 h-4 mr-2" />
                     Editar
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => setConfirmarEliminar({ tipo: 'categoria', id: cat.id })}
+                    onClick={(e) => { e.stopPropagation(); setConfirmarEliminar({ tipo: 'categoria', id: cat.id }); }}
                     className="text-red-600"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
@@ -121,7 +129,7 @@ export function AdminEquipo() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </button>
+            </div>
           ))}
 
           {categorias.length === 0 && (
@@ -146,8 +154,8 @@ export function AdminEquipo() {
             </div>
 
             <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
-              {/* Header de tabla */}
-              <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500 uppercase">
+              {/* Header de tabla (Oculto en móvil) */}
+              <div className="hidden md:grid md:grid-cols-12 gap-2 px-4 py-2 bg-gray-50 text-xs font-medium text-gray-500 uppercase">
                 <div className="col-span-5">Item</div>
                 <div className="col-span-2 text-center">Cantidad</div>
                 <div className="col-span-3">Criticidad</div>
@@ -157,24 +165,59 @@ export function AdminEquipo() {
               {/* Filas de items */}
               <div className="divide-y divide-gray-100">
                 {categoriaActiva.items.map((item) => (
-                  <div key={item.id} className="grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50">
-                    <div className="col-span-5">
-                      <p className="font-medium text-gray-900">{item.nombre}</p>
-                      {item.notas && <p className="text-xs text-gray-500 truncate">{item.notas}</p>}
+                  <div key={item.id} className="flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-2 px-4 py-4 md:py-3 md:items-center hover:bg-gray-50">
+                    
+                    {/* Nombre y Acciones (Móvil) */}
+                    <div className="md:col-span-5 flex justify-between items-start md:block">
+                      <div className="pr-4">
+                        <p className="font-medium text-gray-900">{item.nombre}</p>
+                        {item.notas && <p className="text-xs text-gray-500 line-clamp-2 md:truncate mt-0.5">{item.notas}</p>}
+                      </div>
+                      
+                      {/* Acciones solo visibles en móvil */}
+                      <div className="md:hidden flex flex-shrink-0 gap-1 border border-gray-100 rounded-md p-0.5 bg-white shadow-sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => setModalItem({ open: true, editar: item })}
+                        >
+                          <Pencil className="w-4 h-4 text-gray-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => setConfirmarEliminar({ tipo: 'item', id: item.id })}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="col-span-2 text-center text-gray-600">
-                      {item.cantidad}
+
+                    {/* Detalle inferior en Móvil / Columnas en Desktop */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 md:contents">
+                      <div className="md:col-span-2 flex items-center md:justify-center text-sm text-gray-600">
+                        <span className="md:hidden font-medium text-xs text-gray-400 uppercase w-20">Cantidad:</span>
+                        <span className="font-medium md:font-normal bg-gray-100 md:bg-transparent px-2 py-0.5 md:p-0 rounded-md md:rounded-none">{item.cantidad}</span>
+                      </div>
+                      
+                      <div className="md:col-span-3 flex items-center gap-2">
+                        <span className="md:hidden font-medium text-xs text-gray-400 uppercase w-20">Criticidad:</span>
+                        <div className="flex items-center gap-2 px-2 py-1 md:p-0 bg-gray-50 md:bg-transparent rounded-md md:rounded-none border border-gray-100 md:border-none">
+                          <span className={cn('w-2 h-2 rounded-full', CRITICIDAD_CONFIG[item.criticidad].dotColor)} />
+                          <span className="text-sm font-medium md:font-normal text-gray-700 md:text-gray-600">{CRITICIDAD_CONFIG[item.criticidad].label}</span>
+                          {item.requiereFoto && (
+                            <span className="ml-1 text-indigo-500" title="Requiere foto">
+                              <Camera className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="col-span-3 flex items-center gap-2">
-                      <span className={cn('w-2 h-2 rounded-full', CRITICIDAD_CONFIG[item.criticidad].dotColor)} />
-                      <span className="text-sm text-gray-600">{CRITICIDAD_CONFIG[item.criticidad].label}</span>
-                      {item.requiereFoto && (
-                        <span className="ml-1 text-indigo-500" title="Requiere foto">
-                          <Camera className="w-3.5 h-3.5" />
-                        </span>
-                      )}
-                    </div>
-                    <div className="col-span-2 flex justify-end gap-1">
+
+                    {/* Acciones solo visibles en desktop */}
+                    <div className="hidden md:flex md:col-span-2 justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
