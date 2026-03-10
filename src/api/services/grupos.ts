@@ -97,6 +97,21 @@ export const gruposService = {
     },
 
     /**
+     * Renombra un grupo de acampantes existente.
+     */
+    actualizarGrupoAcampantes: async (grupoId: string, nombre: string): Promise<Grupo> => {
+        const response = await client.put(`/grupos/acampantes/${grupoId}`, { nombre });
+        return response.data;
+    },
+
+    /**
+     * Elimina un grupo de acampantes existente.
+     */
+    eliminarGrupoAcampantes: async (grupoId: string): Promise<void> => {
+        await client.delete(`/grupos/acampantes/${grupoId}`);
+    },
+
+    /**
      * Obtiene los grupos de un usuario.
      */
     obtenerGruposUsuario: async (usuarioId: number): Promise<Grupo[]> => {

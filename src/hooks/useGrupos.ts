@@ -152,7 +152,36 @@ export function useCrearGrupoAcampantes() {
     return useMutation({
         mutationFn: (nombre: string) => gruposService.crearGrupoAcampantes(nombre),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['grupos', 'acampantes'] });
+            queryClient.invalidateQueries({ queryKey: ['grupos'] });
+        },
+    });
+}
+
+/**
+ * Hook para renombrar un grupo de acampantes.
+ */
+export function useActualizarGrupoAcampantes() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ grupoId, nombre }: { grupoId: string; nombre: string }) =>
+            gruposService.actualizarGrupoAcampantes(grupoId, nombre),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['grupos'] });
+        },
+    });
+}
+
+/**
+ * Hook para eliminar un grupo de acampantes.
+ */
+export function useEliminarGrupoAcampantes() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (grupoId: string) => gruposService.eliminarGrupoAcampantes(grupoId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['grupos'] });
         },
     });
 }

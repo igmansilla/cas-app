@@ -1,10 +1,41 @@
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { Alert, AlertDescription } from '../ui/alert';
-import { cn } from '../../lib/utils';
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '../ui/alert-dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '../ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { cn } from '../../lib/utils';
+import { useAuth } from '../../hooks/useAuth';
+import {
+    useActualizarGrupoAcampantes,
+    useCrearGrupoAcampantes,
+    useEliminarGrupoAcampantes,
     useGrupoDetalle,
     useGruposArbol,
     useSincronizarGrupos,
@@ -12,7 +43,7 @@ import {
     type GrupoDetalle,
     type MiembroGrupo,
 } from '../../hooks/useGrupos';
-import { ChevronDown, ChevronRight, Loader2, RefreshCw, Shield, Tent, Users } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2, MoreVertical, Pencil, Plus, RefreshCw, Shield, Tent, Trash2, Users } from 'lucide-react';
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
     ADMIN: 'bg-slate-900 text-slate-50 dark:bg-slate-100 dark:text-slate-900',
@@ -21,11 +52,27 @@ const ROLE_BADGE_CLASS: Record<string, string> = {
     ACAMPANTE: 'bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-200',
 };
 
+interface ManagedGroupTarget {
+    id: string;
+    nombre: string;
+    path: string;
+}
+
 export function ArbolGruposPanel() {
+    const { hasRole } = useAuth();
     const { arbol, cargando, error, refetch } = useGruposArbol();
     const syncMutation = useSincronizarGrupos();
+    const createMutation = useCrearGrupoAcampantes();
+    const updateMutation = useActualizarGrupoAcampantes();
+    const deleteMutation = useEliminarGrupoAcampantes();
     const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
     const [expandedIds, setExpandedIds] = useState<string[]>([]);
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const [renameTarget, setRenameTarget] = useState<ManagedGroupTarget | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<ManagedGroupTarget | null>(null);
+
+    const canManageGroups = hasRole('ADMIN');
+    const isMutatingGroups = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
     const flattenedIds = useMemo(() => collectNodeIds(arbol), [arbol]);
 
@@ -65,8 +112,69 @@ export function ArbolGruposPanel() {
         await refetch();
     };
 
+    const refreshTreeAndSelection = async (nextSelectedId?: string | null) => {
+        const refreshedTree = (await refetch()).data ?? [];
+
+        if (typeof nextSelectedId === 'string' && nextSelectedId.length > 0) {
+            setSelectedGroupId(nextSelectedId);
+            setExpandedIds((prev) => {
+                const merged = new Set([...prev, ...findPathIds(refreshedTree, nextSelectedId)]);
+                return Array.from(merged);
+            });
+            return;
+        }
+
+        if (nextSelectedId === null) {
+            setSelectedGroupId(null);
+        }
+    };
+
+    const handleCreateGroup = async (nombre: string) => {
+        try {
+            const createdGroup = await createMutation.mutateAsync(nombre);
+            setIsCreateDialogOpen(false);
+            await refreshTreeAndSelection(createdGroup.id);
+            toast.success(`Grupo ${createdGroup.nombre} creado.`);
+        } catch (error) {
+            toast.error(resolveGroupMutationError(error, 'No se pudo crear el grupo.'));
+        }
+    };
+
+    const handleRenameGroup = async (nombre: string) => {
+        if (!renameTarget) {
+            return;
+        }
+
+        try {
+            const updatedGroup = await updateMutation.mutateAsync({ grupoId: renameTarget.id, nombre });
+            setRenameTarget(null);
+            await refreshTreeAndSelection(updatedGroup.id);
+            toast.success(`Grupo ${updatedGroup.nombre} actualizado.`);
+        } catch (error) {
+            toast.error(resolveGroupMutationError(error, 'No se pudo actualizar el grupo.'));
+        }
+    };
+
+    const handleDeleteGroup = async () => {
+        if (!deleteTarget) {
+            return;
+        }
+
+        try {
+            const deletedGroupId = deleteTarget.id;
+            await deleteMutation.mutateAsync(deleteTarget.id);
+            setDeleteTarget(null);
+            setExpandedIds((prev) => prev.filter((groupId) => groupId !== deletedGroupId));
+            await refreshTreeAndSelection(selectedGroupId === deletedGroupId ? null : selectedGroupId);
+            toast.success(`Grupo ${deleteTarget.nombre} eliminado.`);
+        } catch (error) {
+            toast.error(resolveGroupMutationError(error, 'No se pudo eliminar el grupo.'));
+        }
+    };
+
     return (
-        <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <>
+            <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
             <section className="rounded-2xl border bg-card shadow-sm">
                 <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
                     <div>
@@ -75,20 +183,37 @@ export function ArbolGruposPanel() {
                             Navegación por click sobre la estructura real del campamento.
                         </p>
                     </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0"
-                        onClick={handleSync}
-                        disabled={syncMutation.isPending}
-                    >
-                        {syncMutation.isPending ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <RefreshCw className="mr-2 h-4 w-4" />
+                    <div className="flex shrink-0 items-center gap-2">
+                        {canManageGroups && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsCreateDialogOpen(true)}
+                                disabled={isMutatingGroups}
+                            >
+                                {createMutation.isPending ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Plus className="mr-2 h-4 w-4" />
+                                )}
+                                Nuevo grupo
+                            </Button>
                         )}
-                        Sincronizar
-                    </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0"
+                            onClick={handleSync}
+                            disabled={syncMutation.isPending || isMutatingGroups}
+                        >
+                            {syncMutation.isPending ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                            )}
+                            Sincronizar
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="max-h-[72vh] overflow-y-auto px-3 py-4">
@@ -135,14 +260,84 @@ export function ArbolGruposPanel() {
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                 ) : detalle ? (
-                    <GrupoDetallePanel detalle={detalle} onSelectNode={handleSelectNode} />
+                    <GrupoDetallePanel
+                        detalle={detalle}
+                        onSelectNode={handleSelectNode}
+                        canManageGroups={canManageGroups}
+                        isMutatingGroups={isMutatingGroups}
+                        onRenameGroup={setRenameTarget}
+                        onDeleteGroup={setDeleteTarget}
+                    />
                 ) : (
                     <div className="flex min-h-[360px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
                         Seleccioná un nodo del árbol para ver integrantes, subgrupos y dirigentes a cargo.
                     </div>
                 )}
             </section>
-        </div>
+            </div>
+
+            <GrupoNombreDialog
+                open={isCreateDialogOpen}
+                title="Nuevo grupo de acampantes"
+                description="El grupo se crea como hijo directo de Acampantes y queda sincronizado con Keycloak."
+                submitLabel="Crear grupo"
+                isPending={createMutation.isPending}
+                onOpenChange={setIsCreateDialogOpen}
+                onSubmit={handleCreateGroup}
+            />
+
+            <GrupoNombreDialog
+                open={!!renameTarget}
+                title="Renombrar grupo"
+                description="El cambio se aplica en Keycloak y luego se replica en el árbol local."
+                initialValue={renameTarget?.nombre ?? ''}
+                submitLabel="Guardar cambios"
+                isPending={updateMutation.isPending}
+                onOpenChange={(nextOpen) => {
+                    if (!nextOpen) {
+                        setRenameTarget(null);
+                    }
+                }}
+                onSubmit={handleRenameGroup}
+            />
+
+            <AlertDialog open={!!deleteTarget} onOpenChange={(nextOpen) => {
+                if (!nextOpen && !deleteMutation.isPending) {
+                    setDeleteTarget(null);
+                }
+            }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Eliminar grupo</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {deleteTarget
+                                ? `Se eliminará ${deleteTarget.nombre} de Keycloak y del árbol local si no tiene referencias históricas.`
+                                : 'Se eliminará el grupo seleccionado.'}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleteMutation.isPending}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-white hover:bg-destructive/90"
+                            onClick={(event) => {
+                                event.preventDefault();
+                                void handleDeleteGroup();
+                            }}
+                            disabled={deleteMutation.isPending}
+                        >
+                            {deleteMutation.isPending ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Eliminando...
+                                </>
+                            ) : (
+                                'Eliminar grupo'
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }
 
@@ -232,13 +427,23 @@ function GrupoTreeNode({
 function GrupoDetallePanel({
     detalle,
     onSelectNode,
+    canManageGroups,
+    isMutatingGroups,
+    onRenameGroup,
+    onDeleteGroup,
 }: {
     detalle: GrupoDetalle;
     onSelectNode: (nodeId: string) => void;
+    canManageGroups: boolean;
+    isMutatingGroups: boolean;
+    onRenameGroup: (group: ManagedGroupTarget) => void;
+    onDeleteGroup: (group: ManagedGroupTarget) => void;
 }) {
     const descriptor = getGroupDescriptor(detalle.path);
     const Icon = descriptor.icon;
     const breadcrumbs = detalle.path.split('/').filter(Boolean);
+    const canEditGroup = canManageGroups && isEditableAcampantesGroupPath(detalle.path);
+    const isAcampantesRoot = isAcampantesRootPath(detalle.path);
 
     return (
         <div className="space-y-6 px-6 py-5">
@@ -264,14 +469,44 @@ function GrupoDetallePanel({
                                     {detalle.dirigentesACargo.length} dirigentes a cargo
                                 </Badge>
                             )}
+                            {canManageGroups && isAcampantesRoot && (
+                                <Badge variant="outline" className="text-green-700">
+                                    ABM habilitado para subgrupos directos
+                                </Badge>
+                            )}
                         </div>
                     </div>
 
-                    {detalle.padreId && detalle.padreNombre && (
-                        <Button variant="outline" onClick={() => onSelectNode(detalle.padreId!)}>
-                            Volver a {detalle.padreNombre}
-                        </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {canEditGroup && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" disabled={isMutatingGroups}>
+                                        <MoreVertical className="mr-2 h-4 w-4" />
+                                        Gestionar
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => onRenameGroup({ id: detalle.id, nombre: detalle.nombre, path: detalle.path })}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Renombrar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        variant="destructive"
+                                        onClick={() => onDeleteGroup({ id: detalle.id, nombre: detalle.nombre, path: detalle.path })}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Eliminar
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                        {detalle.padreId && detalle.padreNombre && (
+                            <Button variant="outline" onClick={() => onSelectNode(detalle.padreId!)}>
+                                Volver a {detalle.padreNombre}
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="rounded-2xl border bg-muted/20 p-4">
@@ -458,4 +693,124 @@ function findPathIds(nodes: GrupoArbolNode[], targetId: string): string[] {
     }
 
     return [];
+}
+
+function GrupoNombreDialog({
+    open,
+    title,
+    description,
+    initialValue = '',
+    submitLabel,
+    isPending,
+    onOpenChange,
+    onSubmit,
+}: {
+    open: boolean;
+    title: string;
+    description: string;
+    initialValue?: string;
+    submitLabel: string;
+    isPending: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSubmit: (nombre: string) => Promise<void>;
+}) {
+    const [nombre, setNombre] = useState(initialValue);
+
+    useEffect(() => {
+        if (open) {
+            setNombre(initialValue);
+        }
+    }, [initialValue, open]);
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        await onSubmit(nombre);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={(nextOpen) => {
+            if (!isPending) {
+                onOpenChange(nextOpen);
+            }
+        }}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
+                </DialogHeader>
+
+                <form className="space-y-4" onSubmit={(event) => { void handleSubmit(event); }}>
+                    <div className="space-y-2">
+                        <Label htmlFor="nombre-grupo">Nombre del grupo</Label>
+                        <Input
+                            id="nombre-grupo"
+                            value={nombre}
+                            onChange={(event) => setNombre(event.target.value)}
+                            placeholder="Ej: ESCUELA"
+                            disabled={isPending}
+                            autoFocus
+                        />
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" disabled={isPending || nombre.trim().length === 0}>
+                            {isPending ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Guardando...
+                                </>
+                            ) : (
+                                submitLabel
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function isAcampantesRootPath(path: string) {
+    return path.toUpperCase() === '/CAS/ACAMPANTES';
+}
+
+function isEditableAcampantesGroupPath(path: string) {
+    const normalizedPath = path.toUpperCase();
+    return normalizedPath.startsWith('/CAS/ACAMPANTES/')
+        && normalizedPath.split('/').filter(Boolean).length === 3;
+}
+
+function resolveGroupMutationError(error: unknown, fallbackMessage: string) {
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+        const response = (error as {
+            response?: {
+                data?: unknown;
+                status?: number;
+            };
+        }).response;
+
+        const data = response?.data;
+
+        if (typeof data === 'string' && data.trim().length > 0) {
+            return data;
+        }
+
+        if (typeof data === 'object' && data !== null) {
+            const maybeMessage = (data as { message?: unknown; error?: unknown }).message
+                ?? (data as { message?: unknown; error?: unknown }).error;
+
+            if (typeof maybeMessage === 'string' && maybeMessage.trim().length > 0) {
+                return maybeMessage;
+            }
+        }
+
+        if (response?.status === 403) {
+            return 'No tenés permisos para administrar grupos.';
+        }
+    }
+
+    return fallbackMessage;
 }
