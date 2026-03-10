@@ -184,7 +184,7 @@ export function GestorGrupos({ usuarioId, gruposActuales, rolesUsuario = [] }: G
             {/* Mensaje si no hay patrulla */}
             {!patrullaActual && !grupoDirigenteActual && (
                 <p className="text-sm text-muted-foreground italic">
-                    Seleccioná una patrulla para asignar al usuario.
+                    Seleccioná los grupos que correspondan para esta persona.
                 </p>
             )}
         </div>

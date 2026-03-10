@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { gruposService, type MiembroGrupo } from "../api/services/grupos";
+import {
+    gruposService,
+    type GrupoArbolNode,
+    type GrupoDetalle,
+    type MiembroGrupo,
+    type SyncGruposResponse,
+} from "../api/services/grupos";
 
 /**
  * Hook para obtener grupos de acampantes.
@@ -69,6 +75,41 @@ export function useMiembrosGrupo(grupoId: string, enabled = true) {
 }
 
 /**
+ * Hook para obtener el árbol jerárquico de grupos.
+ */
+export function useGruposArbol() {
+    const query = useQuery({
+        queryKey: ['grupos', 'arbol'],
+        queryFn: gruposService.listarArbol,
+    });
+
+    return {
+        arbol: query.data ?? ([] as GrupoArbolNode[]),
+        cargando: query.isLoading,
+        error: query.error,
+        refetch: query.refetch,
+    };
+}
+
+/**
+ * Hook para obtener el detalle de un grupo.
+ */
+export function useGrupoDetalle(grupoId: string, enabled = true) {
+    const query = useQuery({
+        queryKey: ['grupos', grupoId, 'detalle'],
+        queryFn: () => gruposService.obtenerDetalleGrupo(grupoId),
+        enabled: enabled && !!grupoId,
+    });
+
+    return {
+        detalle: (query.data ?? null) as GrupoDetalle | null,
+        cargando: query.isLoading,
+        error: query.error,
+        refetch: query.refetch,
+    };
+}
+
+/**
  * Hook para agregar un usuario a un grupo.
  */
 export function useAgregarAGrupo() {
@@ -116,4 +157,18 @@ export function useCrearGrupoAcampantes() {
     });
 }
 
-export type { MiembroGrupo };
+/**
+ * Hook para sincronizar el árbol local de grupos.
+ */
+export function useSincronizarGrupos() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (): Promise<SyncGruposResponse> => gruposService.sincronizarGrupos(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['grupos'] });
+        },
+    });
+}
+
+export type { GrupoArbolNode, GrupoDetalle, MiembroGrupo, SyncGruposResponse };

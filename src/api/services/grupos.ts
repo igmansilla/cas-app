@@ -10,6 +10,43 @@ export const GrupoSchema = object({
 
 export type Grupo = InferOutput<typeof GrupoSchema>;
 
+export interface GrupoArbolNode {
+    id: string;
+    nombre: string;
+    path: string;
+    hijos: GrupoArbolNode[];
+}
+
+export interface GrupoResumen {
+    id: string;
+    nombre: string;
+    path: string;
+    cantidadHijos: number;
+}
+
+export interface MiembroGrupo {
+    keycloakId: string;
+    email: string;
+    nombreMostrar: string;
+    roles?: string[];
+}
+
+export interface GrupoDetalle {
+    id: string;
+    nombre: string;
+    path: string;
+    padreId: string | null;
+    padreNombre: string | null;
+    hijos: GrupoResumen[];
+    integrantes: MiembroGrupo[];
+    dirigentesACargo: MiembroGrupo[];
+}
+
+export interface SyncGruposResponse {
+    gruposSincronizados: number;
+    mensaje: string;
+}
+
 // Schema para grupo con conteo de subgrupos
 export const GrupoConSubgruposSchema = object({
     id: string(),
@@ -24,6 +61,14 @@ export const gruposService = {
      */
     listarTodos: async (): Promise<Grupo[]> => {
         const response = await client.get('/grupos');
+        return response.data;
+    },
+
+    /**
+     * Obtiene el árbol jerárquico de grupos.
+     */
+    listarArbol: async (): Promise<GrupoArbolNode[]> => {
+        const response = await client.get('/grupos/arbol');
         return response.data;
     },
 
@@ -80,11 +125,20 @@ export const gruposService = {
         const response = await client.get(`/grupos/${grupoId}/miembros`);
         return response.data;
     },
-};
 
-// Types adicionales
-export interface MiembroGrupo {
-    keycloakId: string;
-    email: string;
-    nombreMostrar: string;
-}
+    /**
+     * Obtiene el detalle de un grupo con integrantes, dirigentes a cargo y subgrupos directos.
+     */
+    obtenerDetalleGrupo: async (grupoId: string): Promise<GrupoDetalle> => {
+        const response = await client.get(`/grupos/${grupoId}/detalle`);
+        return response.data;
+    },
+
+    /**
+     * Fuerza una sincronización del árbol local de grupos.
+     */
+    sincronizarGrupos: async (): Promise<SyncGruposResponse> => {
+        const response = await client.post('/grupos/sync');
+        return response.data;
+    },
+};

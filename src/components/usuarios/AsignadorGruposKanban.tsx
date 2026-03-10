@@ -219,6 +219,7 @@ export function AsignadorGruposKanban({ tipo }: AsignadorGruposKanbanProps) {
     const cargando = cargandoAcampantes || cargandoDirigentes || cargandoUsuarios;
     const rolFiltro = tipo === 'acampantes' ? 'ACAMPANTE' : 'DIRIGENTE';
     const color = tipo === 'acampantes' ? 'green' : 'blue';
+    const etiquetaPlural = tipo === 'acampantes' ? 'acampantes' : 'dirigentes';
 
     const usuariosFiltrados = usuarios.filter(u => u.roles.includes(rolFiltro));
 
@@ -350,11 +351,11 @@ export function AsignadorGruposKanban({ tipo }: AsignadorGruposKanbanProps) {
             {/* Header con instrucciones y refresh */}
             <div className="flex items-center justify-between gap-3 flex-shrink-0">
                 <div className="text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded-md flex-1">
-                    <strong>Arrastrá</strong> usuarios entre columnas. Solo <strong>Consejo</strong> puede modificar.
+                    <strong>Arrastrá</strong> {etiquetaPlural} entre columnas. Solo <strong>Consejo</strong> puede modificar.
                 </div>
                 <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                        {usuariosFiltrados.length} usuarios
+                        {usuariosFiltrados.length} {etiquetaPlural}
                     </Badge>
                     <Button 
                         variant="outline" 

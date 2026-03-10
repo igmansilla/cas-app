@@ -71,7 +71,7 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar por nombre o email..."
+                        placeholder="Buscar por nombre o correo..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
                         className="pl-10"
@@ -93,7 +93,7 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
             {/* Contador */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="w-4 h-4" />
-                <span>{usuariosFiltrados.length} usuarios</span>
+                <span>{usuariosFiltrados.length} acampantes</span>
             </div>
 
             {/* Tabla */}
@@ -112,7 +112,7 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
                         {usuariosFiltrados.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                    No se encontraron usuarios
+                                    No se encontraron acampantes
                                 </TableCell>
                             </TableRow>
                         ) : (

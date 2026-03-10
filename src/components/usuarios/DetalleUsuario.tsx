@@ -46,7 +46,7 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
         <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
             <SheetContent className="overflow-y-auto w-full sm:max-w-md">
                 <SheetHeader className="pb-4">
-                    <SheetTitle className="text-xl">Detalle de Usuario</SheetTitle>
+                    <SheetTitle className="text-xl">Ficha de acampante</SheetTitle>
                 </SheetHeader>
 
                 <div className="space-y-6 py-4">
@@ -128,7 +128,7 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
                             />
                         </div>
                         <p className="text-xs text-muted-foreground px-1">
-                            Grupos de acampantes y dirigentes a los que pertenece.
+                            Vinculaciones de la persona dentro de acampantes y dirigencia.
                         </p>
                     </div>
 
@@ -145,7 +145,7 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
                         
                         <div className="grid gap-3 p-4 rounded-xl border bg-card">
                             <InfoRow 
-                                label="ID de Usuario" 
+                                label="ID interno" 
                                 value={<code className="bg-muted px-2 py-1 rounded text-xs font-mono">{usuario.id}</code>}
                             />
                             <InfoRow 
