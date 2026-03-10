@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { devtools } from '@tanstack/devtools-vite'
 import viteReact from '@vitejs/plugin-react'
@@ -10,12 +10,29 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const isDev = mode === 'development'
-  const appName = isDev ? '[DEV] Campamento' : 'Campamento'
-  const shortName = isDev ? '[DEV] CAS' : 'CAS'
+  const env = loadEnv(mode, process.cwd(), '')
+  const isLocal = mode === 'development'
+  const isDevRailway = env.RAILWAY_ENVIRONMENT_NAME === 'development' || env.RAILWAY_ENVIRONMENT_NAME === 'dev'
+  
+  let prefix = ''
+  if (isDevRailway) prefix = '[DEV] '
+  else if (isLocal) prefix = '[LOCAL] '
+
+  const appName = prefix ? `${prefix}Campamento Andino Sayhueque` : 'Campamento Andino Sayhueque'
+  const shortName = prefix ? `${prefix}CAS` : 'CAS'
+  const appTitle = prefix ? `${prefix}CAS` : 'CAS'
 
   return {
     plugins: [
+      {
+        name: 'html-transform',
+        transformIndexHtml(html) {
+          return html.replace(
+            /<title>(.*?)<\/title>/,
+            `<title>${appTitle}</title>`
+          )
+        }
+      },
       devtools(),
       tanstackRouter({
         target: 'react',
