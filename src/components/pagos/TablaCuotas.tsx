@@ -7,6 +7,7 @@
  * 3. ATRASADAS: cuotas vencidas sin pago (solo lectura)
  */
 
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -20,7 +21,8 @@ import { Badge } from "../ui/badge";
 import { Checkbox } from "../ui/checkbox";
 import { type Cuota } from "../../api/schemas/pagos";
 import { format } from "date-fns";
-import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Download } from "lucide-react";
+import { pagosService } from "../../api/services/pagos";
 
 interface TablaCuotasProps {
   cuotas: Cuota[];
@@ -74,6 +76,7 @@ export function TablaCuotas({
   onSeleccionChange,
   onSeleccionarTodas 
 }: TablaCuotasProps) {
+  const [descargandoId, setDescargandoId] = useState<number | null>(null);
   // Separar cuotas por categoría
   const cuotasPagables = cuotas.filter(esCuotaPagable);
   const cuotasPagadas = cuotas.filter(c => c.estado === 'PAGADA' || c.estado === 'REGULARIZADA');
@@ -87,6 +90,26 @@ export function TablaCuotas({
     .reduce((sum, c) => sum + Number(c.monto), 0);
 
   const cuotasSeleccionadas = cuotasPagables.filter(c => seleccionadas.includes(c.id!));
+
+  const handleDescargar = async (cuota: Cuota) => {
+    if (!cuota.id) return;
+    try {
+      setDescargandoId(cuota.id);
+      const blob = await pagosService.descargarComprobante(cuota.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `comprobante-cuota-${cuota.secuencia}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('No se pudo descargar el comprobante', err);
+    } finally {
+      setDescargandoId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -182,6 +205,7 @@ export function TablaCuotas({
                   <TableHead>Fecha Pago</TableHead>
                   <TableHead>Monto</TableHead>
                   <TableHead>Método</TableHead>
+                  <TableHead>Comprobante</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -194,6 +218,22 @@ export function TablaCuotas({
                     <TableCell className="font-bold">${Number(cuota.monto).toLocaleString('es-AR')}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{cuota.metodoPago || 'No especificado'}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {cuota.comprobanteDisponible ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDescargar(cuota)}
+                          disabled={descargandoId === cuota.id}
+                          className="flex items-center gap-1"
+                        >
+                          <Download className="h-4 w-4" />
+                          {descargandoId === cuota.id ? 'Descargando...' : 'Descargar'}
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No disponible</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -261,6 +301,28 @@ export function TablaCuotasSimple({ cuotas, onPagar, pagandoId }: {
   onPagar: (cuota: Cuota) => void;
   pagandoId: number | null;
 }) {
+  const [descargandoId, setDescargandoId] = useState<number | null>(null);
+
+  const handleDescargar = async (cuota: Cuota) => {
+    if (!cuota.id) return;
+    try {
+      setDescargandoId(cuota.id);
+      const blob = await pagosService.descargarComprobante(cuota.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `comprobante-cuota-${cuota.secuencia}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('No se pudo descargar el comprobante', err);
+    } finally {
+      setDescargandoId(null);
+    }
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -307,7 +369,21 @@ export function TablaCuotasSimple({ cuotas, onPagar, pagandoId }: {
                         {pagandoId === cuota.secuencia ? "Procesando..." : "Pagar"}
                      </Button>
                   ) : cuota.estado === 'PAGADA' || cuota.estado === 'REGULARIZADA' ? (
-                     <span className="text-green-600 font-medium text-sm">Pagado</span>
+                     <div className="flex items-center justify-end gap-2">
+                       <span className="text-green-600 font-medium text-sm">Pagado</span>
+                       {cuota.comprobanteDisponible && (
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => handleDescargar(cuota)}
+                           disabled={descargandoId === cuota.id}
+                           className="flex items-center gap-1"
+                         >
+                           <Download className="h-4 w-4" />
+                           {descargandoId === cuota.id ? 'Descargando...' : 'Comprobante'}
+                         </Button>
+                       )}
+                     </div>
                   ) : (
                      <span className="text-red-600 font-medium text-sm">Atrasada</span>
                   )}

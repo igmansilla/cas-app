@@ -20,10 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select"
-import { Checkbox } from "../ui/checkbox"
 import { type PlanPago, type PlanPagoRequest, EstrategiaPlan, AudienciaPlan } from "../../api/schemas/pagos"
 import { useActualizarPlan } from "../../hooks/usePagos"
 import { toast } from "sonner"
+import { Lock, AlertTriangle } from "lucide-react"
 
 interface EditarPlanDialogProps {
   plan: PlanPago | null
@@ -57,10 +57,22 @@ const monthToNum = (m: string | number | undefined): number => {
   return map[m] || 1;
 };
 
+const AUDIENCIA_LABELS: Record<string, string> = {
+  [AudienciaPlan.ACAMPANTE]: '🏕️ Acampante',
+  [AudienciaPlan.DIRIGENTE]: '🎯 Dirigente',
+  [AudienciaPlan.BASE]: '👨‍🍳 Base',
+};
+
+const ESTRATEGIA_LABELS: Record<string, string> = {
+  [EstrategiaPlan.PLAN_A]: 'Plan A',
+  [EstrategiaPlan.PLAN_B]: 'Plan B',
+  [EstrategiaPlan.PLAN_C]: 'Plan C',
+};
+
 export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps) {
   const { actualizarPlan, cargando } = useActualizarPlan()
 
-  const { register, handleSubmit, reset, setValue, watch } = useForm<PlanPagoRequest>({
+  const { register, handleSubmit, reset, setValue } = useForm<PlanPagoRequest>({
     defaultValues: {
       codigo: "",
       anio: new Date().getFullYear(),
@@ -84,7 +96,7 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
         codigo: plan.codigo,
         anio: plan.anio,
         nombreParaMostrar: plan.nombre,
-        montoTotal: Number(plan.montoTotal), // Ensure number
+        montoTotal: Number(plan.montoTotal),
         moneda: plan.moneda || "ARS",
         estrategia: plan.estrategia as EstrategiaPlan || EstrategiaPlan.PLAN_A,
         audiencia: plan.audiencia as AudienciaPlan || AudienciaPlan.ACAMPANTE,
@@ -95,6 +107,9 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
         mesInicioHabilitado: monthToNum(plan.mesInicio),
         mesFinHabilitado: monthToNum(plan.mesFin),
         activo: plan.activo,
+        mesLimiteInscripcion: (plan as any).mesLimiteInscripcion,
+        mesLimiteDevolucion100: (plan as any).mesLimiteDevolucion100,
+        mesLimiteDevolucion50: (plan as any).mesLimiteDevolucion50,
       } as unknown as PlanPagoRequest)
     }
   }, [plan, open, reset])
@@ -103,9 +118,6 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
     if (!plan || !plan.id) return
 
     try {
-      // Asegurar que strategy coincida con el plan original si no se editó
-      // OJO: El backend puede requerir ciertos campos dependiendo de la estrategia
-
       await actualizarPlan({ id: plan.id, plan: data })
       toast.success("Plan actualizado correctamente")
       onClose()
@@ -116,6 +128,9 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
   }
 
   if (!plan) return null
+
+  const mesInicioLabel = MESES.find(m => m.val === monthToNum(plan.mesInicio))?.label || '-';
+  const mesFinLabel = MESES.find(m => m.val === monthToNum(plan.mesFin))?.label || '-';
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
@@ -128,52 +143,44 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="codigo">Código</Label>
-              <Input id="codigo" {...register("codigo", { required: true })} />
+          {/* 🔒 Campos no editables - Solo lectura */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Lock className="w-3 h-3" />
+              <span>Campos estructurales (no editables)</span>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="anio">Año</Label>
-              <Input id="anio" type="number" {...register("anio")} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 rounded-lg bg-muted/30 border border-dashed">
+              <div>
+                <span className="text-[10px] text-muted-foreground block">Código</span>
+                <span className="text-sm font-mono">{plan.codigo}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground block">Año</span>
+                <span className="text-sm">{plan.anio}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground block">Estrategia</span>
+                <span className="text-sm">{ESTRATEGIA_LABELS[plan.estrategia as string] || plan.estrategia}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground block">Audiencia</span>
+                <span className="text-sm">{AUDIENCIA_LABELS[plan.audiencia as string] || plan.audiencia}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground block">Vigencia</span>
+                <span className="text-sm">{mesInicioLabel} → {mesFinLabel}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground block">Moneda</span>
+                <span className="text-sm">{plan.moneda || 'ARS'}</span>
+              </div>
             </div>
           </div>
 
+          {/* ✅ Campos editables */}
           <div className="space-y-2">
             <Label htmlFor="nombre">Nombre para Mostrar</Label>
             <Input id="nombre" {...register("nombreParaMostrar", { required: true })} />
-          </div>
-
-          {/* Audiencia Toggle Chips */}
-          <div className="space-y-2">
-            <Label>Audiencia del Plan</Label>
-            <div className="flex gap-2 flex-wrap">
-              {[
-                { value: AudienciaPlan.ACAMPANTE, label: 'Acampante', icon: '🏕️', description: 'Hijos/Participantes' },
-                { value: AudienciaPlan.DIRIGENTE, label: 'Dirigente', icon: '🎯', description: 'Líderes' },
-                { value: AudienciaPlan.BASE, label: 'Base', icon: '👨‍🍳', description: 'Cocina/Voluntarios' },
-              ].map((opt) => {
-                const currentValue = watch('audiencia') || AudienciaPlan.ACAMPANTE;
-                const isSelected = currentValue === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setValue('audiencia', opt.value)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all duration-200 ${isSelected
-                      ? 'bg-primary text-primary-foreground border-primary shadow-md scale-105'
-                      : 'bg-muted/30 border-border hover:border-primary/50 hover:bg-muted/50'
-                      }`}
-                  >
-                    <span className="text-lg">{opt.icon}</span>
-                    <div className="text-left">
-                      <div className={`font-medium text-sm ${isSelected ? '' : 'text-foreground'}`}>{opt.label}</div>
-                      <div className={`text-[10px] ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>{opt.description}</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -185,9 +192,17 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="moneda">Moneda</Label>
-              <Input id="moneda" {...register("moneda")} />
+              <Label htmlFor="montoCuotaFija">Monto Cuota Fija (Opcional)</Label>
+              <Input id="montoCuotaFija" type="number" step="0.01" {...register("montoCuotaFija", { valueAsNumber: true })} placeholder="Automático" />
             </div>
+          </div>
+
+          {/* ⚠️ Warning */}
+          <div className="flex items-start gap-2 p-2 rounded-lg bg-amber-50 border border-amber-200">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <p className="text-[11px] text-amber-800 leading-relaxed">
+              Cambiar el monto o día de vencimiento solo afecta <strong>nuevas inscripciones</strong>. Las cuotas ya generadas no se actualizan.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -203,33 +218,19 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Mes Inicio Vigencia</Label>
-              <Select
-                onValueChange={(v) => setValue("mesInicioHabilitado", Number(v))}
-                defaultValue={String(monthToNum(plan.mesInicio))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione mes" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MESES.map(m => (
-                    <SelectItem key={m.val} value={String(m.val)}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="diaVencimiento">Día Vencimiento</Label>
+              <Input id="diaVencimiento" type="number" {...register("diaVencimiento", { valueAsNumber: true })} />
             </div>
             <div className="space-y-2">
-              <Label>Mes Fin Vigencia</Label>
+              <Label>Límite de Inscripción</Label>
               <Select
-                onValueChange={(v) => setValue("mesFinHabilitado", Number(v))}
-                defaultValue={String(monthToNum(plan.mesFin))}
+                onValueChange={(v) => setValue("mesLimiteInscripcion" as any, Number(v))}
+                defaultValue={String((plan as any).mesLimiteInscripcion || 10)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione mes" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Seleccione mes" /></SelectTrigger>
                 <SelectContent>
                   {MESES.map(m => (
-                    <SelectItem key={m.val} value={String(m.val)}>{m.label}</SelectItem>
+                    <SelectItem key={m.val} value={String(m.val)}>Hasta {m.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -238,24 +239,33 @@ export function EditarPlanDialog({ plan, open, onClose }: EditarPlanDialogProps)
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="diaVencimiento">Día Vencimiento</Label>
-              <Input id="diaVencimiento" type="number" {...register("diaVencimiento", { valueAsNumber: true })} />
+              <Label>Devolución 100% hasta</Label>
+              <Select
+                onValueChange={(v) => setValue("mesLimiteDevolucion100" as any, Number(v))}
+                defaultValue={String((plan as any).mesLimiteDevolucion100 || '')}
+              >
+                <SelectTrigger><SelectValue placeholder="Sin límite" /></SelectTrigger>
+                <SelectContent>
+                  {MESES.map(m => (
+                    <SelectItem key={m.val} value={String(m.val)}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="montoCuotaFija">Monto Cuota Fija (Opcional)</Label>
-              <Input id="montoCuotaFija" type="number" step="0.01" {...register("montoCuotaFija", { valueAsNumber: true })} placeholder="Automático" />
+              <Label>Devolución 50% hasta</Label>
+              <Select
+                onValueChange={(v) => setValue("mesLimiteDevolucion50" as any, Number(v))}
+                defaultValue={String((plan as any).mesLimiteDevolucion50 || '')}
+              >
+                <SelectTrigger><SelectValue placeholder="Sin límite" /></SelectTrigger>
+                <SelectContent>
+                  {MESES.map(m => (
+                    <SelectItem key={m.val} value={String(m.val)}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-
-          {/* Reglas de Transición omitidas de la edición simple por ahora */}
-
-          <div className="flex items-center space-x-2 pt-2">
-            <Checkbox
-              id="activo"
-              defaultChecked={plan.activo}
-              onCheckedChange={(checked) => setValue("activo", checked as boolean)}
-            />
-            <Label htmlFor="activo">Plan Activo</Label>
           </div>
 
           <DialogFooter>

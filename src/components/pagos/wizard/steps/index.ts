@@ -1,3 +1,4 @@
+export { StepPlanConfig } from './StepPlanConfig';
 export { StepPlanADatos } from './StepPlanADatos';
 export { StepPlanAVigencia } from './StepPlanAVigencia';
 export { StepPlanAMonto } from './StepPlanAMonto';

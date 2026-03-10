@@ -122,8 +122,12 @@ function WizardInscripcionContent({
   const cuotasRestantes = Math.max(0, cuotasTotales - cuotasAtrasadas);
   const montoEstimadoMensual = Number(plan.montoTotal) / cuotasTotales;
 
-  const planB = plan.planDestino as PlanPago | undefined;
+  const planDestino = plan.planDestino as PlanPago | undefined;
   const esPlanA = plan.estrategia === 'PLAN_A';
+  const esPlanB = plan.estrategia === 'PLAN_B';
+  const esPlanC = plan.estrategia === 'PLAN_C';
+  
+  const planLabel = esPlanA ? 'Plan A' : (esPlanB ? 'Plan B' : 'Plan C');
 
   const handleConfirmar = () => {
     if (!idUsuario) return;
@@ -179,7 +183,7 @@ function WizardInscripcionContent({
                     <div className="space-y-4">
                         {/* Hero Section */}
                         <div className="text-center py-6 bg-gradient-to-b from-primary/5 to-transparent rounded-xl">
-                            <Badge variant="outline" className="mb-2">{esPlanA ? 'Plan A' : 'Plan B'}</Badge>
+                            <Badge variant="outline" className="mb-2">{planLabel}</Badge>
                             <p className="text-4xl font-bold text-primary">${Number(plan.montoTotal).toLocaleString('es-AR')}</p>
                             <p className="text-sm text-muted-foreground mt-1">Total Ciclo {plan.anio}</p>
                         </div>
@@ -210,7 +214,7 @@ function WizardInscripcionContent({
                                     <button className="w-full flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg text-left">
                                         <div className="flex items-center gap-2">
                                             <ShieldCheck className="w-5 h-5 text-orange-600" />
-                                            <span className="font-medium text-sm text-orange-800 dark:text-orange-200">Condiciones del Plan A</span>
+                                            <span className="font-medium text-sm text-orange-800 dark:text-orange-200">Condiciones del {planLabel}</span>
                                         </div>
                                         <ChevronDown className={`w-4 h-4 text-orange-600 transition-transform ${reglasAbiertas ? 'rotate-180' : ''}`} />
                                     </button>
@@ -229,11 +233,11 @@ function WizardInscripcionContent({
                                                 No acumular más de <strong>{plan.mesesAtrasoParaTransicion} meses</strong> de deuda.
                                             </p>
                                         </div>
-                                        {planB && (
+                                        {(esPlanA || esPlanB) && planDestino && (
                                             <div className="pt-2 border-t border-orange-200/50">
                                                 <p className="text-xs text-orange-700 dark:text-orange-300 flex items-center gap-1">
                                                     <AlertTriangle className="w-3 h-3" />
-                                                    Si no cumplís, pasás al {planB.nombre} (${Number(planB.montoTotal).toLocaleString('es-AR')})
+                                                    Si no cumplís, pasás al {planDestino.nombre} (${Number(planDestino.montoTotal).toLocaleString('es-AR')})
                                                 </p>
                                             </div>
                                         )}
@@ -242,9 +246,9 @@ function WizardInscripcionContent({
                             </Collapsible>
                         )}
 
-                        {!esPlanA && (
-                            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
-                                Plan de contingencia para inscripciones tardías.
+                        {esPlanC && (
+                            <div className="bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-800 rounded-lg p-3 text-sm text-red-800 dark:text-red-200">
+                                Plan de inscripción tardía última instancia.
                             </div>
                         )}
                     </div>

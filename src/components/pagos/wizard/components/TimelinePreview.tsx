@@ -1,5 +1,6 @@
 /**
  * Timeline visual para mostrar rangos de meses.
+ * Mobile-first: tiles se adaptan al ancho disponible en lugar de usar ancho fijo.
  */
 import { MESES } from '../wizard-types';
 
@@ -27,10 +28,12 @@ export function TimelinePreview({ start, end, controlMonth, toleranceMonths = 2 
         }
     }
 
+    if (visible.length === 0) return null;
+
     return (
-        <div className="flex gap-1 overflow-x-auto py-2 px-1">
+        <div className="grid gap-1 py-1" style={{ gridTemplateColumns: `repeat(${Math.min(visible.length, 6)}, 1fr)` }}>
             {visible.map((m) => {
-                let color = 'bg-primary/20 text-primary';
+                let color = 'bg-primary/15 text-primary border border-primary/20';
                 const mIdx = MESES.findIndex(x => x.val === m.val);
                 const isControl = mIdx === controlIdx;
                 const isTolerance = controlIdx !== -1
@@ -38,18 +41,18 @@ export function TimelinePreview({ start, end, controlMonth, toleranceMonths = 2 
                     && mIdx <= controlIdx + toleranceMonths;
 
                 if (isControl) {
-                    color = 'bg-red-500 text-white';
+                    color = 'bg-red-500 text-white border-red-500';
                 } else if (isTolerance) {
-                    color = 'bg-orange-400 text-white';
+                    color = 'bg-orange-400 text-white border-orange-400';
                 }
 
                 return (
                     <div
                         key={m.val}
-                        className={`flex-shrink-0 w-12 h-10 flex items-center justify-center rounded text-xs font-medium ${color}`}
+                        className={`flex items-center justify-center rounded py-1.5 text-[10px] sm:text-xs font-medium ${color}`}
                         title={m.label}
                     >
-                        {m.label.slice(0, 3)}
+                        {m.label}
                     </div>
                 );
             })}

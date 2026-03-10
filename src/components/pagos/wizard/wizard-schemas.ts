@@ -11,26 +11,36 @@ import {
     boolean,
     optional,
     array,
+    enum_,
 } from "valibot";
 
-// Plan A: Datos básicos
-export const PlanADatosSchema = object({
+import { EstrategiaPlan } from '../../../api/schemas/pagos';
+
+// ===== Schemas Genéricos para cualquier Plan (A, B, C) =====
+
+// Datos básicos de un plan
+export const PlanDatosSchema = object({
     nombreParaMostrar: pipe(string(), minLength(3, 'El nombre es obligatorio (min 3 caracteres)')),
     anio: pipe(number(), minValue(2020, 'Año inválido')),
 });
 
-// Plan A: Vigencia
-export const PlanAVigenciaSchema = object({
+// Vigencia de un plan
+export const PlanVigenciaSchema = object({
     mesInicioHabilitado: number(),
     mesFinHabilitado: number(),
     diaVencimiento: number(),
 });
 
-// Plan A: Monto
-export const PlanAMontoSchema = object({
+// Monto de un plan
+export const PlanMontoSchema = object({
     montoTotal: pipe(number(), minValue(1000, 'El monto debe ser al menos 1000')),
     activo: boolean(),
 });
+
+// ===== Aliases para compatibilidad con código existente =====
+export const PlanADatosSchema = PlanDatosSchema;
+export const PlanAVigenciaSchema = PlanVigenciaSchema;
+export const PlanAMontoSchema = PlanMontoSchema;
 
 // Reglas de Transición (Múltiples planes de contingencia)
 export const ReglasTransicionSchema = object({
@@ -40,6 +50,9 @@ export const ReglasTransicionSchema = object({
                 montoTotalDestino: pipe(number(), minValue(0, 'El monto no puede ser negativo')),
                 codigoDestino: optional(string()),
                 nombreDestino: optional(string()),
+                estrategiaDestino: optional(enum_(EstrategiaPlan)),
+                mesInicioHabilitadoDestino: optional(number()),
+                mesFinHabilitadoDestino: optional(number()),
                 mesInicioControl: number(),
                 cuotasMinimasRequeridas: pipe(number(), minValue(1, 'Mínimo 1 cuota')),
                 mesesAtrasoParaMigrar: pipe(number(), minValue(1, 'Mínimo 1 mes')),

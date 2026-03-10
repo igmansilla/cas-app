@@ -7,6 +7,7 @@
  * 3. Lista de cuotas pagables
  */
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -20,11 +21,13 @@ import {
   TrendingUp,
   ArrowRight,
   Info,
-  UserX
+  UserX,
+  Download
 } from "lucide-react";
 import { type Inscripcion, type Cuota } from "../../api/schemas/pagos";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { pagosService } from "../../api/services/pagos";
 
 // Mapa de meses en español
 const MESES_ES: Record<string, string> = {
@@ -433,6 +436,7 @@ function CuotaCard({
 }) {
   const isPagada = cuota.estado === 'PAGADA' || cuota.estado === 'REGULARIZADA';
   const isAtrasada = cuota.estado === 'ATRASADA';
+  const [descargando, setDescargando] = useState(false);
 
   const fechaVenc = cuota.fechaVencimiento
     ? format(new Date(cuota.fechaVencimiento), "d 'de' MMMM", { locale: es })
@@ -441,6 +445,26 @@ function CuotaCard({
   const fechaPago = cuota.fechaPago
     ? format(new Date(cuota.fechaPago), "dd/MM/yyyy", { locale: es })
     : null;
+
+  const handleDescargar = async () => {
+    if (!cuota.id) return;
+    try {
+      setDescargando(true);
+      const blob = await pagosService.descargarComprobante(cuota.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `comprobante-cuota-${cuota.secuencia}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('No se pudo descargar el comprobante', err);
+    } finally {
+      setDescargando(false);
+    }
+  };
 
   return (
     <div className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${isPagada
@@ -485,9 +509,23 @@ function CuotaCard({
 
         {/* Badge de estado o botón de pagar */}
         {isPagada ? (
-          <Badge variant="default" className="bg-green-600">
-            Pagada
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="default" className="bg-green-600">
+              Pagada
+            </Badge>
+            {cuota.comprobanteDisponible && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDescargar}
+                disabled={descargando}
+                className="flex items-center gap-1"
+              >
+                <Download className="w-4 h-4" />
+                {descargando ? 'Descargando...' : 'Comprobante'}
+              </Button>
+            )}
+          </div>
         ) : (
           <Button
             size="sm"

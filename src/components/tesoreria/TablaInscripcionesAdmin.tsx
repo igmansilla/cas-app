@@ -61,6 +61,8 @@ export function TablaInscripcionesAdmin({
         return <Badge variant="secondary">Activa</Badge>;
       case EstadoInscripcion.MOVIDA_PLAN_B:
         return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">Plan B</Badge>;
+      case EstadoInscripcion.MOVIDA_PLAN_C:
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Plan C</Badge>;
       case EstadoInscripcion.CANCELADA:
         return <Badge variant="destructive">Cancelada</Badge>;
       default:

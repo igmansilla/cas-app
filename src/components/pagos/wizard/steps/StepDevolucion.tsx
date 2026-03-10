@@ -10,30 +10,27 @@ import { MESES, ultimoDiaMes } from '../wizard-types';
 
 export function StepDevolucion({ form }: WizardStepProps) {
     return (
-        <div className="grid gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+        <div className="grid gap-4 sm:gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="flex items-center gap-2 pb-2 border-b">
-                <div className="p-2 rounded-full bg-green-100 text-green-600">
-                    <Undo2 className="w-5 h-5" />
+                <div className="p-1.5 sm:p-2 rounded-full bg-green-100 text-green-600">
+                    <Undo2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-medium">Políticas de Devolución</h3>
-                    <p className="text-xs text-muted-foreground">Configura las reglas de reembolso si un acampante se da de baja.</p>
+                    <h3 className="text-base sm:text-lg font-medium">Políticas de Devolución</h3>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground">Reglas de reembolso si un acampante se da de baja.</p>
                 </div>
             </div>
 
             <Card>
                 <CardContent className="pt-4 space-y-4">
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <h5 className="font-medium text-green-700 mb-2 flex items-center gap-2">
-                            <span className="text-xl">💰</span>
-                            ¿Cómo funciona?
-                        </h5>
-                        <p className="text-sm text-muted-foreground">
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
+                        <span className="text-lg flex-shrink-0">💰</span>
+                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                             Si un acampante solicita darse de baja, el porcentaje de devolución dependerá del mes en que lo solicite.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <form.Field name="mesLimiteDevolucion100">
                             {(field: any) => {
                                 const mes = field.state.value;

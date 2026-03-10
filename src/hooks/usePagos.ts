@@ -10,7 +10,8 @@ import type {
   InscripcionRequest, 
   IntencionPagoRequest,
   AdminInscripcionFilters,
-  RegistroPagoManualRequest
+  RegistroPagoManualRequest,
+  FacturacionConfigRequest
 } from '../api/schemas/pagos';
 
 // ============================================
@@ -204,6 +205,38 @@ export function useCrearIntencionPago() {
 // ============================================
 // Hooks para Tesorería (ADMIN)
 // ============================================
+
+export function useConfigFacturacion() {
+  const query = useQuery({
+    queryKey: pagosKeys.config.facturacion,
+    queryFn: () => pagosService.obtenerConfigFacturacion(),
+  });
+
+  return {
+    config: query.data,
+    cargando: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+}
+
+export function useActualizarConfigFacturacion() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (payload: FacturacionConfigRequest) => pagosService.actualizarConfigFacturacion(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: pagosKeys.config.facturacion });
+    }
+  });
+
+  return {
+    actualizarConfig: mutation.mutateAsync,
+    cargando: mutation.isPending,
+    error: mutation.error,
+    reset: mutation.reset,
+  };
+}
 
 export function useInscripcionesAdmin(filters?: AdminInscripcionFilters) {
   const query = useQuery({

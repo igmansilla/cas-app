@@ -24,7 +24,8 @@ import {
 
 export enum EstrategiaPlan {
   PLAN_A = 'PLAN_A',    // Plan principal con descuento
-  PLAN_B = 'PLAN_B'     // Plan contingencia/tardío
+  PLAN_B = 'PLAN_B',    // Plan contingencia/tardío
+  PLAN_C = 'PLAN_C'     // Plan inscripción tardía
 }
 
 export const EstrategiaPlanSchema = enum_(EstrategiaPlan);
@@ -99,6 +100,9 @@ export const ReglaTransicionRequestSchema = object({
   montoTotalDestino: number(),
   codigoDestino: optional(string()),
   nombreDestino: optional(string()),
+  estrategiaDestino: optional(enum_(EstrategiaPlan)),
+  mesInicioHabilitadoDestino: optional(number()),
+  mesFinHabilitadoDestino: optional(number()),
   mesInicioControl: number(),
   cuotasMinimasRequeridas: number(),
   mesesAtrasoParaMigrar: number(),
@@ -156,6 +160,9 @@ export const CuotaSchema = object({
   metodoPago: optional(nullable(string())),
   notasAdmin: optional(nullable(string())), // Backend cambió nombre de notasAdministrativas
   esPagable: optional(boolean()), // Nuevo campo que indica si la cuota puede ser pagada
+  comprobanteDisponible: optional(nullable(boolean())),
+  comprobanteTipo: optional(nullable(string())),
+  comprobanteUrl: optional(nullable(string())),
 
   // Alias para compatibilidad con componentes existentes
   nroCuota: optional(number()), // Deprecated, usar secuencia
@@ -268,6 +275,7 @@ export type IntencionPagoResponse = InferOutput<typeof IntencionPagoResponseSche
 export enum EstadoInscripcion {
   ACTIVA = 'ACTIVA',
   MOVIDA_PLAN_B = 'MOVIDA_PLAN_B',
+  MOVIDA_PLAN_C = 'MOVIDA_PLAN_C',
   CANCELADA = 'CANCELADA'
 }
 
@@ -337,6 +345,20 @@ export const RegistroPagoManualRequestSchema = object({
 });
 
 export type RegistroPagoManualRequest = InferOutput<typeof RegistroPagoManualRequestSchema>;
+
+// ============================================
+// Schemas: Configuración de Facturación
+// ============================================
+
+export const FacturacionConfigSchema = object({
+  afipHabilitada: boolean(),
+});
+
+export type FacturacionConfig = InferOutput<typeof FacturacionConfigSchema>;
+
+export interface FacturacionConfigRequest {
+  afipHabilitada: boolean;
+}
 
 // Filter params for admin inscription queries
 export interface AdminInscripcionFilters {

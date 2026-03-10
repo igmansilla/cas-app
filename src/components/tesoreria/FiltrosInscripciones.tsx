@@ -118,6 +118,7 @@ export function FiltrosInscripciones({ filters, onFiltersChange }: FiltrosInscri
   const estadosInscripcion = [
     { value: EstadoInscripcion.ACTIVA, label: 'Activa' },
     { value: EstadoInscripcion.MOVIDA_PLAN_B, label: 'Plan B' },
+    { value: EstadoInscripcion.MOVIDA_PLAN_C, label: 'Plan C' },
     { value: EstadoInscripcion.CANCELADA, label: 'Cancelada' }
   ];
 
@@ -206,6 +207,7 @@ export function FiltrosInscripciones({ filters, onFiltersChange }: FiltrosInscri
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value={EstadoInscripcion.ACTIVA}>Activa</SelectItem>
             <SelectItem value={EstadoInscripcion.MOVIDA_PLAN_B}>Migrada Plan B</SelectItem>
+            <SelectItem value={EstadoInscripcion.MOVIDA_PLAN_C}>Migrada Plan C</SelectItem>
             <SelectItem value={EstadoInscripcion.CANCELADA}>Cancelada</SelectItem>
           </SelectContent>
         </Select>

@@ -12,4 +12,7 @@ export const pagosKeys = {
     detalle: (id: number) => ['inscripciones', id] as const,
     cuotas: (id: number) => ['inscripciones', id, 'cuotas'] as const,
   },
+  config: {
+    facturacion: ['config', 'facturacion'] as const,
+  },
 };

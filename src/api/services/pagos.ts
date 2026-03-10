@@ -15,6 +15,7 @@ import {
   ResumenFinancieroSchema,
   SolicitudBajaSchema,
   SolicitudBajaAdminSchema,
+  FacturacionConfigSchema,
   type PlanPago,
   type PlanPagoRequest,
   type Inscripcion,
@@ -27,7 +28,9 @@ import {
   type RegistroPagoManualRequest,
   type AdminInscripcionFilters,
   type SolicitudBaja,
-  type SolicitudBajaAdmin
+  type SolicitudBajaAdmin,
+  type FacturacionConfig,
+  type FacturacionConfigRequest
 } from '../schemas/pagos';
 
 const PlanesSchema = array(PlanPagoSchema);
@@ -195,6 +198,14 @@ export const pagosService = {
     return parse(IntencionPagoResponseSchema, response.data);
   },
 
+  /**
+   * Descarga el comprobante (factura o recibo) de una cuota pagada.
+   */
+  descargarComprobante: async (idCuota: number): Promise<Blob> => {
+    const response = await client.get(`/pagos/cuotas/${idCuota}/comprobante`, { responseType: 'blob' });
+    return response.data as Blob;
+  },
+
   // ============================================
   // Administración de Inscripciones (TESORERO/ADMIN)
   // ============================================
@@ -264,6 +275,20 @@ export const pagosService = {
   regularizarCuota: async (idCuota: number, metodo: string, notas?: string): Promise<Cuota> => {
     const response = await client.put(`/admin/cuotas/${idCuota}/regularizar`, { metodo, notas });
     return parse(CuotaSchema, response.data);
+  },
+
+  // ============================================
+  // Configuración de Facturación (ADMIN/DIRIGENTE)
+  // ============================================
+
+  obtenerConfigFacturacion: async (): Promise<FacturacionConfig> => {
+    const response = await client.get('/admin/facturacion/config');
+    return parse(FacturacionConfigSchema, response.data);
+  },
+
+  actualizarConfigFacturacion: async (payload: FacturacionConfigRequest): Promise<FacturacionConfig> => {
+    const response = await client.put('/admin/facturacion/config', payload);
+    return parse(FacturacionConfigSchema, response.data);
   },
 
   // ============================================
