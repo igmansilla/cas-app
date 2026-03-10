@@ -26,7 +26,11 @@ export function DepartamentosHubPage() {
       (accumulator, screen) => {
         const departamento = departamentos.find((item) => item.codigo === screen.codigo);
         const plantillasDepartamento = departamento
-          ? plantillas.filter((plantilla) => plantilla.departamentoId === departamento.id)
+          ? plantillas.filter(
+              (plantilla) =>
+                plantilla.departamentoId === departamento.id &&
+                plantilla.naturaleza === "evento"
+            )
           : [];
 
         const pendientes = plantillasDepartamento.filter((plantilla) => !plantilla.programado).length;
@@ -47,12 +51,12 @@ export function DepartamentosHubPage() {
   }, [departamentos, plantillas]);
 
   const alertasCriticasTotales = useMemo(
-    () => plantillas.filter((plantilla) => plantilla.critico && !plantilla.programado).length,
+    () => plantillas.filter((plantilla) => plantilla.naturaleza === "evento" && plantilla.critico && !plantilla.programado).length,
     [plantillas]
   );
 
   const pendientesTotales = useMemo(
-    () => plantillas.filter((plantilla) => !plantilla.programado).length,
+    () => plantillas.filter((plantilla) => plantilla.naturaleza === "evento" && !plantilla.programado).length,
     [plantillas]
   );
 

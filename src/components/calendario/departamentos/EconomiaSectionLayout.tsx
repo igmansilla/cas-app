@@ -46,6 +46,7 @@ export function EconomiaSectionLayout({ currentTab, children }: EconomiaSectionL
     return plantillas.filter(
       (plantilla) =>
         plantilla.departamentoId === departamentoEconomia.id &&
+        plantilla.naturaleza === "evento" &&
         plantilla.critico &&
         !plantilla.programado
     ).length;
@@ -57,7 +58,10 @@ export function EconomiaSectionLayout({ currentTab, children }: EconomiaSectionL
     }
 
     return plantillas.filter(
-      (plantilla) => plantilla.departamentoId === departamentoEconomia.id && !plantilla.programado
+      (plantilla) =>
+        plantilla.departamentoId === departamentoEconomia.id &&
+        plantilla.naturaleza === "evento" &&
+        !plantilla.programado
     ).length;
   }, [departamentoEconomia, plantillas]);
 
@@ -69,7 +73,6 @@ export function EconomiaSectionLayout({ currentTab, children }: EconomiaSectionL
   }[currentTab];
 
   const navItems = [
-    { key: "hub", label: "Sección", to: "/departamentos/economia", visible: true },
     { key: "planificacion", label: "Planificación", to: "/departamentos/economia/planificacion", visible: true },
     { key: "tesoreria", label: "Tesorería", to: "/departamentos/economia/tesoreria", visible: canAccessTesoreria },
     { key: "planes", label: "Planes", to: "/departamentos/economia/planes", visible: canManagePlanes },
@@ -182,7 +185,7 @@ export function EconomiaSectionLayout({ currentTab, children }: EconomiaSectionL
           <section className="mt-6 grid gap-4 lg:grid-cols-3">
             <OverviewCard
               title="Planificación"
-              description="Canónicos del área, reuniones internas y alertas críticas de eventos no programados."
+              description="Canónicos del área y alertas críticas de eventos pendientes dentro de Economía."
               to="/departamentos/economia/planificacion"
               icon={<ShieldAlert className="h-5 w-5 text-emerald-600" />}
               badge={

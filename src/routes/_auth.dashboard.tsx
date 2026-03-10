@@ -18,7 +18,9 @@ function DashboardComponent() {
   const canAccessPlanificacion = hasRole('dirigente') || hasRole('admin');
   const anioActual = new Date().getFullYear();
   const { plantillas } = usePlanificacionAnual(anioActual, canAccessPlanificacion);
-  const alertasCriticas = plantillas.filter((plantilla) => plantilla.critico && !plantilla.programado).length;
+  const alertasCriticas = plantillas.filter(
+    (plantilla) => plantilla.naturaleza === 'evento' && plantilla.critico && !plantilla.programado
+  ).length;
 
   return (
     <div className="p-6 space-y-6">
