@@ -13,17 +13,27 @@ import { Route as PagoResultadoRouteImport } from './routes/pago-resultado'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthUsuariosRouteImport } from './routes/_auth.usuarios'
-import { Route as AuthTesoreriaRouteImport } from './routes/_auth.tesoreria'
 import { Route as AuthTemplateEditorRouteImport } from './routes/_auth.template-editor'
+import { Route as AuthReunionesRouteImport } from './routes/_auth.reuniones'
 import { Route as AuthPlanesRouteImport } from './routes/_auth.planes'
 import { Route as AuthPerfilRouteImport } from './routes/_auth.perfil'
 import { Route as AuthPagosRouteImport } from './routes/_auth.pagos'
 import { Route as AuthOnboardingRouteImport } from './routes/_auth.onboarding'
 import { Route as AuthEquipoRouteImport } from './routes/_auth.equipo'
 import { Route as AuthDocumentosRouteImport } from './routes/_auth.documentos'
-import { Route as AuthDefinicionPlanesRouteImport } from './routes/_auth.definicion-planes'
+import { Route as AuthDepartamentosRouteImport } from './routes/_auth.departamentos'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
 import { Route as AuthCalendarioRouteImport } from './routes/_auth.calendario'
+import { Route as AuthDepartamentosIndexRouteImport } from './routes/_auth.departamentos.index'
+import { Route as AuthDepartamentosOperacionesRouteImport } from './routes/_auth.departamentos.operaciones'
+import { Route as AuthDepartamentosEventosRouteImport } from './routes/_auth.departamentos.eventos'
+import { Route as AuthDepartamentosEspiritualidadRouteImport } from './routes/_auth.departamentos.espiritualidad'
+import { Route as AuthDepartamentosEconomiaRouteImport } from './routes/_auth.departamentos.economia'
+import { Route as AuthDepartamentosComunicacionesRouteImport } from './routes/_auth.departamentos.comunicaciones'
+import { Route as AuthDepartamentosEconomiaIndexRouteImport } from './routes/_auth.departamentos.economia.index'
+import { Route as AuthDepartamentosEconomiaTesoreriaRouteImport } from './routes/_auth.departamentos.economia.tesoreria'
+import { Route as AuthDepartamentosEconomiaPlanificacionRouteImport } from './routes/_auth.departamentos.economia.planificacion'
+import { Route as AuthDepartamentosEconomiaPlanesRouteImport } from './routes/_auth.departamentos.economia.planes'
 
 const PagoResultadoRoute = PagoResultadoRouteImport.update({
   id: '/pago-resultado',
@@ -44,14 +54,14 @@ const AuthUsuariosRoute = AuthUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthTesoreriaRoute = AuthTesoreriaRouteImport.update({
-  id: '/tesoreria',
-  path: '/tesoreria',
-  getParentRoute: () => AuthRoute,
-} as any)
 const AuthTemplateEditorRoute = AuthTemplateEditorRouteImport.update({
   id: '/template-editor',
   path: '/template-editor',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthReunionesRoute = AuthReunionesRouteImport.update({
+  id: '/reuniones',
+  path: '/reuniones',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthPlanesRoute = AuthPlanesRouteImport.update({
@@ -84,9 +94,9 @@ const AuthDocumentosRoute = AuthDocumentosRouteImport.update({
   path: '/documentos',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthDefinicionPlanesRoute = AuthDefinicionPlanesRouteImport.update({
-  id: '/definicion-planes',
-  path: '/definicion-planes',
+const AuthDepartamentosRoute = AuthDepartamentosRouteImport.update({
+  id: '/departamentos',
+  path: '/departamentos',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
@@ -99,38 +109,115 @@ const AuthCalendarioRoute = AuthCalendarioRouteImport.update({
   path: '/calendario',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthDepartamentosIndexRoute = AuthDepartamentosIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthDepartamentosRoute,
+} as any)
+const AuthDepartamentosOperacionesRoute =
+  AuthDepartamentosOperacionesRouteImport.update({
+    id: '/operaciones',
+    path: '/operaciones',
+    getParentRoute: () => AuthDepartamentosRoute,
+  } as any)
+const AuthDepartamentosEventosRoute =
+  AuthDepartamentosEventosRouteImport.update({
+    id: '/eventos',
+    path: '/eventos',
+    getParentRoute: () => AuthDepartamentosRoute,
+  } as any)
+const AuthDepartamentosEspiritualidadRoute =
+  AuthDepartamentosEspiritualidadRouteImport.update({
+    id: '/espiritualidad',
+    path: '/espiritualidad',
+    getParentRoute: () => AuthDepartamentosRoute,
+  } as any)
+const AuthDepartamentosEconomiaRoute =
+  AuthDepartamentosEconomiaRouteImport.update({
+    id: '/economia',
+    path: '/economia',
+    getParentRoute: () => AuthDepartamentosRoute,
+  } as any)
+const AuthDepartamentosComunicacionesRoute =
+  AuthDepartamentosComunicacionesRouteImport.update({
+    id: '/comunicaciones',
+    path: '/comunicaciones',
+    getParentRoute: () => AuthDepartamentosRoute,
+  } as any)
+const AuthDepartamentosEconomiaIndexRoute =
+  AuthDepartamentosEconomiaIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthDepartamentosEconomiaRoute,
+  } as any)
+const AuthDepartamentosEconomiaTesoreriaRoute =
+  AuthDepartamentosEconomiaTesoreriaRouteImport.update({
+    id: '/tesoreria',
+    path: '/tesoreria',
+    getParentRoute: () => AuthDepartamentosEconomiaRoute,
+  } as any)
+const AuthDepartamentosEconomiaPlanificacionRoute =
+  AuthDepartamentosEconomiaPlanificacionRouteImport.update({
+    id: '/planificacion',
+    path: '/planificacion',
+    getParentRoute: () => AuthDepartamentosEconomiaRoute,
+  } as any)
+const AuthDepartamentosEconomiaPlanesRoute =
+  AuthDepartamentosEconomiaPlanesRouteImport.update({
+    id: '/planes',
+    path: '/planes',
+    getParentRoute: () => AuthDepartamentosEconomiaRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/pago-resultado': typeof PagoResultadoRoute
   '/calendario': typeof AuthCalendarioRoute
   '/dashboard': typeof AuthDashboardRoute
-  '/definicion-planes': typeof AuthDefinicionPlanesRoute
+  '/departamentos': typeof AuthDepartamentosRouteWithChildren
   '/documentos': typeof AuthDocumentosRoute
   '/equipo': typeof AuthEquipoRoute
   '/onboarding': typeof AuthOnboardingRoute
   '/pagos': typeof AuthPagosRoute
   '/perfil': typeof AuthPerfilRoute
   '/planes': typeof AuthPlanesRoute
+  '/reuniones': typeof AuthReunionesRoute
   '/template-editor': typeof AuthTemplateEditorRoute
-  '/tesoreria': typeof AuthTesoreriaRoute
   '/usuarios': typeof AuthUsuariosRoute
+  '/departamentos/comunicaciones': typeof AuthDepartamentosComunicacionesRoute
+  '/departamentos/economia': typeof AuthDepartamentosEconomiaRouteWithChildren
+  '/departamentos/espiritualidad': typeof AuthDepartamentosEspiritualidadRoute
+  '/departamentos/eventos': typeof AuthDepartamentosEventosRoute
+  '/departamentos/operaciones': typeof AuthDepartamentosOperacionesRoute
+  '/departamentos/': typeof AuthDepartamentosIndexRoute
+  '/departamentos/economia/planes': typeof AuthDepartamentosEconomiaPlanesRoute
+  '/departamentos/economia/planificacion': typeof AuthDepartamentosEconomiaPlanificacionRoute
+  '/departamentos/economia/tesoreria': typeof AuthDepartamentosEconomiaTesoreriaRoute
+  '/departamentos/economia/': typeof AuthDepartamentosEconomiaIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/pago-resultado': typeof PagoResultadoRoute
   '/calendario': typeof AuthCalendarioRoute
   '/dashboard': typeof AuthDashboardRoute
-  '/definicion-planes': typeof AuthDefinicionPlanesRoute
   '/documentos': typeof AuthDocumentosRoute
   '/equipo': typeof AuthEquipoRoute
   '/onboarding': typeof AuthOnboardingRoute
   '/pagos': typeof AuthPagosRoute
   '/perfil': typeof AuthPerfilRoute
   '/planes': typeof AuthPlanesRoute
+  '/reuniones': typeof AuthReunionesRoute
   '/template-editor': typeof AuthTemplateEditorRoute
-  '/tesoreria': typeof AuthTesoreriaRoute
   '/usuarios': typeof AuthUsuariosRoute
+  '/departamentos/comunicaciones': typeof AuthDepartamentosComunicacionesRoute
+  '/departamentos/espiritualidad': typeof AuthDepartamentosEspiritualidadRoute
+  '/departamentos/eventos': typeof AuthDepartamentosEventosRoute
+  '/departamentos/operaciones': typeof AuthDepartamentosOperacionesRoute
+  '/departamentos': typeof AuthDepartamentosIndexRoute
+  '/departamentos/economia/planes': typeof AuthDepartamentosEconomiaPlanesRoute
+  '/departamentos/economia/planificacion': typeof AuthDepartamentosEconomiaPlanificacionRoute
+  '/departamentos/economia/tesoreria': typeof AuthDepartamentosEconomiaTesoreriaRoute
+  '/departamentos/economia': typeof AuthDepartamentosEconomiaIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -139,16 +226,26 @@ export interface FileRoutesById {
   '/pago-resultado': typeof PagoResultadoRoute
   '/_auth/calendario': typeof AuthCalendarioRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
-  '/_auth/definicion-planes': typeof AuthDefinicionPlanesRoute
+  '/_auth/departamentos': typeof AuthDepartamentosRouteWithChildren
   '/_auth/documentos': typeof AuthDocumentosRoute
   '/_auth/equipo': typeof AuthEquipoRoute
   '/_auth/onboarding': typeof AuthOnboardingRoute
   '/_auth/pagos': typeof AuthPagosRoute
   '/_auth/perfil': typeof AuthPerfilRoute
   '/_auth/planes': typeof AuthPlanesRoute
+  '/_auth/reuniones': typeof AuthReunionesRoute
   '/_auth/template-editor': typeof AuthTemplateEditorRoute
-  '/_auth/tesoreria': typeof AuthTesoreriaRoute
   '/_auth/usuarios': typeof AuthUsuariosRoute
+  '/_auth/departamentos/comunicaciones': typeof AuthDepartamentosComunicacionesRoute
+  '/_auth/departamentos/economia': typeof AuthDepartamentosEconomiaRouteWithChildren
+  '/_auth/departamentos/espiritualidad': typeof AuthDepartamentosEspiritualidadRoute
+  '/_auth/departamentos/eventos': typeof AuthDepartamentosEventosRoute
+  '/_auth/departamentos/operaciones': typeof AuthDepartamentosOperacionesRoute
+  '/_auth/departamentos/': typeof AuthDepartamentosIndexRoute
+  '/_auth/departamentos/economia/planes': typeof AuthDepartamentosEconomiaPlanesRoute
+  '/_auth/departamentos/economia/planificacion': typeof AuthDepartamentosEconomiaPlanificacionRoute
+  '/_auth/departamentos/economia/tesoreria': typeof AuthDepartamentosEconomiaTesoreriaRoute
+  '/_auth/departamentos/economia/': typeof AuthDepartamentosEconomiaIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,32 +254,50 @@ export interface FileRouteTypes {
     | '/pago-resultado'
     | '/calendario'
     | '/dashboard'
-    | '/definicion-planes'
+    | '/departamentos'
     | '/documentos'
     | '/equipo'
     | '/onboarding'
     | '/pagos'
     | '/perfil'
     | '/planes'
+    | '/reuniones'
     | '/template-editor'
-    | '/tesoreria'
     | '/usuarios'
+    | '/departamentos/comunicaciones'
+    | '/departamentos/economia'
+    | '/departamentos/espiritualidad'
+    | '/departamentos/eventos'
+    | '/departamentos/operaciones'
+    | '/departamentos/'
+    | '/departamentos/economia/planes'
+    | '/departamentos/economia/planificacion'
+    | '/departamentos/economia/tesoreria'
+    | '/departamentos/economia/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/pago-resultado'
     | '/calendario'
     | '/dashboard'
-    | '/definicion-planes'
     | '/documentos'
     | '/equipo'
     | '/onboarding'
     | '/pagos'
     | '/perfil'
     | '/planes'
+    | '/reuniones'
     | '/template-editor'
-    | '/tesoreria'
     | '/usuarios'
+    | '/departamentos/comunicaciones'
+    | '/departamentos/espiritualidad'
+    | '/departamentos/eventos'
+    | '/departamentos/operaciones'
+    | '/departamentos'
+    | '/departamentos/economia/planes'
+    | '/departamentos/economia/planificacion'
+    | '/departamentos/economia/tesoreria'
+    | '/departamentos/economia'
   id:
     | '__root__'
     | '/'
@@ -190,16 +305,26 @@ export interface FileRouteTypes {
     | '/pago-resultado'
     | '/_auth/calendario'
     | '/_auth/dashboard'
-    | '/_auth/definicion-planes'
+    | '/_auth/departamentos'
     | '/_auth/documentos'
     | '/_auth/equipo'
     | '/_auth/onboarding'
     | '/_auth/pagos'
     | '/_auth/perfil'
     | '/_auth/planes'
+    | '/_auth/reuniones'
     | '/_auth/template-editor'
-    | '/_auth/tesoreria'
     | '/_auth/usuarios'
+    | '/_auth/departamentos/comunicaciones'
+    | '/_auth/departamentos/economia'
+    | '/_auth/departamentos/espiritualidad'
+    | '/_auth/departamentos/eventos'
+    | '/_auth/departamentos/operaciones'
+    | '/_auth/departamentos/'
+    | '/_auth/departamentos/economia/planes'
+    | '/_auth/departamentos/economia/planificacion'
+    | '/_auth/departamentos/economia/tesoreria'
+    | '/_auth/departamentos/economia/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -238,18 +363,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthUsuariosRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/tesoreria': {
-      id: '/_auth/tesoreria'
-      path: '/tesoreria'
-      fullPath: '/tesoreria'
-      preLoaderRoute: typeof AuthTesoreriaRouteImport
-      parentRoute: typeof AuthRoute
-    }
     '/_auth/template-editor': {
       id: '/_auth/template-editor'
       path: '/template-editor'
       fullPath: '/template-editor'
       preLoaderRoute: typeof AuthTemplateEditorRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/reuniones': {
+      id: '/_auth/reuniones'
+      path: '/reuniones'
+      fullPath: '/reuniones'
+      preLoaderRoute: typeof AuthReunionesRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/planes': {
@@ -294,11 +419,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDocumentosRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/definicion-planes': {
-      id: '/_auth/definicion-planes'
-      path: '/definicion-planes'
-      fullPath: '/definicion-planes'
-      preLoaderRoute: typeof AuthDefinicionPlanesRouteImport
+    '/_auth/departamentos': {
+      id: '/_auth/departamentos'
+      path: '/departamentos'
+      fullPath: '/departamentos'
+      preLoaderRoute: typeof AuthDepartamentosRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/dashboard': {
@@ -315,36 +440,149 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCalendarioRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/departamentos/': {
+      id: '/_auth/departamentos/'
+      path: '/'
+      fullPath: '/departamentos/'
+      preLoaderRoute: typeof AuthDepartamentosIndexRouteImport
+      parentRoute: typeof AuthDepartamentosRoute
+    }
+    '/_auth/departamentos/operaciones': {
+      id: '/_auth/departamentos/operaciones'
+      path: '/operaciones'
+      fullPath: '/departamentos/operaciones'
+      preLoaderRoute: typeof AuthDepartamentosOperacionesRouteImport
+      parentRoute: typeof AuthDepartamentosRoute
+    }
+    '/_auth/departamentos/eventos': {
+      id: '/_auth/departamentos/eventos'
+      path: '/eventos'
+      fullPath: '/departamentos/eventos'
+      preLoaderRoute: typeof AuthDepartamentosEventosRouteImport
+      parentRoute: typeof AuthDepartamentosRoute
+    }
+    '/_auth/departamentos/espiritualidad': {
+      id: '/_auth/departamentos/espiritualidad'
+      path: '/espiritualidad'
+      fullPath: '/departamentos/espiritualidad'
+      preLoaderRoute: typeof AuthDepartamentosEspiritualidadRouteImport
+      parentRoute: typeof AuthDepartamentosRoute
+    }
+    '/_auth/departamentos/economia': {
+      id: '/_auth/departamentos/economia'
+      path: '/economia'
+      fullPath: '/departamentos/economia'
+      preLoaderRoute: typeof AuthDepartamentosEconomiaRouteImport
+      parentRoute: typeof AuthDepartamentosRoute
+    }
+    '/_auth/departamentos/comunicaciones': {
+      id: '/_auth/departamentos/comunicaciones'
+      path: '/comunicaciones'
+      fullPath: '/departamentos/comunicaciones'
+      preLoaderRoute: typeof AuthDepartamentosComunicacionesRouteImport
+      parentRoute: typeof AuthDepartamentosRoute
+    }
+    '/_auth/departamentos/economia/': {
+      id: '/_auth/departamentos/economia/'
+      path: '/'
+      fullPath: '/departamentos/economia/'
+      preLoaderRoute: typeof AuthDepartamentosEconomiaIndexRouteImport
+      parentRoute: typeof AuthDepartamentosEconomiaRoute
+    }
+    '/_auth/departamentos/economia/tesoreria': {
+      id: '/_auth/departamentos/economia/tesoreria'
+      path: '/tesoreria'
+      fullPath: '/departamentos/economia/tesoreria'
+      preLoaderRoute: typeof AuthDepartamentosEconomiaTesoreriaRouteImport
+      parentRoute: typeof AuthDepartamentosEconomiaRoute
+    }
+    '/_auth/departamentos/economia/planificacion': {
+      id: '/_auth/departamentos/economia/planificacion'
+      path: '/planificacion'
+      fullPath: '/departamentos/economia/planificacion'
+      preLoaderRoute: typeof AuthDepartamentosEconomiaPlanificacionRouteImport
+      parentRoute: typeof AuthDepartamentosEconomiaRoute
+    }
+    '/_auth/departamentos/economia/planes': {
+      id: '/_auth/departamentos/economia/planes'
+      path: '/planes'
+      fullPath: '/departamentos/economia/planes'
+      preLoaderRoute: typeof AuthDepartamentosEconomiaPlanesRouteImport
+      parentRoute: typeof AuthDepartamentosEconomiaRoute
+    }
   }
 }
+
+interface AuthDepartamentosEconomiaRouteChildren {
+  AuthDepartamentosEconomiaPlanesRoute: typeof AuthDepartamentosEconomiaPlanesRoute
+  AuthDepartamentosEconomiaPlanificacionRoute: typeof AuthDepartamentosEconomiaPlanificacionRoute
+  AuthDepartamentosEconomiaTesoreriaRoute: typeof AuthDepartamentosEconomiaTesoreriaRoute
+  AuthDepartamentosEconomiaIndexRoute: typeof AuthDepartamentosEconomiaIndexRoute
+}
+
+const AuthDepartamentosEconomiaRouteChildren: AuthDepartamentosEconomiaRouteChildren =
+  {
+    AuthDepartamentosEconomiaPlanesRoute: AuthDepartamentosEconomiaPlanesRoute,
+    AuthDepartamentosEconomiaPlanificacionRoute:
+      AuthDepartamentosEconomiaPlanificacionRoute,
+    AuthDepartamentosEconomiaTesoreriaRoute:
+      AuthDepartamentosEconomiaTesoreriaRoute,
+    AuthDepartamentosEconomiaIndexRoute: AuthDepartamentosEconomiaIndexRoute,
+  }
+
+const AuthDepartamentosEconomiaRouteWithChildren =
+  AuthDepartamentosEconomiaRoute._addFileChildren(
+    AuthDepartamentosEconomiaRouteChildren,
+  )
+
+interface AuthDepartamentosRouteChildren {
+  AuthDepartamentosComunicacionesRoute: typeof AuthDepartamentosComunicacionesRoute
+  AuthDepartamentosEconomiaRoute: typeof AuthDepartamentosEconomiaRouteWithChildren
+  AuthDepartamentosEspiritualidadRoute: typeof AuthDepartamentosEspiritualidadRoute
+  AuthDepartamentosEventosRoute: typeof AuthDepartamentosEventosRoute
+  AuthDepartamentosOperacionesRoute: typeof AuthDepartamentosOperacionesRoute
+  AuthDepartamentosIndexRoute: typeof AuthDepartamentosIndexRoute
+}
+
+const AuthDepartamentosRouteChildren: AuthDepartamentosRouteChildren = {
+  AuthDepartamentosComunicacionesRoute: AuthDepartamentosComunicacionesRoute,
+  AuthDepartamentosEconomiaRoute: AuthDepartamentosEconomiaRouteWithChildren,
+  AuthDepartamentosEspiritualidadRoute: AuthDepartamentosEspiritualidadRoute,
+  AuthDepartamentosEventosRoute: AuthDepartamentosEventosRoute,
+  AuthDepartamentosOperacionesRoute: AuthDepartamentosOperacionesRoute,
+  AuthDepartamentosIndexRoute: AuthDepartamentosIndexRoute,
+}
+
+const AuthDepartamentosRouteWithChildren =
+  AuthDepartamentosRoute._addFileChildren(AuthDepartamentosRouteChildren)
 
 interface AuthRouteChildren {
   AuthCalendarioRoute: typeof AuthCalendarioRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
-  AuthDefinicionPlanesRoute: typeof AuthDefinicionPlanesRoute
+  AuthDepartamentosRoute: typeof AuthDepartamentosRouteWithChildren
   AuthDocumentosRoute: typeof AuthDocumentosRoute
   AuthEquipoRoute: typeof AuthEquipoRoute
   AuthOnboardingRoute: typeof AuthOnboardingRoute
   AuthPagosRoute: typeof AuthPagosRoute
   AuthPerfilRoute: typeof AuthPerfilRoute
   AuthPlanesRoute: typeof AuthPlanesRoute
+  AuthReunionesRoute: typeof AuthReunionesRoute
   AuthTemplateEditorRoute: typeof AuthTemplateEditorRoute
-  AuthTesoreriaRoute: typeof AuthTesoreriaRoute
   AuthUsuariosRoute: typeof AuthUsuariosRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthCalendarioRoute: AuthCalendarioRoute,
   AuthDashboardRoute: AuthDashboardRoute,
-  AuthDefinicionPlanesRoute: AuthDefinicionPlanesRoute,
+  AuthDepartamentosRoute: AuthDepartamentosRouteWithChildren,
   AuthDocumentosRoute: AuthDocumentosRoute,
   AuthEquipoRoute: AuthEquipoRoute,
   AuthOnboardingRoute: AuthOnboardingRoute,
   AuthPagosRoute: AuthPagosRoute,
   AuthPerfilRoute: AuthPerfilRoute,
   AuthPlanesRoute: AuthPlanesRoute,
+  AuthReunionesRoute: AuthReunionesRoute,
   AuthTemplateEditorRoute: AuthTemplateEditorRoute,
-  AuthTesoreriaRoute: AuthTesoreriaRoute,
   AuthUsuariosRoute: AuthUsuariosRoute,
 }
 

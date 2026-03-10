@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tansta
 import { useMemo } from 'react';
 import { calendarioService } from '../api/services/calendario';
 import { calendarioKeys, type FiltroEventos } from '../api/query-keys/calendario.keys';
-import type { EventoRequest } from '../api/schemas/calendario';
+import type { ActualizarAsistenciaReunionRequest, EventoRequest } from '../api/schemas/calendario';
 
 /**
  * Hook para obtener eventos del calendario
@@ -138,5 +138,100 @@ export function useEliminarEvento() {
     cargando: mutation.isPending,
     error: mutation.error,
     reset: mutation.reset
+  };
+}
+
+/**
+ * Hook para obtener la planificación anual (solo dirigentes/admin)
+ */
+export function usePlanificacionAnual(anio: number, enabled = true) {
+  const query = useQuery({
+    queryKey: calendarioKeys.planificacion(anio),
+    queryFn: () => calendarioService.obtenerPlanificacionAnual(anio),
+    enabled,
+  });
+
+  return {
+    plantillas: query.data || [],
+    cargando: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+}
+
+export function useSeriesReunion(filtro: FiltroEventos = {}, enabled = true) {
+  const query = useQuery({
+    queryKey: calendarioKeys.reunionSeries(filtro),
+    queryFn: () => calendarioService.listarSeriesReunion(filtro),
+    enabled,
+    placeholderData: keepPreviousData,
+  });
+
+  return {
+    reuniones: query.data || [],
+    cargando: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+}
+
+export function useInstanciasReunion(reunionId: number, filtro: FiltroEventos = {}, enabled = true) {
+  const query = useQuery({
+    queryKey: calendarioKeys.reunionInstancias(reunionId, filtro),
+    queryFn: () => calendarioService.listarInstanciasReunion(reunionId, filtro),
+    enabled: enabled && reunionId > 0,
+    placeholderData: keepPreviousData,
+  });
+
+  return {
+    instancias: query.data || [],
+    cargando: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+}
+
+export function useAsistenciaReunion(instanciaId: number, enabled = true) {
+  const query = useQuery({
+    queryKey: calendarioKeys.reunionAsistencia(instanciaId),
+    queryFn: () => calendarioService.obtenerAsistenciaReunion(instanciaId),
+    enabled: enabled && instanciaId > 0,
+  });
+
+  return {
+    detalle: query.data,
+    cargando: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+}
+
+export function useActualizarAsistenciaReunion() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({
+      instanciaId,
+      request,
+    }: {
+      instanciaId: number;
+      request: ActualizarAsistenciaReunionRequest;
+    }) => calendarioService.actualizarAsistenciaReunion(instanciaId, request),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: calendarioKeys.reuniones() });
+      queryClient.invalidateQueries({ queryKey: calendarioKeys.reunionAsistencia(variables.instanciaId) });
+    },
+  });
+
+  const actualizarAsistencia = (instanciaId: number, request: ActualizarAsistenciaReunionRequest) => {
+    return mutation.mutateAsync({ instanciaId, request });
+  };
+
+  return {
+    actualizarAsistencia,
+    cargando: mutation.isPending,
+    error: mutation.error,
+    detalleActualizado: mutation.data,
+    reset: mutation.reset,
   };
 }

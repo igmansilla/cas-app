@@ -96,7 +96,7 @@ export function CalendarioView({
   );
 
   return (
-    <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg relative">
+    <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg relative w-full max-w-6xl mx-auto">
       <style>{`
         .rbc-calendar {
           font-family: inherit;
@@ -107,12 +107,12 @@ export function CalendarioView({
           padding: 12px 6px;
           font-weight: 600;
           color: ${casColors.ui.text.primary};
-          background-color: ${casColors.nature.green[50]};
-          border-bottom: 2px solid ${casColors.nature.green[200]};
+          background-color: ${casColors.orange[50]};
+          border-bottom: 2px solid ${casColors.orange[200]};
         }
 
         .rbc-today {
-          background-color: ${casColors.nature.green[50]};
+          background-color: ${casColors.orange[50]};
         }
 
         .rbc-off-range-bg {
@@ -137,8 +137,8 @@ export function CalendarioView({
         }
 
         .rbc-toolbar button:hover {
-          background-color: ${casColors.nature.green[50]};
-          border-color: ${casColors.nature.green[300]};
+          background-color: ${casColors.orange[50]};
+          border-color: ${casColors.orange[300]};
         }
 
         .rbc-toolbar button.rbc-active {

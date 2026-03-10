@@ -8,24 +8,34 @@
 import { parse, array } from 'valibot';
 import { client } from '../client';
 import { 
+  AsistenciaReunionDetalleSchema,
   EventoSchema, 
+  ReunionInstanciaSchema,
   TipoEventoSchema,
+  type ActualizarAsistenciaReunionRequest,
+  type AsistenciaReunionDetalle,
   type Evento, 
   type TipoEvento,
   type EventoRequest,
-  type EventoCalendarioFormateado 
+  type EventoCalendarioFormateado,
+  type PlantillaEventoAnual,
+  type ReunionInstancia,
 } from '../schemas/calendario';
 import type { FiltroEventos } from '../query-keys/calendario.keys';
 
 // Schema para lista de eventos
 const EventosSchema = array(EventoSchema);
+const ReunionesInstanciasSchema = array(ReunionInstanciaSchema);
 
 /**
  * Convierte un evento del backend al formato del calendario UI
  */
 function aEventoCalendario(evento: Evento): EventoCalendarioFormateado {
+  const serieId = evento.serieId ?? evento.id ?? undefined;
+  const esVirtual = Boolean(evento.virtual ?? !evento.id);
+
   return {
-    id: String(evento.id),
+    id: esVirtual ? `${serieId ?? 'virtual'}-${evento.fechaInicio}` : String(serieId ?? evento.id),
     title: evento.titulo,
     start: (() => {
       const d = new Date(evento.fechaInicio);
@@ -55,6 +65,20 @@ function aEventoCalendario(evento: Evento): EventoCalendarioFormateado {
     })(),
     ubicacion: evento.ubicacion ?? undefined,
     participantes: evento.participantes,
+    realId: serieId,
+    serieId,
+    naturaleza: evento.naturaleza,
+    departamentoId: evento.departamentoId ?? undefined,
+    departamentoNombre: evento.departamentoNombre ?? undefined,
+    periodicidad: evento.periodicidad ?? undefined,
+    diaSemana: evento.diaSemana ?? undefined,
+    horaInicio: evento.horaInicio ?? undefined,
+    horaFin: evento.horaFin ?? undefined,
+    grupoId: evento.grupoId ?? undefined,
+    grupoNombre: evento.grupoNombre ?? undefined,
+    plantillaAnualId: evento.plantillaAnualId ?? undefined,
+    enlaceVideollamada: evento.enlaceVideollamada ?? undefined,
+    esVirtual,
   };
 }
 
@@ -206,4 +230,52 @@ export const calendarioService = {
    * Convierte una lista de eventos del backend al formato del calendario UI
    */
   aEventosCalendario,
+
+  /**
+   * Obtiene la planificación anual con estado de programación
+   * (solo accesible para DIRIGENTE/ADMIN)
+   */
+  obtenerPlanificacionAnual: async (anio: number): Promise<PlantillaEventoAnual[]> => {
+    const response = await client.get(`/calendario/planificacion-anual?anio=${anio}`);
+    const data = Array.isArray(response.data) ? response.data : [];
+    return data.map((item: Record<string, unknown>) => ({
+      id: Number(item.id ?? 0),
+      codigo: String(item.codigo ?? ''),
+      etiqueta: String(item.etiqueta ?? ''),
+      departamentoId: Number(item.departamentoId ?? 0),
+      departamento: String(item.departamento ?? ''),
+      descripcion: String(item.descripcion ?? ''),
+      naturaleza: String(item.naturaleza ?? 'evento') as 'evento' | 'reunion',
+      critico: Boolean(item.critico),
+      programado: Boolean(item.programado),
+      eventoId: item.eventoId != null ? Number(item.eventoId) : null,
+    }));
+  },
+
+  listarInstanciasReunion: async (reunionId: number, filtro: FiltroEventos = {}): Promise<ReunionInstancia[]> => {
+    const query = construirQueryEventos(filtro);
+    const response = await client.get(`/calendario/reuniones/${reunionId}/instancias${query}`);
+    const data = Array.isArray(response.data) ? response.data : [];
+    return parse(ReunionesInstanciasSchema, data);
+  },
+
+  listarSeriesReunion: async (filtro: FiltroEventos = {}): Promise<Evento[]> => {
+    const query = construirQueryEventos(filtro);
+    const response = await client.get(`/calendario/reuniones/series${query}`);
+    const data = Array.isArray(response.data) ? response.data : [];
+    return parse(EventosSchema, data);
+  },
+
+  obtenerAsistenciaReunion: async (instanciaId: number): Promise<AsistenciaReunionDetalle> => {
+    const response = await client.get(`/calendario/reuniones/instancias/${instanciaId}/asistencia`);
+    return parse(AsistenciaReunionDetalleSchema, response.data);
+  },
+
+  actualizarAsistenciaReunion: async (
+    instanciaId: number,
+    request: ActualizarAsistenciaReunionRequest
+  ): Promise<AsistenciaReunionDetalle> => {
+    const response = await client.put(`/calendario/reuniones/instancias/${instanciaId}/asistencia`, request);
+    return parse(AsistenciaReunionDetalleSchema, response.data);
+  },
 };

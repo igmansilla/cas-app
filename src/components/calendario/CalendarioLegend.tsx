@@ -7,7 +7,7 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
-import { casColors } from "../../lib/colors";
+import { obtenerColorEvento, obtenerIconoEvento } from "./helpers";
 import type { TipoEvento } from "../../api/schemas/calendario";
 
 interface CalendarioLegendProps {
@@ -30,48 +30,6 @@ export function CalendarioLegend({ tiposEvento }: CalendarioLegendProps) {
     
     return Array.from(tiposUnicos.values());
   }, [tiposEvento]);
-
-  // Obtener color según tipo de evento
-  const obtenerColorEvento = (tipo: string) => {
-    switch (tipo) {
-      case "importante":
-        return casColors.primary.orange;
-      case "fecha_limite":
-      case "fecha-limite":
-        return casColors.primary.red;
-      case "reunion":
-        return casColors.nature.green[600];
-      case "actividad":
-        return casColors.ui.info;
-      case "taller":
-        return casColors.nature.green[500];
-      case "excursion":
-        return casColors.nature.mountain;
-      default:
-        return casColors.ui.text.secondary;
-    }
-  };
-
-  // Obtener icono según tipo
-  const obtenerIconoEvento = (tipo: string) => {
-    switch (tipo) {
-      case "importante":
-        return "⭐";
-      case "fecha_limite":
-      case "fecha-limite":
-        return "⏰";
-      case "reunion":
-        return "👥";
-      case "actividad":
-        return "🏕️";
-      case "taller":
-        return "📚";
-      case "excursion":
-        return "🥾";
-      default:
-        return "📅";
-    }
-  };
 
   if (tiposEventoParaMostrar.length === 0) {
     return null;
@@ -110,3 +68,4 @@ export function CalendarioLegend({ tiposEvento }: CalendarioLegendProps) {
     </Card>
   );
 }
+

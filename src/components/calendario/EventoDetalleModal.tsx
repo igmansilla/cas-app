@@ -38,6 +38,18 @@ export function EventoDetalleModal({
   eliminando,
   puedeEditar = false
 }: EventoDetalleModalProps) {
+  const diaLabel = (dia?: string) => {
+    const map: Record<string, string> = {
+      SATURDAY: "Sábado",
+      SUNDAY: "Domingo",
+      MONDAY: "Lunes",
+      TUESDAY: "Martes",
+      WEDNESDAY: "Miércoles",
+      THURSDAY: "Jueves",
+      FRIDAY: "Viernes",
+    };
+    return dia ? map[dia] || dia : "";
+  };
   
   return (
     <Dialog open={abierto} onOpenChange={(open) => !open && onCerrar()}>
@@ -63,6 +75,18 @@ export function EventoDetalleModal({
               <p className="text-sm text-foreground">{eventoSeleccionado.descripcion || "Sin descripción"}</p>
             </div>
 
+            {(eventoSeleccionado.departamentoNombre || eventoSeleccionado.grupoNombre) && (
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium leading-none text-muted-foreground">Asignación</h4>
+                {eventoSeleccionado.departamentoNombre && (
+                  <p className="text-sm text-foreground">🏳️‍⚑ {eventoSeleccionado.departamentoNombre}</p>
+                )}
+                {eventoSeleccionado.grupoNombre && (
+                  <p className="text-sm text-foreground">👥 {eventoSeleccionado.grupoNombre}</p>
+                )}
+              </div>
+            )}
+
             <div className="space-y-1">
               <h4 className="text-sm font-medium leading-none text-muted-foreground">Fecha y hora</h4>
               <p className="text-sm text-foreground">
@@ -81,14 +105,52 @@ export function EventoDetalleModal({
               </div>
             )}
 
+            {eventoSeleccionado.naturaleza === 'REUNION' && (
+              <div className="bg-orange-50 p-3 rounded-lg border border-orange-100 space-y-2">
+                <h4 className="text-xs font-bold text-orange-700 uppercase tracking-wider">Reunión Periódica</h4>
+                <div className="space-y-1">
+                  <p className="text-sm text-orange-800 flex items-center gap-2">
+                    🔄 <span>
+                      {eventoSeleccionado.periodicidad === 'SEMANAL' ? 'Semanal' : 
+                       eventoSeleccionado.periodicidad === 'QUINCENAL' ? 'Quincenal' : 'Mensual'}
+                    </span>
+                  </p>
+                  {eventoSeleccionado.diaSemana && (
+                    <p className="text-sm text-orange-800">📅 {diaLabel(eventoSeleccionado.diaSemana)}</p>
+                  )}
+                  {(eventoSeleccionado.horaInicio || eventoSeleccionado.horaFin) && (
+                    <p className="text-sm text-orange-800">🕒 {eventoSeleccionado.horaInicio?.slice(0,5)} - {eventoSeleccionado.horaFin?.slice(0,5)}</p>
+                  )}
+                  <p className="text-xs text-orange-700">Vigencia: {format(eventoSeleccionado.start, "dd/MM/yyyy")} - {format(eventoSeleccionado.end, "dd/MM/yyyy")}</p>
+                  {eventoSeleccionado.enlaceVideollamada && (
+                    <a 
+                      href={eventoSeleccionado.enlaceVideollamada.startsWith('http') ? eventoSeleccionado.enlaceVideollamada : `https://${eventoSeleccionado.enlaceVideollamada}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline text-sm flex items-center gap-2"
+                    >
+                      🔗 Enlace a reunión
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1">
               <h4 className="text-sm font-medium leading-none text-muted-foreground mb-2">Tipo</h4>
-              <Badge 
-                style={{ backgroundColor: obtenerColorEvento(eventoSeleccionado.tipo) }}
-                className="text-white hover:opacity-90"
-              >
-                {eventoSeleccionado.tipo.charAt(0).toUpperCase() + eventoSeleccionado.tipo.slice(1)}
-              </Badge>
+              <div className="flex gap-2">
+                <Badge 
+                  style={{ backgroundColor: obtenerColorEvento(eventoSeleccionado.tipo) }}
+                  className="text-white hover:opacity-90"
+                >
+                  {eventoSeleccionado.tipo.charAt(0).toUpperCase() + eventoSeleccionado.tipo.slice(1).replace('_', ' ')}
+                </Badge>
+                {eventoSeleccionado.esVirtual && (
+                  <Badge variant="outline" className="text-orange-600 border-orange-200">
+                    Instancia Virtual
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         )}

@@ -10,6 +10,12 @@ export const casColors = {
     red: "#C53030",
     green: "#38A169",
   },
+  orange: {
+    50: "#FFF8F3",
+    100: "#FFEAD9",
+    200: "#FFD4B3",
+    300: "#FFB380",
+  },
   nature: {
     green: {
       50: "#F0FFF4",

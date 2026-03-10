@@ -1,24 +1,17 @@
 /**
  * CalendarioHeader Component
  * 
- * Header del calendario con título y botón de nuevo evento
+ * Header del calendario en modo consulta.
  */
-
-import { Button } from "../ui/button";
-import { Plus } from "lucide-react";
 
 interface CalendarioHeaderProps {
   diasRestantes?: number;
-  onNuevoEvento: () => void;
   error?: Error | null;
-  puedeEditar?: boolean;
 }
 
 export function CalendarioHeader({ 
   diasRestantes, 
-  onNuevoEvento, 
   error,
-  puedeEditar = false
 }: CalendarioHeaderProps) {
   return (
     <header className="mb-8">
@@ -33,16 +26,6 @@ export function CalendarioHeader({
             </p>
           )}
         </div>
-        
-        {puedeEditar && (
-          <Button 
-            onClick={onNuevoEvento}
-            className="bg-orange-500 hover:bg-orange-600 text-white"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Evento
-          </Button>
-        )}
       </div>
       
       {error && (

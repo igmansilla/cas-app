@@ -1,37 +1,26 @@
 import { useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
 import { PlusIcon } from 'lucide-react';
-import { Button } from "../components/ui/button";
-import { TablaPlanes } from '../components/pagos/TablaPlanes';
-import { WizardPlanPago } from '../components/pagos/WizardPlanPago';
-import { EditarPlanDialog } from '../components/pagos/EditarPlanDialog';
+
+import { Button } from '../ui/button';
+import { TablaPlanes } from './TablaPlanes';
+import { WizardPlanPago } from './WizardPlanPago';
+import { EditarPlanDialog } from './EditarPlanDialog';
 import {
   useAdminPlanes,
   useCrearPlan,
-  useToggleEstadoPlan
-} from '../hooks/usePagos';
-import { type PlanPago, type PlanPagoRequest } from '../api/schemas/pagos';
+  useToggleEstadoPlan,
+} from '../../hooks/usePagos';
+import { type PlanPago, type PlanPagoRequest } from '../../api/schemas/pagos';
 import { toast } from 'sonner';
 
-export const Route = createFileRoute('/_auth/definicion-planes')({
-  component: RouteComponent,
-});
-
-function RouteComponent() {
+export function DefinicionPlanesPageContent() {
   const { planes, cargando: cargandoPlanes, error } = useAdminPlanes();
   const { crearPlan, cargando: creando } = useCrearPlan();
   const { toggleEstado } = useToggleEstadoPlan();
 
-  // State for Wizard (Creation)
   const [wizardAbierto, setWizardAbierto] = useState(false);
-
-  // State for Edit Dialog (Modification)
   const [planEditar, setPlanEditar] = useState<PlanPago | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-
-  const handleNuevoPlan = () => {
-    setWizardAbierto(true);
-  };
 
   const handleEditarPlan = (plan: PlanPago) => {
     setPlanEditar(plan);
@@ -45,35 +34,31 @@ function RouteComponent() {
       toast.success(`Plan ${plan.activo ? 'desactivado' : 'activado'} exitosamente`);
     } catch (err) {
       console.error(err);
-      toast.error("Error al cambiar estado del plan");
+      toast.error('Error al cambiar estado del plan');
     }
   };
 
   const handleGuardarNuevo = async (datos: PlanPagoRequest) => {
     try {
       await crearPlan(datos);
-      toast.success("Plan creado exitosamente");
+      toast.success('Plan creado exitosamente');
       setWizardAbierto(false);
     } catch (err) {
       console.error(err);
-      toast.error("Error al guardar plan");
+      toast.error('Error al guardar plan');
     }
   };
 
-  // Note: Edit Dialog handles its own save validation and API call internally via hook, 
-  // but we pass a close handler to refresh or close.
-  // Actually, standard pattern is parenting handles save, but the dialog I wrote handles it self.
-  // Let's check EditarPlanDialog again. Yes, it calls useActualizarPlan internally.
-  // We just need to handle close.
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 rounded-3xl border border-emerald-100 bg-white/85 p-6 shadow-sm backdrop-blur-sm">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Planes de Pago</h1>
-          <p className="text-muted-foreground">Configuración de los planes disponibles para inscripción.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900">Planes de Pago</h2>
+          <p className="text-sm text-muted-foreground">
+            Configuración de los planes disponibles para inscripción.
+          </p>
         </div>
-        <Button onClick={handleNuevoPlan}>
+        <Button onClick={() => setWizardAbierto(true)}>
           <PlusIcon className="mr-2 h-4 w-4" />
           Nuevo Plan
         </Button>
@@ -104,7 +89,6 @@ function RouteComponent() {
         </div>
       )}
 
-      {/* Creation Wizard */}
       {wizardAbierto && (
         <WizardPlanPago
           abierto={wizardAbierto}
@@ -114,7 +98,6 @@ function RouteComponent() {
         />
       )}
 
-      {/* Edit Dialog */}
       <EditarPlanDialog
         open={editDialogOpen}
         onClose={() => {

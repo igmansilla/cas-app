@@ -1,7 +1,10 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "../hooks/useAuth";
-import { Wallet, ChevronRight, Settings, Users, Backpack, FileText } from "lucide-react";
+import { Backpack, Building2, ChevronRight, FileText, ShieldAlert, Users, UsersRound } from "lucide-react";
 import { FamiliaWidget } from "../components/familia/FamiliaWidget";
+import { groupsScreen } from "../components/calendario/departamentos/departamentoScreens";
+import { usePlanificacionAnual } from "../hooks/useCalendario";
+import { Badge } from "../components/ui/badge";
 
 export const Route = createFileRoute("/_auth/dashboard")({
   component: DashboardComponent,
@@ -10,14 +13,12 @@ export const Route = createFileRoute("/_auth/dashboard")({
 function DashboardComponent() {
   const { hasRole, hasGroup } = useAuth();
   
-  // Check if user has admin/treasurer/reviewer roles
-  const canAccessTesoreria = hasRole('admin') || hasRole('tesorero') || hasRole('revisor');
-  
-  // Check if user can manage payment plans (CONSEJO group)
-  const canManagePlanes = hasGroup('CONSEJO') || hasRole('admin');
-  
   // Check if user can access user management (DIRIGENTE or CONSEJO)
   const canAccessUsuarios = hasRole('dirigente') || hasGroup('CONSEJO') || hasRole('admin');
+  const canAccessPlanificacion = hasRole('dirigente') || hasRole('admin');
+  const anioActual = new Date().getFullYear();
+  const { plantillas } = usePlanificacionAnual(anioActual, canAccessPlanificacion);
+  const alertasCriticas = plantillas.filter((plantilla) => plantilla.critico && !plantilla.programado).length;
 
   return (
     <div className="p-6 space-y-6">
@@ -80,55 +81,67 @@ function DashboardComponent() {
         </Link>
       </section>
 
+      {/* Planificación - visible para dirigentes/admin */}
+      {canAccessPlanificacion && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-muted-foreground">Planificación</h2>
+
+          <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 px-4 py-3 text-sm text-orange-900">
+            {hasRole('admin')
+              ? 'Como admin, desde acá podés entrar a las pantallas operativas de departamentos y reuniones. El calendario general queda unificado en el footer.'
+              : 'Desde acá podés entrar a las pantallas operativas de departamentos y reuniones. El calendario general queda unificado en el footer.'}
+          </div>
+
+          <div className="grid gap-3 xl:grid-cols-2">
+            <Link
+              to="/departamentos"
+              className="flex items-center justify-between rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 p-4 transition-all hover:shadow-md group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/80">
+                  <Building2 className="w-6 h-6 text-orange-600" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-semibold text-orange-900">Departamentos</h3>
+                    {alertasCriticas > 0 && (
+                      <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                        <ShieldAlert className="mr-1 h-3.5 w-3.5" />
+                        {alertasCriticas} crítica{alertasCriticas === 1 ? '' : 's'}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-orange-700">
+                    Entrá al hub operativo y navegá cada área desde un solo lugar. Economía concentra Tesorería y Planes.
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-orange-400 group-hover:translate-x-1 transition-transform" />
+            </Link>
+
+            <Link
+              to={groupsScreen.path as any}
+              className="flex items-center justify-between rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 transition-all hover:shadow-md group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/80">
+                  <UsersRound className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-emerald-900">{groupsScreen.nombre}</h3>
+                  <p className="text-sm text-emerald-700">{groupsScreen.resumen}</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-emerald-400 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* Admin Quick Access */}
-      {(canAccessTesoreria || canAccessUsuarios) && (
+      {canAccessUsuarios && (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-muted-foreground">Administración</h2>
-          
-          {canAccessTesoreria && (
-            <Link 
-              to="/tesoreria"
-              className="flex items-center justify-between p-4 border rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border-violet-200 dark:border-violet-800 hover:shadow-md transition-all group"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-violet-100 dark:bg-violet-900 flex items-center justify-center">
-                  <Wallet className="w-6 h-6 text-violet-600 dark:text-violet-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-violet-900 dark:text-violet-100">
-                    Tesorería
-                  </h3>
-                  <p className="text-sm text-violet-700 dark:text-violet-300">
-                    Gestión de pagos e inscripciones
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-violet-400 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          )}
-
-          {/* Definición de Planes - Only for CONSEJO members */}
-          {canManagePlanes && (
-            <Link 
-              to="/definicion-planes"
-              className="flex items-center justify-between p-4 border rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-800 hover:shadow-md transition-all group"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-                  <Settings className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-900 dark:text-amber-100">
-                    Definición de Planes
-                  </h3>
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
-                    Configuración de planes de pago
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-amber-400 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          )}
 
           {/* Usuarios - For DIRIGENTE and CONSEJO */}
           {canAccessUsuarios && (
@@ -142,10 +155,10 @@ function DashboardComponent() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-                    Usuarios
+                    Acampantes y grupos
                   </h3>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    Gestión de usuarios y roles
+                    Gestión de acampantes, jerarquía y asignaciones
                   </p>
                 </div>
               </div>
