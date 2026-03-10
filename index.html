@@ -11,6 +11,20 @@
       content="Campamento Andino Sayhueque - Sistema de gestión"
     />
     <title>CAS</title>
+    <script>
+      (function () {
+        const hostname = window.location.hostname.toLowerCase();
+        const isLocal =
+          hostname === "localhost" ||
+          hostname === "127.0.0.1" ||
+          hostname === "[::1]" ||
+          hostname.endsWith(".local");
+        const isDev = hostname.startsWith("dev.");
+
+        const prefix = isDev ? "[DEV] " : isLocal ? "[LOCAL] " : "";
+        document.title = `${prefix}CAS`;
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

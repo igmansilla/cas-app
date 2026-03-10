@@ -33,6 +33,7 @@ Copiar `.env.example` a `.env` y configurar:
 | `VITE_KEYCLOAK_REALM` | Realm de Keycloak |
 | `VITE_KEYCLOAK_CLIENT_ID` | Client ID del frontend |
 | `VITE_API_BASE_URL` | URL del backend API |
+| `VITE_APP_ENV` | Entorno visual de la app. Usar `dev` para mostrar `[DEV] CAS` en la pestaña |
 
 ## Despliegue
 

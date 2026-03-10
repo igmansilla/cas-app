@@ -11,11 +11,12 @@ import { fileURLToPath, URL } from 'node:url'
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const isLocal = mode === 'development'
-  const isDevRailway = env.RAILWAY_ENVIRONMENT_NAME === 'development' || env.RAILWAY_ENVIRONMENT_NAME === 'dev'
+  const appEnv = (env.VITE_APP_ENV || env.VITE_ENVIRONMENT || env.RAILWAY_ENVIRONMENT_NAME || '').trim().toLowerCase()
+  const isLocal = appEnv === 'local' || mode === 'development'
+  const isDev = appEnv === 'development' || appEnv === 'dev'
   
   let prefix = ''
-  if (isDevRailway) prefix = '[DEV] '
+  if (isDev) prefix = '[DEV] '
   else if (isLocal) prefix = '[LOCAL] '
 
   const appName = prefix ? `${prefix}Campamento Andino Sayhueque` : 'Campamento Andino Sayhueque'
