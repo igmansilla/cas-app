@@ -64,6 +64,9 @@ function aEventoCalendario(evento: Evento): EventoCalendarioFormateado {
       return obj.formato ?? obj.codigo ?? obj.etiqueta ?? String(t);
     })(),
     ubicacion: evento.ubicacion ?? undefined,
+    latitud: evento.latitud ?? undefined,
+    longitud: evento.longitud ?? undefined,
+    urlMapa: evento.urlMapa ?? undefined,
     participantes: evento.participantes,
     realId: serieId,
     serieId,

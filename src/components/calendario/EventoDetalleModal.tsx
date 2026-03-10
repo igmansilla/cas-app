@@ -18,6 +18,7 @@ import {
 } from "../ui/dialog";
 import { Badge } from "../ui/badge";
 import type { EventoCalendarioFormateado } from "../../api/schemas/calendario";
+import { buildGoogleMapsSearchUrl } from "../../lib/google-maps";
 
 interface EventoDetalleModalProps {
   eventoSeleccionado: EventoCalendarioFormateado | null;
@@ -38,6 +39,9 @@ export function EventoDetalleModal({
   eliminando,
   puedeEditar = false
 }: EventoDetalleModalProps) {
+  const urlMapa = eventoSeleccionado?.urlMapa || (eventoSeleccionado?.ubicacion ? buildGoogleMapsSearchUrl(eventoSeleccionado.ubicacion) : "");
+  const permiteVideollamada = !eventoSeleccionado?.grupoId;
+
   const diaLabel = (dia?: string) => {
     const map: Record<string, string> = {
       SATURDAY: "Sábado",
@@ -78,7 +82,7 @@ export function EventoDetalleModal({
             {(eventoSeleccionado.departamentoNombre || eventoSeleccionado.grupoNombre) && (
               <div className="space-y-1">
                 <h4 className="text-sm font-medium leading-none text-muted-foreground">Asignación</h4>
-                {eventoSeleccionado.departamentoNombre && (
+                {!eventoSeleccionado.grupoId && eventoSeleccionado.departamentoNombre && (
                   <p className="text-sm text-foreground">🏳️‍⚑ {eventoSeleccionado.departamentoNombre}</p>
                 )}
                 {eventoSeleccionado.grupoNombre && (
@@ -102,6 +106,16 @@ export function EventoDetalleModal({
               <div className="space-y-1">
                 <h4 className="text-sm font-medium leading-none text-muted-foreground">Ubicación</h4>
                 <p className="text-sm text-foreground">📍 {eventoSeleccionado.ubicacion}</p>
+                {urlMapa && (
+                  <a
+                    href={urlMapa}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    Ver en Google Maps
+                  </a>
+                )}
               </div>
             )}
 
@@ -122,7 +136,7 @@ export function EventoDetalleModal({
                     <p className="text-sm text-orange-800">🕒 {eventoSeleccionado.horaInicio?.slice(0,5)} - {eventoSeleccionado.horaFin?.slice(0,5)}</p>
                   )}
                   <p className="text-xs text-orange-700">Vigencia: {format(eventoSeleccionado.start, "dd/MM/yyyy")} - {format(eventoSeleccionado.end, "dd/MM/yyyy")}</p>
-                  {eventoSeleccionado.enlaceVideollamada && (
+                  {permiteVideollamada && eventoSeleccionado.enlaceVideollamada && (
                     <a 
                       href={eventoSeleccionado.enlaceVideollamada.startsWith('http') ? eventoSeleccionado.enlaceVideollamada : `https://${eventoSeleccionado.enlaceVideollamada}`} 
                       target="_blank" 

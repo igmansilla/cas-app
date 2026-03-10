@@ -14,6 +14,7 @@ import {
 import type { Evento, ReunionInstancia } from "../../../api/schemas/calendario";
 import { useInstanciasReunion } from "../../../hooks/useCalendario";
 import { obtenerIdSerieReunion } from "../../../lib/calendario/reuniones";
+import { buildGoogleMapsSearchUrl } from "../../../lib/google-maps";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../ui/accordion";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
@@ -48,6 +49,7 @@ export function ReunionSerieCard({ reunion, puedeEditar, onEditar, onEliminar }:
   const [instanciaSeleccionada, setInstanciaSeleccionada] = useState<ReunionInstancia | null>(null);
   const reunionId = obtenerIdSerieReunion(reunion);
   const esReunionDeGrupo = Boolean(reunion.grupoId);
+  const urlMapa = reunion.urlMapa || (reunion.ubicacion ? buildGoogleMapsSearchUrl(reunion.ubicacion) : "");
 
   const hoy = useMemo(() => new Date(), []);
   const hasta = useMemo(() => addDays(hoy, 60), [hoy]);
@@ -116,20 +118,35 @@ export function ReunionSerieCard({ reunion, puedeEditar, onEditar, onEliminar }:
                 ↩ Vigente hasta {format(vigenciaFin, "d/MM/yyyy", { locale: es })}
               </p>
             )}
+            {reunion.ubicacion && <p>📍 {reunion.ubicacion}</p>}
             {reunion.grupoNombre && <p>👥 {reunion.grupoNombre}</p>}
-            {reunion.departamentoNombre && <p>🏷 {reunion.departamentoNombre}</p>}
+            {!esReunionDeGrupo && reunion.departamentoNombre && <p>🏷 {reunion.departamentoNombre}</p>}
           </div>
 
-          {reunion.enlaceVideollamada && (
-            <a
-              href={reunion.enlaceVideollamada}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
-            >
-              <Video className="h-4 w-4" />
-              Abrir videollamada
-            </a>
+          {(urlMapa || (!esReunionDeGrupo && reunion.enlaceVideollamada)) && (
+            <div className="flex flex-wrap gap-4">
+              {urlMapa && (
+                <a
+                  href={urlMapa}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                >
+                  Abrir en Google Maps
+                </a>
+              )}
+              {!esReunionDeGrupo && reunion.enlaceVideollamada && (
+                <a
+                  href={reunion.enlaceVideollamada}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                >
+                  <Video className="h-4 w-4" />
+                  Abrir videollamada
+                </a>
+              )}
+            </div>
           )}
 
           <Accordion type="single" collapsible value={seccionAbierta} onValueChange={setSeccionAbierta}>

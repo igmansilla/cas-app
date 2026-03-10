@@ -7,7 +7,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Clock3, Plus, Users } from "lucide-react";
+import { Clock3, Users } from "lucide-react";
 
 import {
   useSeriesReunion,
@@ -126,6 +126,10 @@ function ReunionesPage() {
       tipo: "REUNION",
       fechaInicio: reunion.fechaInicio?.slice(0, 10) ?? "",
       fechaFin: reunion.fechaFin?.slice(0, 10) ?? "",
+      ubicacion: reunion.ubicacion ?? "",
+      latitud: reunion.latitud ?? undefined,
+      longitud: reunion.longitud ?? undefined,
+      urlMapa: reunion.urlMapa ?? "",
       periodicidad: reunion.periodicidad ?? "SEMANAL",
       diaSemana: reunion.diaSemana ?? "",
       horaInicio: reunion.horaInicio ?? "15:00",
@@ -137,13 +141,6 @@ function ReunionesPage() {
     });
     setIdEventoEditando(reunionId);
     setModoEdicion(true);
-    setWizardAbierto(true);
-  };
-
-  const abrirCreacion = () => {
-    setEventoEditando({ naturaleza: "REUNION", tipo: "REUNION" });
-    setIdEventoEditando(null);
-    setModoEdicion(false);
     setWizardAbierto(true);
   };
 
@@ -170,18 +167,9 @@ function ReunionesPage() {
                 Grupos
               </h1>
               <p className="text-gray-500 mt-1">
-                Reuniones con grupos de acampantes o dirigentes. Acá se ve quién ya tiene horario y qué grupos siguen pendientes.
+                  Esta vista se usa para planificar las reuniones anuales de los grupos ya configurados. Acá se ve quién ya tiene horario y qué grupos siguen pendientes.
               </p>
             </div>
-            {puedeEditar && (
-              <Button
-                onClick={abrirCreacion}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Nueva reunión de grupo
-              </Button>
-            )}
           </div>
         </div>
 
@@ -271,7 +259,7 @@ function ReunionesPage() {
               <p className="text-lg font-medium">Sin reuniones de grupo programadas</p>
               <p className="text-sm">
                 {puedeEditar
-                  ? 'Usá el botón "Nueva reunión de grupo" para agregar una.'
+                    ? "Planificá las reuniones desde la sección de grupos pendientes."
                   : "No hay reuniones de grupo programadas aún."}
               </p>
             </div>

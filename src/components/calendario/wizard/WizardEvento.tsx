@@ -28,6 +28,7 @@ import {
 import { Textarea } from "../../ui/textarea";
 import { useGruposAcampantes, useGruposDirigentes } from "../../../hooks/useGrupos";
 import { useDepartamentos } from "../../../hooks/useDepartamentos";
+import { buildGoogleMapsSearchUrl, getDefaultMeetingLocation } from "../../../lib/google-maps";
 import { 
   CalendarRange, Building2, Users, MapPin, Video, CheckCircle2, 
   Tag, Clock, ChevronRight, ChevronLeft 
@@ -46,10 +47,107 @@ const stepperEvento = defineStepper(
 const stepperReunion = defineStepper(
   { id: "clasificacion", title: "Definición", icon: Tag },
   { id: "tiempos",       title: "Horario",       icon: Clock },
-  { id: "responsable",   title: "Responsable",   icon: Building2 },
-  { id: "ubicacion",     title: "Lugar/Link",    icon: MapPin },
+  { id: "ubicacion",     title: "Lugar",         icon: MapPin },
   { id: "confirmacion",  title: "Confirmar",     icon: CheckCircle2 }
 );
+
+const APRIL_MONTH_INDEX = 3;
+const DECEMBER_MONTH_INDEX = 11;
+const ARGENTINA_HOLIDAY_SEASON_START_DAY = 24;
+const SATURDAY_DAY_INDEX = 6;
+
+function formatDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getFirstSaturdayOfApril(year: number) {
+  const date = new Date(year, APRIL_MONTH_INDEX, 1);
+
+  while (date.getDay() !== SATURDAY_DAY_INDEX) {
+    date.setDate(date.getDate() + 1);
+  }
+
+  return date;
+}
+
+function getLastSaturdayBeforeHolidaySeason(year: number) {
+  const date = new Date(year, DECEMBER_MONTH_INDEX, ARGENTINA_HOLIDAY_SEASON_START_DAY - 1);
+
+  while (date.getDay() !== SATURDAY_DAY_INDEX) {
+    date.setDate(date.getDate() - 1);
+  }
+
+  return date;
+}
+
+function getMeetingPlanningYear(now = new Date()) {
+  const currentYearEnd = getLastSaturdayBeforeHolidaySeason(now.getFullYear());
+  currentYearEnd.setHours(23, 59, 59, 999);
+
+  return now > currentYearEnd ? now.getFullYear() + 1 : now.getFullYear();
+}
+
+function getDefaultMeetingScheduleValues(now = new Date()) {
+  const planningYear = getMeetingPlanningYear(now);
+
+  return {
+    fechaInicio: formatDateInputValue(getFirstSaturdayOfApril(planningYear)),
+    fechaFin: formatDateInputValue(getLastSaturdayBeforeHolidaySeason(planningYear)),
+    diaSemana: "SATURDAY" as const,
+  };
+}
+
+function formatFechaFieldValue(value: string | undefined, naturaleza: "EVENTO" | "REUNION") {
+  if (!value) {
+    return "";
+  }
+
+  return naturaleza === "REUNION" ? value.slice(0, 10) : value.slice(0, 16);
+}
+
+function validateRequiredValue(message: string) {
+  return ({ value }: { value: string | undefined | null }) => {
+    if (typeof value === "string" && value.trim()) {
+      return undefined;
+    }
+
+    return message;
+  };
+}
+
+function validateFechaFinPosterior({ value, fieldApi }: { value: string | undefined | null; fieldApi: any }) {
+  if (!value?.trim()) {
+    return "La fecha de fin es obligatoria.";
+  }
+
+  const fechaInicio = fieldApi.form.getFieldValue("fechaInicio");
+  if (!fechaInicio?.trim()) {
+    return undefined;
+  }
+
+  return new Date(value) > new Date(fechaInicio)
+    ? undefined
+    : "La fecha de fin debe ser posterior a la fecha de inicio.";
+}
+
+function validateHoraFinPosterior({ value, fieldApi }: { value: string | undefined | null; fieldApi: any }) {
+  if (!value?.trim()) {
+    return "La hora de fin es obligatoria.";
+  }
+
+  const horaInicio = fieldApi.form.getFieldValue("horaInicio");
+  if (!horaInicio?.trim()) {
+    return undefined;
+  }
+
+  return value > horaInicio
+    ? undefined
+    : "La hora de fin debe ser posterior a la hora de inicio.";
+}
 
 // ─── Props ─────────────────────────────────────────────────────────────────
 interface WizardEventoProps {
@@ -107,6 +205,9 @@ function WizardEventoContent({
     ...gruposAcampantes.map(g => ({ ...g, tipo: "Acampantes" })),
     ...gruposDirigentes.map(g => ({ ...g, tipo: "Dirigentes" })),
   ], [gruposAcampantes, gruposDirigentes]);
+  const defaultMeetingLocation = getDefaultMeetingLocation();
+  const defaultMeetingSchedule = getDefaultMeetingScheduleValues();
+  const permiteVideollamada = !(naturaleza === "REUNION" && mostrarGrupoEnReunion);
 
   const useStepper = stepper.useStepper();
 
@@ -115,15 +216,15 @@ function WizardEventoContent({
       titulo: "",
       descripcion: "",
       tipo: naturaleza === "REUNION" ? "REUNION" : "",
-      fechaInicio: "",
-      fechaFin: "",
-      ubicacion: "",
-      latitud: undefined as number | undefined,
-      longitud: undefined as number | undefined,
-      urlMapa: "",
+      fechaInicio: naturaleza === "REUNION" ? defaultMeetingSchedule.fechaInicio : "",
+      fechaFin: naturaleza === "REUNION" ? defaultMeetingSchedule.fechaFin : "",
+      ubicacion: naturaleza === "REUNION" ? defaultMeetingLocation.direccion : "",
+      latitud: naturaleza === "REUNION" ? defaultMeetingLocation.lat : undefined as number | undefined,
+      longitud: naturaleza === "REUNION" ? defaultMeetingLocation.lng : undefined as number | undefined,
+      urlMapa: naturaleza === "REUNION" ? defaultMeetingLocation.url : "",
       naturaleza,
       periodicidad: naturaleza === "REUNION" ? "SEMANAL" : "PUNTUAL",
-      diaSemana: "",
+      diaSemana: naturaleza === "REUNION" ? defaultMeetingSchedule.diaSemana : "",
       horaInicio: "15:00",
       horaFin: "17:00",
       grupoId: "",
@@ -137,40 +238,60 @@ function WizardEventoContent({
         ...value,
         naturaleza,
         tipo: value.tipo,
-        departamentoId: value.departamentoId ? Number(value.departamentoId) : undefined,
+        departamentoId: naturaleza === "REUNION" && mostrarGrupoEnReunion
+          ? undefined
+          : value.departamentoId ? Number(value.departamentoId) : undefined,
         grupoId: mostrarGrupoEnReunion ? value.grupoId || undefined : undefined,
         plantillaAnualId: value.plantillaAnualId,
         fechaInicio: new Date(value.fechaInicio).toISOString(),
         fechaFin: new Date(value.fechaFin).toISOString(),
+        enlaceVideollamada: permiteVideollamada ? value.enlaceVideollamada || undefined : undefined,
       };
-      onGuardar(payload);
+      await onGuardar(payload);
     },
   });
 
   useEffect(() => {
     if (abierto) {
+      const ubicacionInicial = valoresIniciales.ubicacion || (naturaleza === "REUNION" ? defaultMeetingLocation.direccion : "");
+      const latitudInicial = valoresIniciales.latitud ?? (naturaleza === "REUNION" ? defaultMeetingLocation.lat : undefined);
+      const longitudInicial = valoresIniciales.longitud ?? (naturaleza === "REUNION" ? defaultMeetingLocation.lng : undefined);
+      const fechaInicioInicial = valoresIniciales.fechaInicio
+        ? formatFechaFieldValue(valoresIniciales.fechaInicio, naturaleza)
+        : (naturaleza === "REUNION" ? defaultMeetingSchedule.fechaInicio : "");
+      const fechaFinInicial = valoresIniciales.fechaFin
+        ? formatFechaFieldValue(valoresIniciales.fechaFin, naturaleza)
+        : (naturaleza === "REUNION" ? defaultMeetingSchedule.fechaFin : "");
+      const urlMapaInicial = valoresIniciales.urlMapa
+        || buildGoogleMapsSearchUrl(ubicacionInicial, { lat: latitudInicial, lng: longitudInicial });
+
       useStepper.reset();
       form.reset();
       form.setFieldValue("titulo", valoresIniciales.titulo || "");
       form.setFieldValue("descripcion", valoresIniciales.descripcion || "");
       form.setFieldValue("tipo", valoresIniciales.tipo || (naturaleza === "REUNION" ? "REUNION" : ""));
       form.setFieldValue("naturaleza", naturaleza);
-      form.setFieldValue("fechaInicio", valoresIniciales.fechaInicio?.slice(0, 16) || "");
-      form.setFieldValue("fechaFin", valoresIniciales.fechaFin?.slice(0, 16) || "");
-      form.setFieldValue("ubicacion", valoresIniciales.ubicacion || "");
-      form.setFieldValue("latitud", valoresIniciales.latitud);
-      form.setFieldValue("longitud", valoresIniciales.longitud);
-      form.setFieldValue("urlMapa", valoresIniciales.urlMapa || "");
+      form.setFieldValue("fechaInicio", fechaInicioInicial);
+      form.setFieldValue("fechaFin", fechaFinInicial);
+      form.setFieldValue("ubicacion", ubicacionInicial);
+      form.setFieldValue("latitud", latitudInicial);
+      form.setFieldValue("longitud", longitudInicial);
+      form.setFieldValue("urlMapa", urlMapaInicial);
       form.setFieldValue("periodicidad", valoresIniciales.periodicidad || (naturaleza === "REUNION" ? "SEMANAL" : "PUNTUAL"));
-      form.setFieldValue("diaSemana", valoresIniciales.diaSemana || "");
+      form.setFieldValue("diaSemana", valoresIniciales.diaSemana || (naturaleza === "REUNION" ? defaultMeetingSchedule.diaSemana : ""));
       form.setFieldValue("horaInicio", valoresIniciales.horaInicio || "15:00");
       form.setFieldValue("horaFin", valoresIniciales.horaFin || "17:00");
       form.setFieldValue("grupoId", mostrarGrupoEnReunion ? valoresIniciales.grupoId || "" : "");
-      form.setFieldValue("departamentoId", valoresIniciales.departamentoId ? String(valoresIniciales.departamentoId) : "");
+      form.setFieldValue(
+        "departamentoId",
+        naturaleza === "REUNION" && mostrarGrupoEnReunion
+          ? ""
+          : valoresIniciales.departamentoId ? String(valoresIniciales.departamentoId) : "",
+      );
       form.setFieldValue("plantillaAnualId", valoresIniciales.plantillaAnualId);
-      form.setFieldValue("enlaceVideollamada", valoresIniciales.enlaceVideollamada || "");
+      form.setFieldValue("enlaceVideollamada", permiteVideollamada ? valoresIniciales.enlaceVideollamada || "" : "");
     }
-  }, [abierto, mostrarGrupoEnReunion, naturaleza, valoresIniciales]);
+  }, [abierto, defaultMeetingLocation.direccion, defaultMeetingLocation.lat, defaultMeetingLocation.lng, defaultMeetingLocation.url, defaultMeetingSchedule.diaSemana, defaultMeetingSchedule.fechaFin, defaultMeetingSchedule.fechaInicio, mostrarGrupoEnReunion, naturaleza, permiteVideollamada, valoresIniciales]);
 
   // ── Stepper header ─────────────────────────────────────────────────────────
   const allSteps = useStepper.all;
@@ -180,10 +301,51 @@ function WizardEventoContent({
   const tipoSeleccionado = form.getFieldValue("tipo");
   const tipoSeleccionadoLabel = tiposEvento.find((tipo) => tipo.codigo === tipoSeleccionado)?.etiqueta ?? tipoSeleccionado;
   const grupoSeleccionado = form.getFieldValue("grupoId");
+  const grupoSeleccionadoInfo = todosLosGrupos.find((grupo) => grupo.id === grupoSeleccionado);
   const esReunionDepartamental = naturaleza === "REUNION" && contextoPlanificacion === "DEPARTAMENTO";
   const departamentoEsObligatorio = naturaleza === "EVENTO" || esReunionDepartamental || !grupoSeleccionado;
 
   const esUltimoStep = useStepper.isLast;
+
+  const validateCurrentStep = async () => {
+    const fieldsToValidate = (() => {
+      switch (useStepper.current.id) {
+        case "clasificacion":
+          return [
+            "titulo",
+            ...(naturaleza === "EVENTO" && !esEventoPlantillado ? ["tipo"] : []),
+            ...(naturaleza === "REUNION" && mostrarGrupoEnReunion ? ["grupoId"] : []),
+            ...(naturaleza === "REUNION" && !mostrarGrupoEnReunion ? ["departamentoId"] : []),
+          ];
+        case "tiempos":
+          return naturaleza === "EVENTO"
+            ? ["fechaInicio", "fechaFin"]
+            : ["fechaInicio", "fechaFin", "periodicidad", "diaSemana", "horaInicio", "horaFin"];
+        case "responsable":
+          return naturaleza === "EVENTO" && !esEventoPlantillado ? ["departamentoId"] : [];
+        default:
+          return [];
+      }
+    })() as Array<keyof EventoFormData>;
+
+    if (!fieldsToValidate.length) {
+      return true;
+    }
+
+    await Promise.all(fieldsToValidate.map((fieldName) => Promise.resolve(form.validateField(fieldName, "change"))));
+
+    return fieldsToValidate.every((fieldName) => form.getFieldMeta(fieldName)?.isValid ?? true);
+  };
+
+  const handleNextStep = async () => {
+    const currentStepIsValid = await validateCurrentStep();
+
+    if (!currentStepIsValid) {
+      return;
+    }
+
+    useStepper.next();
+  };
 
   return (
     <Dialog open={abierto} onOpenChange={(open) => !open && onCerrar()}>
@@ -216,6 +378,17 @@ function WizardEventoContent({
                   : "Creá un evento puntual nuevo para un departamento."}
             </DialogDescription>
           </DialogHeader>
+
+          {naturaleza === "REUNION" && mostrarGrupoEnReunion && (
+            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Grupo</p>
+              <p className="mt-1 text-sm font-medium text-emerald-950">
+                {grupoSeleccionadoInfo
+                  ? `${grupoSeleccionadoInfo.nombre} (${grupoSeleccionadoInfo.tipo})`
+                  : "Elegí el grupo en Definición"}
+              </p>
+            </div>
+          )}
 
           {/* ── Stepper pills (estilo WizardPlanPago) ─────────────────── */}
           <nav className="mt-4">
@@ -265,7 +438,10 @@ function WizardEventoContent({
         <div className="flex-1 overflow-y-auto px-6 py-5">
           <form
             id="wizard-evento-form"
-            onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); form.handleSubmit(); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
           >
             {/* PASO 1: Definición */}
             {useStepper.current.id === "clasificacion" && (
@@ -302,7 +478,7 @@ function WizardEventoContent({
                       </div>
                     </div>
                   ) : (
-                    <form.Field name="tipo">
+                    <form.Field name="tipo" validators={{ onChange: EventoFieldSchema.entries.tipo }}>
                       {(field) => (
                         <div className="space-y-1.5">
                           <Label>Tipo de evento *</Label>
@@ -338,128 +514,14 @@ function WizardEventoContent({
                     </div>
                   )}
                 </form.Field>
-              </div>
-            )}
 
-            {/* PASO 2: Tiempos / Horario */}
-            {useStepper.current.id === "tiempos" && (
-              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-3">
-                {naturaleza === "EVENTO" ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <form.Field name="fechaInicio" validators={{ onChange: EventoFieldSchema.entries.fechaInicio }}>
-                      {(field) => (
-                        <div className="space-y-1.5">
-                          <Label>Inicia *</Label>
-                          <Input type="datetime-local" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
-                          <FieldError field={field} />
-                        </div>
-                      )}
-                    </form.Field>
-                    <form.Field name="fechaFin" validators={{ onChange: EventoFieldSchema.entries.fechaFin }}>
-                      {(field) => (
-                        <div className="space-y-1.5">
-                          <Label>Termina *</Label>
-                          <Input type="datetime-local" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
-                          <FieldError field={field} />
-                        </div>
-                      )}
-                    </form.Field>
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <form.Field name="fechaInicio">
-                        {(field) => (
-                          <div className="space-y-1.5">
-                            <Label>Vigencia desde *</Label>
-                            <Input type="date" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
-                          </div>
-                        )}
-                      </form.Field>
-                      <form.Field name="fechaFin">
-                        {(field) => (
-                          <div className="space-y-1.5">
-                            <Label>Vigencia hasta *</Label>
-                            <Input type="date" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
-                          </div>
-                        )}
-                      </form.Field>
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <form.Field name="periodicidad">
-                        {(field) => (
-                          <div className="space-y-1.5">
-                            <Label>Periodicidad</Label>
-                            <Select value={field.state.value} onValueChange={field.handleChange}>
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="SEMANAL">Semanal</SelectItem>
-                                <SelectItem value="QUINCENAL">Quincenal</SelectItem>
-                                <SelectItem value="MENSUAL">Mensual</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                      </form.Field>
-                      <form.Field name="diaSemana">
-                        {(field) => (
-                          <div className="space-y-1.5">
-                            <Label>Día de la semana</Label>
-                            <Select value={field.state.value} onValueChange={field.handleChange}>
-                              <SelectTrigger><SelectValue placeholder="Día" /></SelectTrigger>
-                              <SelectContent>
-                                {[
-                                  ["SATURDAY", "Sábado"],
-                                  ["SUNDAY", "Domingo"],
-                                  ["MONDAY", "Lunes"],
-                                  ["TUESDAY", "Martes"],
-                                  ["WEDNESDAY", "Miércoles"],
-                                  ["THURSDAY", "Jueves"],
-                                  ["FRIDAY", "Viernes"],
-                                ].map(([val, label]) => (
-                                  <SelectItem key={val} value={val}>{label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                      </form.Field>
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <form.Field name="horaInicio">
-                        {(field) => (
-                          <div className="space-y-1.5">
-                            <Label>Hora inicio</Label>
-                            <Input type="time" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
-                          </div>
-                        )}
-                      </form.Field>
-                      <form.Field name="horaFin">
-                        {(field) => (
-                          <div className="space-y-1.5">
-                            <Label>Hora fin</Label>
-                            <Input type="time" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
-                          </div>
-                        )}
-                      </form.Field>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* PASO 3: Responsable / Grupo */}
-            {useStepper.current.id === "responsable" && (
-              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-3">
                 {naturaleza === "REUNION" && mostrarGrupoEnReunion && (
-                  <form.Field name="grupoId">
+                  <form.Field name="grupoId" validators={{ onChange: validateRequiredValue("Seleccioná un grupo.") }}>
                     {(field) => (
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
                         <Label className="flex items-center gap-1.5"><Users className="w-4 h-4" /> Grupo *</Label>
                         <Select value={field.state.value} onValueChange={field.handleChange} disabled={bloquearGrupo}>
-                          <SelectTrigger><SelectValue placeholder="Seleccione un grupo..." /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder="Seleccioná el grupo..." /></SelectTrigger>
                           <SelectContent>
                             {todosLosGrupos.map((grupo) => (
                               <SelectItem key={grupo.id} value={grupo.id}>
@@ -473,7 +535,7 @@ function WizardEventoContent({
                         )}
                         {bloquearGrupo && field.state.value && (
                           <p className="text-xs text-muted-foreground">
-                            El grupo queda fijado por la tarjeta desde la que abriste esta planificación.
+                            Esta reunión se está programando para el grupo seleccionado desde la tarjeta.
                           </p>
                         )}
                         <FieldError field={field} />
@@ -494,35 +556,194 @@ function WizardEventoContent({
                   </div>
                 )}
 
-                <form.Field name="departamentoId">
-                  {(field) => (
-                    <div className="space-y-1.5">
-                      <Label className="flex items-center gap-1.5"><Building2 className="w-4 h-4" /> Departamento {departamentoEsObligatorio ? "*" : ""}</Label>
-                      <Select
-                        value={field.state.value}
-                        onValueChange={field.handleChange}
-                        disabled={cargandoDepartamentos || esEventoPlantillado || bloquearDepartamento}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Selecciona un departamento..." /></SelectTrigger>
-                        <SelectContent>
-                          {departamentos.filter(d => d.activo).map(d => (
-                            <SelectItem key={d.id} value={String(d.id)}>{d.nombre}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        {esEventoPlantillado
-                          ? "El departamento viene fijado por la plantilla anual elegida."
-                          : bloquearDepartamento
+                {naturaleza === "REUNION" && !mostrarGrupoEnReunion && (
+                  <form.Field
+                    name="departamentoId"
+                    validators={{
+                      onChange: ({ value }) => {
+                        if (esEventoPlantillado) {
+                          return undefined;
+                        }
+
+                        return validateRequiredValue("Seleccioná un departamento.")({ value });
+                      },
+                    }}
+                  >
+                    {(field) => (
+                      <div className="space-y-1.5">
+                        <Label className="flex items-center gap-1.5"><Building2 className="w-4 h-4" /> Departamento {departamentoEsObligatorio ? "*" : ""}</Label>
+                        <Select
+                          value={field.state.value}
+                          onValueChange={field.handleChange}
+                          disabled={cargandoDepartamentos || esEventoPlantillado || bloquearDepartamento}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Selecciona un departamento..." /></SelectTrigger>
+                          <SelectContent>
+                            {departamentos.filter(d => d.activo).map(d => (
+                              <SelectItem key={d.id} value={String(d.id)}>{d.nombre}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          {bloquearDepartamento
                             ? "El departamento queda fijado por la pantalla desde la que abriste esta planificación."
-                            : naturaleza === "REUNION" && mostrarGrupoEnReunion
-                              ? "Podés dejarlo vacío si la reunión ya queda identificada por el grupo."
-                              : "Departamento organizador de la actividad."}
-                      </p>
-                      <FieldError field={field} />
+                            : "Departamento organizador de la actividad."}
+                        </p>
+                        <FieldError field={field} />
+                      </div>
+                    )}
+                  </form.Field>
+                )}
+              </div>
+            )}
+
+            {/* PASO 2: Tiempos / Horario */}
+            {useStepper.current.id === "tiempos" && (
+              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-3">
+                {naturaleza === "EVENTO" ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <form.Field name="fechaInicio" validators={{ onChange: EventoFieldSchema.entries.fechaInicio }}>
+                      {(field) => (
+                        <div className="space-y-1.5">
+                          <Label>Inicia *</Label>
+                          <Input type="datetime-local" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
+                          <FieldError field={field} />
+                        </div>
+                      )}
+                    </form.Field>
+                    <form.Field name="fechaFin" validators={{ onChangeListenTo: ["fechaInicio"], onChange: validateFechaFinPosterior }}>
+                      {(field) => (
+                        <div className="space-y-1.5">
+                          <Label>Termina *</Label>
+                          <Input type="datetime-local" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
+                          <FieldError field={field} />
+                        </div>
+                      )}
+                    </form.Field>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <form.Field name="fechaInicio" validators={{ onChange: validateRequiredValue("La fecha de inicio es obligatoria.") }}>
+                        {(field) => (
+                          <div className="space-y-1.5">
+                            <Label>Vigencia desde *</Label>
+                            <Input type="date" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
+                            <FieldError field={field} />
+                          </div>
+                        )}
+                      </form.Field>
+                      <form.Field name="fechaFin" validators={{ onChangeListenTo: ["fechaInicio"], onChange: validateFechaFinPosterior }}>
+                        {(field) => (
+                          <div className="space-y-1.5">
+                            <Label>Vigencia hasta *</Label>
+                            <Input type="date" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
+                            <FieldError field={field} />
+                          </div>
+                        )}
+                      </form.Field>
                     </div>
-                  )}
-                </form.Field>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <form.Field name="periodicidad" validators={{ onChange: validateRequiredValue("Seleccioná la periodicidad.") }}>
+                        {(field) => (
+                          <div className="space-y-1.5">
+                            <Label>Periodicidad</Label>
+                            <Select value={field.state.value} onValueChange={field.handleChange}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="SEMANAL">Semanal</SelectItem>
+                                <SelectItem value="QUINCENAL">Quincenal</SelectItem>
+                                <SelectItem value="MENSUAL">Mensual</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FieldError field={field} />
+                          </div>
+                        )}
+                      </form.Field>
+                      <form.Field name="diaSemana" validators={{ onChange: validateRequiredValue("Seleccioná el día de la semana.") }}>
+                        {(field) => (
+                          <div className="space-y-1.5">
+                            <Label>Día de la semana</Label>
+                            <Select value={field.state.value} onValueChange={field.handleChange}>
+                              <SelectTrigger><SelectValue placeholder="Día" /></SelectTrigger>
+                              <SelectContent>
+                                {[
+                                  ["SATURDAY", "Sábado"],
+                                  ["SUNDAY", "Domingo"],
+                                  ["MONDAY", "Lunes"],
+                                  ["TUESDAY", "Martes"],
+                                  ["WEDNESDAY", "Miércoles"],
+                                  ["THURSDAY", "Jueves"],
+                                  ["FRIDAY", "Viernes"],
+                                ].map(([val, label]) => (
+                                  <SelectItem key={val} value={val}>{label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FieldError field={field} />
+                          </div>
+                        )}
+                      </form.Field>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <form.Field name="horaInicio" validators={{ onChange: validateRequiredValue("La hora de inicio es obligatoria.") }}>
+                        {(field) => (
+                          <div className="space-y-1.5">
+                            <Label>Hora inicio</Label>
+                            <Input type="time" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
+                            <FieldError field={field} />
+                          </div>
+                        )}
+                      </form.Field>
+                      <form.Field name="horaFin" validators={{ onChangeListenTo: ["horaInicio"], onChange: validateHoraFinPosterior }}>
+                        {(field) => (
+                          <div className="space-y-1.5">
+                            <Label>Hora fin</Label>
+                            <Input type="time" value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
+                            <FieldError field={field} />
+                          </div>
+                        )}
+                      </form.Field>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* PASO 3: Responsable / Grupo */}
+            {useStepper.current.id === "responsable" && naturaleza === "EVENTO" && (
+              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-3">
+                {
+                  <form.Field name="departamentoId" validators={{ onChange: validateRequiredValue("Seleccioná un departamento.") }}>
+                    {(field) => (
+                      <div className="space-y-1.5">
+                        <Label className="flex items-center gap-1.5"><Building2 className="w-4 h-4" /> Departamento {departamentoEsObligatorio ? "*" : ""}</Label>
+                        <Select
+                          value={field.state.value}
+                          onValueChange={field.handleChange}
+                          disabled={cargandoDepartamentos || esEventoPlantillado || bloquearDepartamento}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Selecciona un departamento..." /></SelectTrigger>
+                          <SelectContent>
+                            {departamentos.filter(d => d.activo).map(d => (
+                              <SelectItem key={d.id} value={String(d.id)}>{d.nombre}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          {esEventoPlantillado
+                            ? "El departamento viene fijado por la plantilla anual elegida."
+                            : bloquearDepartamento
+                              ? "El departamento queda fijado por la pantalla desde la que abriste esta planificación."
+                              : "Departamento organizador de la actividad."}
+                        </p>
+                        <FieldError field={field} />
+                      </div>
+                    )}
+                  </form.Field>
+                }
               </div>
             )}
 
@@ -536,15 +757,38 @@ function WizardEventoContent({
                         <MapPin className="w-4 h-4 text-red-500" /> Lugar físico
                       </Label>
                       <MapsAutocomplete
+                        lat={form.getFieldValue("latitud")}
+                        lng={form.getFieldValue("longitud")}
                         value={field.state.value || ""}
                         onChange={(ubicacion) => {
+                          const debeRestaurarDefault = naturaleza === "REUNION" && ubicacion.source === "clear";
+
+                          if (debeRestaurarDefault) {
+                            field.handleChange(defaultMeetingLocation.direccion);
+                            form.setFieldValue("latitud", defaultMeetingLocation.lat);
+                            form.setFieldValue("longitud", defaultMeetingLocation.lng);
+                            form.setFieldValue("urlMapa", defaultMeetingLocation.url);
+                            return;
+                          }
+
+                          if (ubicacion.source === "clear") {
+                            field.handleChange("");
+                            form.setFieldValue("latitud", undefined);
+                            form.setFieldValue("longitud", undefined);
+                            form.setFieldValue("urlMapa", "");
+                            return;
+                          }
+
                           field.handleChange(ubicacion.direccion);
                           form.setFieldValue("latitud", ubicacion.lat);
                           form.setFieldValue("longitud", ubicacion.lng);
                           form.setFieldValue("urlMapa", ubicacion.url);
                         }}
-                        placeholder="Buscar dirección en Google Maps..."
+                        placeholder="Cómo querés que figure el lugar"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Buscá o marcá el punto. El nombre visible se edita aparte.
+                      </p>
                       {field.state.value && form.getFieldValue("urlMapa") && (
                         <p className="text-xs text-muted-foreground pt-1 border-t mt-2">
                           📍 {field.state.value} ·{" "}
@@ -557,20 +801,22 @@ function WizardEventoContent({
                   )}
                 </form.Field>
 
-                <form.Field name="enlaceVideollamada">
-                  {(field) => (
-                    <div className="space-y-1.5 p-4 border rounded-xl bg-muted/20">
-                      <Label className="flex items-center gap-1.5 text-sm font-semibold">
-                        <Video className="w-4 h-4 text-blue-500" /> Enlace de videollamada
-                      </Label>
-                      <Input
-                        placeholder="https://meet.google.com/... (opcional)"
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                      />
-                    </div>
-                  )}
-                </form.Field>
+                {permiteVideollamada && (
+                  <form.Field name="enlaceVideollamada">
+                    {(field) => (
+                      <div className="space-y-1.5 p-4 border rounded-xl bg-muted/20">
+                        <Label className="flex items-center gap-1.5 text-sm font-semibold">
+                          <Video className="w-4 h-4 text-blue-500" /> Enlace de videollamada
+                        </Label>
+                        <Input
+                          placeholder="https://meet.google.com/... (opcional)"
+                          value={field.state.value}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </form.Field>
+                )}
               </div>
             )}
 
@@ -618,7 +864,9 @@ function WizardEventoContent({
                       {values.grupoId && (
                         <div className="px-4 py-3 flex justify-between">
                           <span className="text-muted-foreground">Grupo</span>
-                          <span className="font-medium">{values.grupoId}</span>
+                          <span className="font-medium">
+                            {grupoSeleccionadoInfo ? `${grupoSeleccionadoInfo.nombre} (${grupoSeleccionadoInfo.tipo})` : values.grupoId}
+                          </span>
                         </div>
                       )}
 
@@ -629,16 +877,16 @@ function WizardEventoContent({
                         </div>
                       )}
 
-                      {(values.ubicacion || values.enlaceVideollamada) && (
+                      {(values.ubicacion || (permiteVideollamada && values.enlaceVideollamada)) && (
                         <div className="px-4 py-3">
-                          <span className="text-muted-foreground block mb-1">Lugar / Conexión</span>
+                          <span className="text-muted-foreground block mb-1">{permiteVideollamada ? "Lugar / Conexión" : "Lugar"}</span>
                           {values.ubicacion && (
                             <span className="flex items-center gap-1">
                               <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
                               {values.ubicacion}
                             </span>
                           )}
-                          {values.enlaceVideollamada && (
+                          {permiteVideollamada && values.enlaceVideollamada && (
                             <a href={values.enlaceVideollamada} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-blue-500 hover:underline text-xs">
                               <Video className="w-3.5 h-3.5 shrink-0" />
                               {values.enlaceVideollamada}
@@ -667,9 +915,14 @@ function WizardEventoContent({
 
           {esUltimoStep ? (
             <Button
-              type="submit"
-              form="wizard-evento-form"
+              key="wizard-submit"
+              type="button"
               disabled={cargando}
+              onClick={() => {
+                if (!cargando) {
+                  void form.handleSubmit();
+                }
+              }}
               className={`gap-2 ${naturaleza === "REUNION" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-orange-500 hover:bg-orange-600"}`}
             >
               <CheckCircle2 className="w-4 h-4" />
@@ -677,8 +930,9 @@ function WizardEventoContent({
             </Button>
           ) : (
             <Button
+              key="wizard-next"
               type="button"
-              onClick={useStepper.next}
+              onClick={handleNextStep}
               className={naturaleza === "REUNION" ? "bg-emerald-600 hover:bg-emerald-700 gap-1" : "gap-1"}
             >
               Continuar <ChevronRight className="w-4 h-4" />
