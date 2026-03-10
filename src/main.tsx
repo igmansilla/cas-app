@@ -4,6 +4,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { getRouter } from "./router";
 import { OidcInitializationGate } from "./oidc";
+import { ensureAppServiceWorker } from "./lib/pwa";
 import "./styles.css";
 import reportWebVitals from "./reportWebVitals.ts";
 
@@ -11,6 +12,8 @@ import reportWebVitals from "./reportWebVitals.ts";
 
 const router = getRouter();
 const queryClient = new QueryClient();
+
+void ensureAppServiceWorker();
 
 // Render the app
 const rootElement = document.getElementById("app");
