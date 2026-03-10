@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import type { CategoriaEquipo, ItemProgreso } from '../../api/schemas/equipo';
+import type { CategoriaEquipo, FotoCargadaEquipo, ItemProgreso } from '../../api/schemas/equipo';
 import { CRITICIDAD_CONFIG } from '../../api/schemas/equipo';
 import { ItemEquipoCheck } from './ItemEquipoCheck';
 import { cn } from '../../lib/utils';
@@ -8,9 +8,9 @@ import { cn } from '../../lib/utils';
 interface CategoriaAccordionProps {
   categoria: CategoriaEquipo;
   progreso: Record<string, ItemProgreso>;
-  itemIdsConFoto: number[];
+  fotosPorRequisito: Record<number, FotoCargadaEquipo>;
   onToggleItem: (itemId: number) => void;
-  onPhotoClick: (item: any) => void;
+  onPhotoClick: (item: CategoriaEquipo['items'][number]) => void;
   itemCargando?: number | null;
   defaultOpen?: boolean;
 }
@@ -21,7 +21,7 @@ interface CategoriaAccordionProps {
 export function CategoriaAccordion({
   categoria,
   progreso,
-  itemIdsConFoto,
+  fotosPorRequisito,
   onToggleItem,
   onPhotoClick,
   itemCargando,
@@ -122,18 +122,24 @@ export function CategoriaAccordion({
         )}
       >
         <div className="border-t border-gray-100 divide-y divide-gray-50">
-          {categoria.items.map((item) => (
+          {categoria.items.map((item) => {
+            const fotoResumen = {
+              cargadas: item.requisitosFoto.filter((requisito) => fotosPorRequisito[requisito.id]).length,
+              total: item.requisitosFoto.length,
+            };
+
+            return (
             <ItemEquipoCheck
               key={item.id}
               item={item}
               completado={progreso[item.id]?.completado || false}
-              hasFoto={itemIdsConFoto.includes(item.id)}
-              requiereFoto={item.requiereFoto}
+              fotoResumen={fotoResumen}
               onToggle={() => onToggleItem(item.id)}
-              onPhotoClick={item.requiereFoto ? () => onPhotoClick(item) : undefined}
+              onPhotoClick={item.requisitosFoto.length > 0 ? () => onPhotoClick(item) : undefined}
               cargando={itemCargando === item.id}
             />
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

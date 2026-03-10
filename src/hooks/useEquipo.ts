@@ -34,14 +34,14 @@ export const equipoKeys = {
 /**
  * Hook para obtener los IDs de los items que tienen foto
  */
-export function useMisItemsConFoto() {
+export function useMisFotosEquipo() {
   const query = useQuery({
     queryKey: equipoKeys.misFotos(),
-    queryFn: () => equipoService.getMisItemsConFoto(),
+    queryFn: () => equipoService.getMisFotos(),
   });
 
   return {
-    itemIds: query.data || [],
+    fotos: query.data || [],
     cargando: query.isLoading,
     error: query.error,
     refetch: query.refetch,
@@ -323,12 +323,12 @@ export function useReordenarItems() {
 /**
  * Hook para subir una foto de un item
  */
-export function useSubirFotoItem() {
+export function useSubirFotoRequisito() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({ itemId, file }: { itemId: number; file: File }) =>
-      equipoService.subirFotoItem(itemId, file),
+    mutationFn: ({ requisitoId, file }: { requisitoId: number; file: File }) =>
+      equipoService.subirFotoRequisito(requisitoId, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: equipoKeys.misFotos() });
     },
@@ -344,11 +344,11 @@ export function useSubirFotoItem() {
 /**
  * Hook para eliminar la foto de un item
  */
-export function useEliminarFotoItem() {
+export function useEliminarFotoRequisito() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (itemId: number) => equipoService.eliminarFotoItem(itemId),
+    mutationFn: (requisitoId: number) => equipoService.eliminarFotoRequisito(requisitoId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: equipoKeys.misFotos() });
     },

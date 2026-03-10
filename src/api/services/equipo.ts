@@ -12,7 +12,16 @@ import type {
   DetalleProgresoUsuario,
   Criticidad,
   FotoItemResponse,
+  FotoCargadaEquipo,
 } from '../schemas/equipo';
+
+export interface RequisitoFotoRequest {
+  id?: number;
+  codigo?: string;
+  titulo: string;
+  descripcion?: string;
+  orden?: number;
+}
 
 // ============================================
 // Tipos de Request
@@ -37,6 +46,7 @@ export interface CrearItemRequest {
   notas?: string;
   evitar?: string;
   requiereFoto?: boolean;
+  requisitosFoto?: RequisitoFotoRequest[];
 }
 
 export interface ActualizarItemRequest {
@@ -48,6 +58,7 @@ export interface ActualizarItemRequest {
   evitar?: string;
   orden?: number;
   requiereFoto?: boolean;
+  requisitosFoto?: RequisitoFotoRequest[];
 }
 
 // ============================================
@@ -179,10 +190,10 @@ export const equipoService = {
   /**
    * Sube una foto para un item
    */
-  subirFotoItem: async (itemId: number, file: File): Promise<FotoItemResponse> => {
+  subirFotoRequisito: async (requisitoId: number, file: File): Promise<FotoItemResponse> => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await client.post(`/equipo/items/${itemId}/foto`, formData, {
+    const response = await client.post(`/equipo/requisitos-foto/${requisitoId}/foto`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -193,14 +204,14 @@ export const equipoService = {
   /**
    * Elimina la foto de un item
    */
-  eliminarFotoItem: async (itemId: number): Promise<void> => {
-    await client.delete(`/equipo/items/${itemId}/foto`);
+  eliminarFotoRequisito: async (requisitoId: number): Promise<void> => {
+    await client.delete(`/equipo/requisitos-foto/${requisitoId}/foto`);
   },
 
   /**
    * Obtiene los IDs de los items que tienen foto
    */
-  getMisItemsConFoto: async (): Promise<number[]> => {
+  getMisFotos: async (): Promise<FotoCargadaEquipo[]> => {
     const response = await client.get('/equipo/mis-fotos');
     return response.data;
   },
@@ -208,14 +219,18 @@ export const equipoService = {
   /**
    * Retorna la URL para previsualizar la foto (thumbnail)
    */
-  getThumbnailUrl: (itemId: number): string => {
-    return `${import.meta.env.VITE_API_URL}/equipo/items/${itemId}/foto/thumbnail`;
+  getRequisitoThumbnailUrl: (requisitoId: number): string => {
+    return `${import.meta.env.VITE_API_URL}/equipo/requisitos-foto/${requisitoId}/foto/thumbnail`;
   },
 
   /**
    * Retorna la URL para ver la foto completa
    */
-  getFotoUrl: (itemId: number): string => {
-    return `${import.meta.env.VITE_API_URL}/equipo/items/${itemId}/foto`;
+  getRequisitoFotoUrl: (requisitoId: number): string => {
+    return `${import.meta.env.VITE_API_URL}/equipo/requisitos-foto/${requisitoId}/foto`;
+  },
+
+  getAdminRequisitoFotoUrl: (usuarioId: number, requisitoId: number): string => {
+    return `${import.meta.env.VITE_API_URL}/equipo/admin/usuarios/${usuarioId}/requisitos-foto/${requisitoId}/foto`;
   },
 };

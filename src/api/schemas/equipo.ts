@@ -24,6 +24,16 @@ import {
 export const CriticidadSchema = picklist(['CRITICO', 'IMPORTANTE', 'NORMAL']);
 export type Criticidad = InferOutput<typeof CriticidadSchema>;
 
+export const RequisitoFotoEquipoSchema = object({
+  id: number(),
+  codigo: string(),
+  titulo: string(),
+  descripcion: nullable(string()),
+  orden: number(),
+});
+
+export type RequisitoFotoEquipo = InferOutput<typeof RequisitoFotoEquipoSchema>;
+
 // ============================================
 // Schemas de Respuesta - Items y Categorías
 // ============================================
@@ -41,6 +51,7 @@ export const ItemEquipoSchema = object({
   evitar: nullable(string()),
   orden: number(),
   requiereFoto: boolean(),
+  requisitosFoto: array(RequisitoFotoEquipoSchema),
 });
 
 export type ItemEquipo = InferOutput<typeof ItemEquipoSchema>;
@@ -118,6 +129,15 @@ export const ItemProgresoDetalleSchema = object({
   fechaCompletado: nullable(string()),
   hasFoto: boolean(),
   requiereFoto: boolean(),
+  fotosCargadas: number(),
+  totalFotosSugeridas: number(),
+  requisitosFoto: array(object({
+    requisitoId: number(),
+    titulo: string(),
+    descripcion: nullable(string()),
+    hasFoto: boolean(),
+    fechaSubida: nullable(string()),
+  })),
 });
 
 export type ItemProgresoDetalle = InferOutput<typeof ItemProgresoDetalleSchema>;
@@ -173,6 +193,7 @@ export type DetalleProgresoUsuario = InferOutput<typeof DetalleProgresoUsuarioSc
 export const FotoItemResponseSchema = object({
   id: number(),
   itemId: number(),
+  requisitoId: number(),
   ancho: number(),
   alto: number(),
   tamanioBytes: number(),
@@ -180,6 +201,15 @@ export const FotoItemResponseSchema = object({
 });
 
 export type FotoItemResponse = InferOutput<typeof FotoItemResponseSchema>;
+
+export const FotoCargadaEquipoSchema = object({
+  id: number(),
+  itemId: number(),
+  requisitoId: number(),
+  fechaSubida: string(),
+});
+
+export type FotoCargadaEquipo = InferOutput<typeof FotoCargadaEquipoSchema>;
 
 // ============================================
 // Helpers de UI - Configuración de Criticidad

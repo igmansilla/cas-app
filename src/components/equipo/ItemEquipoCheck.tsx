@@ -7,8 +7,10 @@ import { Button } from '../ui/button';
 interface ItemEquipoCheckProps {
   item: ItemEquipo;
   completado: boolean;
-  hasFoto?: boolean;
-  requiereFoto?: boolean;
+  fotoResumen?: {
+    cargadas: number;
+    total: number;
+  };
   onToggle: () => void;
   onPhotoClick?: (e: React.MouseEvent) => void;
   cargando?: boolean;
@@ -21,8 +23,7 @@ interface ItemEquipoCheckProps {
 export function ItemEquipoCheck({ 
   item, 
   completado, 
-  hasFoto,
-  requiereFoto,
+  fotoResumen,
   onToggle, 
   onPhotoClick, 
   cargando 
@@ -30,6 +31,11 @@ export function ItemEquipoCheck({
   const criticidadConfig = CRITICIDAD_CONFIG[item.criticidad];
   const esCritico = item.criticidad === 'CRITICO';
   const esImportante = item.criticidad === 'IMPORTANTE';
+  const totalFotos = fotoResumen?.total ?? item.requisitosFoto.length;
+  const fotosCargadas = fotoResumen?.cargadas ?? 0;
+  const tieneFotosGuiadas = totalFotos > 0;
+  const tieneFotosCargadas = fotosCargadas > 0;
+  const faltanFotos = tieneFotosGuiadas && fotosCargadas < totalFotos;
 
   return (
     <div
@@ -107,6 +113,18 @@ export function ItemEquipoCheck({
           </p>
         )}
 
+        {tieneFotosGuiadas && (
+          <span className={cn(
+            'inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 text-xs font-medium rounded-full border',
+            faltanFotos
+              ? 'text-indigo-700 bg-indigo-50 border-indigo-200'
+              : 'text-green-700 bg-green-50 border-green-200'
+          )}>
+            <Camera className="w-3 h-3" />
+            Fotos: {fotosCargadas}/{totalFotos}
+          </span>
+        )}
+
         {/* Advertencia de "Evitar" como badge */}
         {item.evitar && !completado && (
           <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-full">
@@ -125,9 +143,9 @@ export function ItemEquipoCheck({
             size="icon"
             className={cn(
               "h-8 w-8 rounded-full transition-all",
-              hasFoto 
+              tieneFotosCargadas
                 ? "text-indigo-600 bg-indigo-50 hover:bg-indigo-100" 
-                : requiereFoto && !completado
+                : faltanFotos
                   ? "text-orange-500 ring-2 ring-orange-300 hover:bg-orange-50"
                   : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
             )}
@@ -135,14 +153,14 @@ export function ItemEquipoCheck({
               e.stopPropagation();
               onPhotoClick(e);
             }}
-            title={requiereFoto ? "Foto requerida" : "Subir foto"}
+            title={tieneFotosGuiadas ? `Fotos del item (${fotosCargadas}/${totalFotos})` : 'Subir foto'}
           >
             <Camera className="h-4 w-4" />
           </Button>
-          {hasFoto && (
+          {tieneFotosCargadas && (
             <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full" />
           )}
-          {requiereFoto && !hasFoto && !completado && (
+          {faltanFotos && (
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-orange-500 border-2 border-white rounded-full animate-pulse" />
           )}
         </div>

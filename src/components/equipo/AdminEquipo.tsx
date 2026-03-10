@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, MoreVertical, Package, Camera } from 'lucide-react';
+import { ArrowDown, ArrowUp, Camera, MoreVertical, Package, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -208,8 +208,9 @@ export function AdminEquipo() {
                           <span className={cn('w-2 h-2 rounded-full', CRITICIDAD_CONFIG[item.criticidad].dotColor)} />
                           <span className="text-sm font-medium md:font-normal text-gray-700 md:text-gray-600">{CRITICIDAD_CONFIG[item.criticidad].label}</span>
                           {item.requiereFoto && (
-                            <span className="ml-1 text-indigo-500" title="Requiere foto">
+                            <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-indigo-600" title="Fotos guiadas">
                               <Camera className="w-3.5 h-3.5" />
+                              <span className="text-xs font-medium">{item.requisitosFoto.length}</span>
                             </span>
                           )}
                         </div>
@@ -391,12 +392,19 @@ function ModalItem({
   const { crearItem, cargando: creando } = useCrearItem();
   const { actualizarItem, cargando: actualizando } = useActualizarItem();
 
+  type RequisitoFotoForm = {
+    id?: number;
+    titulo: string;
+    descripcion: string;
+  };
+
   const [nombre, setNombre] = useState('');
   const [cantidad, setCantidad] = useState(1);
   const [criticidad, setCriticidad] = useState<Criticidad>('NORMAL');
   const [notas, setNotas] = useState('');
   const [evitar, setEvitar] = useState('');
   const [requiereFoto, setRequiereFoto] = useState(false);
+  const [requisitosFoto, setRequisitosFoto] = useState<RequisitoFotoForm[]>([]);
 
   // Poblar datos cuando se abre para editar
   useEffect(() => {
@@ -407,6 +415,13 @@ function ModalItem({
       setNotas(editar.notas || '');
       setEvitar(editar.evitar || '');
       setRequiereFoto(editar.requiereFoto || false);
+      setRequisitosFoto(
+        editar.requisitosFoto.map((requisito) => ({
+          id: requisito.id,
+          titulo: requisito.titulo,
+          descripcion: requisito.descripcion || '',
+        }))
+      );
     } else if (open && !editar) {
       // Reset para crear nuevo
       setNombre('');
@@ -415,6 +430,7 @@ function ModalItem({
       setNotas('');
       setEvitar('');
       setRequiereFoto(false);
+      setRequisitosFoto([]);
     }
   }, [open, editar]);
 
@@ -430,12 +446,50 @@ function ModalItem({
       return;
     }
 
+    if (requiereFoto) {
+      if (requisitosFoto.length === 0) {
+        toast.error('Agrega al menos una foto guiada para este item');
+        return;
+      }
+
+      const tieneTitulosVacios = requisitosFoto.some((requisito) => !requisito.titulo.trim());
+      if (tieneTitulosVacios) {
+        toast.error('Cada foto guiada necesita un título');
+        return;
+      }
+    }
+
+    const payloadRequisitos = requiereFoto
+      ? requisitosFoto.map((requisito, index) => ({
+          id: requisito.id,
+          titulo: requisito.titulo.trim(),
+          descripcion: requisito.descripcion.trim() || undefined,
+          orden: index + 1,
+        }))
+      : [];
+
     try {
       if (editar) {
-        await actualizarItem(editar.id, { nombre, cantidad, criticidad, notas, evitar, requiereFoto });
+        await actualizarItem(editar.id, {
+          nombre,
+          cantidad,
+          criticidad,
+          notas,
+          evitar,
+          requiereFoto,
+          requisitosFoto: payloadRequisitos,
+        });
         toast.success('Item actualizado');
       } else if (categoriaId) {
-        await crearItem(categoriaId, { nombre, cantidad, criticidad, notas, evitar, requiereFoto });
+        await crearItem(categoriaId, {
+          nombre,
+          cantidad,
+          criticidad,
+          notas,
+          evitar,
+          requiereFoto,
+          requisitosFoto: payloadRequisitos,
+        });
         toast.success('Item creado');
       }
       onClose();
@@ -445,9 +499,49 @@ function ModalItem({
     }
   };
 
+  const agregarRequisitoFoto = () => {
+    setRequisitosFoto((prev) => [...prev, { titulo: '', descripcion: '' }]);
+  };
+
+  const actualizarRequisitoFoto = (index: number, field: keyof RequisitoFotoForm, value: string) => {
+    setRequisitosFoto((prev) => prev.map((requisito, currentIndex) => (
+      currentIndex === index
+        ? { ...requisito, [field]: value }
+        : requisito
+    )));
+  };
+
+  const eliminarRequisitoFoto = (index: number) => {
+    setRequisitosFoto((prev) => prev.filter((_, currentIndex) => currentIndex !== index));
+  };
+
+  const moverRequisitoFoto = (index: number, direction: 'up' | 'down') => {
+    setRequisitosFoto((prev) => {
+      const next = [...prev];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+      if (targetIndex < 0 || targetIndex >= next.length) {
+        return prev;
+      }
+
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      return next;
+    });
+  };
+
+  const toggleRequiereFoto = () => {
+    setRequiereFoto((prev) => {
+      const next = !prev;
+      if (next && requisitosFoto.length === 0) {
+        setRequisitosFoto([{ titulo: '', descripcion: '' }]);
+      }
+      return next;
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editar ? 'Editar item' : 'Nuevo item'}</DialogTitle>
         </DialogHeader>
@@ -538,7 +632,7 @@ function ModalItem({
               type="button"
               role="switch"
               aria-checked={requiereFoto}
-              onClick={() => setRequiereFoto(!requiereFoto)}
+              onClick={toggleRequiereFoto}
               className={cn(
                 "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
                 requiereFoto ? "bg-indigo-600" : "bg-gray-200"
@@ -552,6 +646,87 @@ function ModalItem({
               />
             </button>
           </div>
+
+          {requiereFoto && (
+            <div className="space-y-3 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <Label>Fotos guiadas</Label>
+                  <p className="text-xs text-gray-500">
+                    Definí qué vistas o detalles necesita ver el dirigente para revisar este item.
+                  </p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={agregarRequisitoFoto}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Agregar foto
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {requisitosFoto.map((requisito, index) => (
+                  <div key={requisito.id ?? `nuevo-${index}`} className="rounded-xl border border-gray-200 bg-white p-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                        Foto {index + 1}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => moverRequisitoFoto(index, 'up')}
+                          disabled={index === 0}
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => moverRequisitoFoto(index, 'down')}
+                          disabled={index === requisitosFoto.length - 1}
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-500"
+                          onClick={() => eliminarRequisitoFoto(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`requisito-titulo-${index}`}>Título</Label>
+                      <Input
+                        id={`requisito-titulo-${index}`}
+                        value={requisito.titulo}
+                        onChange={(e) => actualizarRequisitoFoto(index, 'titulo', e.target.value)}
+                        placeholder="Ej: Suelas"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor={`requisito-descripcion-${index}`}>Qué necesitamos ver</Label>
+                      <Textarea
+                        id={`requisito-descripcion-${index}`}
+                        value={requisito.descripcion}
+                        onChange={(e) => actualizarRequisitoFoto(index, 'descripcion', e.target.value)}
+                        placeholder="Ej: Foto de las suelas desde abajo para revisar dibujo, desgaste y agarre"
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter>

@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Users, Eye, AlertCircle, Camera } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { toast } from 'sonner';
 
 import {
   useReporteProgreso,
   useDetalleProgresoUsuario,
 } from '../../hooks/useEquipo';
+import { equipoService } from '../../api/services/equipo';
 import { CRITICIDAD_CONFIG } from '../../api/schemas/equipo';
 import { Button } from '../ui/button';
 import {
@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '../ui/select';
 import { cn } from '../../lib/utils';
+import { ProtectedEquipoImage } from './ProtectedEquipoImage';
 
 /**
  * Panel de reportes de progreso de usuarios
@@ -340,12 +341,23 @@ function DetalleUsuarioModal({
                           {item.nombre}
                         </span>
 
-                        {/* Foto (solo si tiene) */}
-                        {item.hasFoto && (
-                          <FotoViewer
+                        {item.totalFotosSugeridas > 0 && (
+                          <span className={cn(
+                            'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
+                            item.fotosCargadas === item.totalFotosSugeridas
+                              ? 'border-green-200 bg-green-50 text-green-700'
+                              : 'border-indigo-200 bg-indigo-50 text-indigo-700'
+                          )}>
+                            <Camera className="h-3 w-3" />
+                            {item.fotosCargadas}/{item.totalFotosSugeridas}
+                          </span>
+                        )}
+
+                        {item.totalFotosSugeridas > 0 && (
+                          <FotosItemViewer
                             usuarioId={usuarioId}
-                            itemId={item.itemId}
                             itemName={item.nombre}
+                            requisitosFoto={item.requisitosFoto}
                           />
                         )}
                       </div>
@@ -366,34 +378,25 @@ function DetalleUsuarioModal({
 }
 
 /**
- * Componente para visualizar la foto de un item con token
+ * Componente para revisar las fotos guiadas de un item con token
  */
-function FotoViewer({ usuarioId, itemId, itemName }: { usuarioId: number; itemId: number; itemName: string }) {
+function FotosItemViewer({
+  usuarioId,
+  itemName,
+  requisitosFoto,
+}: {
+  usuarioId: number;
+  itemName: string;
+  requisitosFoto: Array<{
+    requisitoId: number;
+    titulo: string;
+    descripcion: string | null;
+    hasFoto: boolean;
+    fechaSubida: string | null;
+  }>;
+}) {
   const [isOpen, setIsOpen] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const fetchPhoto = async () => {
-    setLoading(true);
-    try {
-      const { client } = await import('../../api/client');
-      const response = await client.get(`/equipo/admin/usuarios/${usuarioId}/items/${itemId}/foto`, {
-        responseType: 'blob'
-      });
-      const url = URL.createObjectURL(response.data);
-      setPhotoUrl(url);
-    } catch (error) {
-      console.error('Error al cargar foto:', error);
-      toast.error('No se pudo cargar la foto');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOpen = () => {
-    setIsOpen(true);
-    if (!photoUrl) fetchPhoto();
-  };
+  const cargadas = requisitosFoto.filter((requisito) => requisito.hasFoto).length;
 
   return (
     <>
@@ -401,27 +404,60 @@ function FotoViewer({ usuarioId, itemId, itemName }: { usuarioId: number; itemId
         variant="ghost"
         size="sm"
         className="h-8 w-8 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-        onClick={handleOpen}
+        onClick={() => setIsOpen(true)}
       >
         <Camera className="h-4 w-4" />
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{itemName}</DialogTitle>
           </DialogHeader>
-          <div className="aspect-video w-full overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
-            {loading ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-gray-500">Cargando foto...</p>
+          <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Revisión visual del item</p>
+              <p className="text-xs text-gray-500">Vistas cargadas: {cargadas}/{requisitosFoto.length}</p>
+            </div>
+          </div>
+          <div className="space-y-4 mt-4">
+            {requisitosFoto.map((requisito) => (
+              <div key={requisito.requisitoId} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                <div className="border-b border-gray-100 bg-gray-50/70 px-4 py-3 flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="font-medium text-gray-900">{requisito.titulo}</h4>
+                    {requisito.descripcion && (
+                      <p className="mt-1 text-sm text-gray-600 leading-relaxed">{requisito.descripcion}</p>
+                    )}
+                  </div>
+                  <span className={cn(
+                    'inline-flex rounded-full border px-2.5 py-1 text-xs font-medium',
+                    requisito.hasFoto
+                      ? 'border-green-200 bg-green-50 text-green-700'
+                      : 'border-amber-200 bg-amber-50 text-amber-700'
+                  )}>
+                    {requisito.hasFoto ? 'Cargada' : 'Faltante'}
+                  </span>
+                </div>
+
+                <div className="p-4">
+                  {requisito.hasFoto ? (
+                    <div className="aspect-video w-full overflow-hidden rounded-xl bg-gray-100 flex items-center justify-center">
+                      <ProtectedEquipoImage
+                        url={equipoService.getAdminRequisitoFotoUrl(usuarioId, requisito.requisitoId)}
+                        alt={`${itemName} - ${requisito.titulo}`}
+                        className="h-full w-full object-contain"
+                        loadingFallback={<div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
+                      Todavía no cargó esta vista.
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : photoUrl ? (
-              <img src={photoUrl} alt={itemName} className="h-full w-full object-contain" />
-            ) : (
-              <p className="text-gray-500 text-sm">Error al cargar la foto</p>
-            )}
+            ))}
           </div>
         </DialogContent>
       </Dialog>

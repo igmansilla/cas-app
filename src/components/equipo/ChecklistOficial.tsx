@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AlertTriangle, RotateCcw, Backpack, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useCategorias, useMiProgreso, useToggleItem, useResetearChecklist, useMisItemsConFoto } from '../../hooks/useEquipo';
+import { useCategorias, useMiProgreso, useToggleItem, useResetearChecklist, useMisFotosEquipo } from '../../hooks/useEquipo';
 import { CategoriaAccordion, CategoriaCard } from './CategoriaAccordion';
 import { Button } from '../ui/button';
 import {
@@ -75,13 +75,19 @@ export function HeaderProgressRing({ progress, size = 80 }: { progress: number; 
 export function ChecklistOficial() {
   const { categorias, cargando: cargandoCategorias, error: errorCategorias } = useCategorias();
   const { progreso, cargando: cargandoProgreso } = useMiProgreso();
-  const { itemIds: itemIdsConFoto, refetch: refetchFotos } = useMisItemsConFoto();
+  const { fotos, refetch: refetchFotos } = useMisFotosEquipo();
   const { toggleItem } = useToggleItem();
   const { resetear, cargando: reseteando } = useResetearChecklist();
 
   const [itemCargando, setItemCargando] = useState<number | null>(null);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<CategoriaEquipo | null>(null);
   const [itemSeleccionadoParaFoto, setItemSeleccionadoParaFoto] = useState<ItemEquipo | null>(null);
+  const fotosPorRequisito = Object.fromEntries(fotos.map((foto) => [foto.requisitoId, foto]));
+
+  const getFotoResumen = (item: ItemEquipo) => ({
+    cargadas: item.requisitosFoto.filter((requisito) => fotosPorRequisito[requisito.id]).length,
+    total: item.requisitosFoto.length,
+  });
 
   // Manejar toggle de item
   const handleToggleItem = async (itemId: number) => {
@@ -221,7 +227,7 @@ export function ChecklistOficial() {
             key={categoria.id}
             categoria={categoria}
             progreso={progreso?.progreso || {}}
-            itemIdsConFoto={itemIdsConFoto}
+            fotosPorRequisito={fotosPorRequisito}
             onToggleItem={handleToggleItem}
             onPhotoClick={(item) => setItemSeleccionadoParaFoto(item)}
             itemCargando={itemCargando}
@@ -254,10 +260,9 @@ export function ChecklistOficial() {
                 key={item.id}
                 item={item}
                 completado={progreso?.progreso[item.id]?.completado || false}
-                hasFoto={itemIdsConFoto.includes(item.id)}
-                requiereFoto={item.requiereFoto}
+                fotoResumen={getFotoResumen(item)}
                 onToggle={() => handleToggleItem(item.id)}
-                onPhotoClick={item.requiereFoto ? () => setItemSeleccionadoParaFoto(item) : undefined}
+                onPhotoClick={item.requisitosFoto.length > 0 ? () => setItemSeleccionadoParaFoto(item) : undefined}
                 cargando={itemCargando === item.id}
               />
             ))}
@@ -267,19 +272,20 @@ export function ChecklistOficial() {
 
       {/* Modal de subida de foto */}
       <Dialog open={!!itemSeleccionadoParaFoto} onOpenChange={() => setItemSeleccionadoParaFoto(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Foto del equipo</DialogTitle>
+        <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden p-0 sm:max-h-[90vh] sm:w-full">
+          <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 text-left sm:px-6">
+            <DialogTitle>Fotos del equipo</DialogTitle>
           </DialogHeader>
-          {itemSeleccionadoParaFoto && (
-            <FotoItemUpload
-              itemId={itemSeleccionadoParaFoto.id}
-              itemName={itemSeleccionadoParaFoto.nombre}
-              hasFoto={itemIdsConFoto.includes(itemSeleccionadoParaFoto.id)}
-              onClose={() => setItemSeleccionadoParaFoto(null)}
-              onSuccess={() => refetchFotos()}
-            />
-          )}
+          <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6 sm:py-5">
+            {itemSeleccionadoParaFoto && (
+              <FotoItemUpload
+                item={itemSeleccionadoParaFoto}
+                fotosPorRequisito={fotosPorRequisito}
+                onClose={() => setItemSeleccionadoParaFoto(null)}
+                onSuccess={() => refetchFotos()}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
