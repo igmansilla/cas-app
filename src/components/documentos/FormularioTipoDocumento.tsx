@@ -22,6 +22,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { useActualizarTipoDocumento, useCrearTipoDocumento } from '../../hooks/useDocumentos';
+import { cn } from '../../lib/utils';
 import type {
   TipoDocumento,
   AudienciaDocumento,
@@ -127,18 +128,59 @@ export function FormularioTipoDocumento({
     })) || []
   );
 
-  const handleGuardar = async () => {
-    setError(null);
-
-    // Validación básica
+  const validarDatosGenerales = () => {
     if (!codigo.trim()) {
       setError('El código es requerido');
       setActiveTab('general');
-      return;
+      return false;
     }
+
     if (!nombre.trim()) {
       setError('El nombre es requerido');
       setActiveTab('general');
+      return false;
+    }
+
+    if (audiencias.length === 0) {
+      setError('Selecciona al menos una audiencia');
+      setActiveTab('general');
+      return false;
+    }
+
+    return true;
+  };
+
+  const generalCompleto = Boolean(codigo.trim()) && Boolean(nombre.trim()) && audiencias.length > 0;
+
+  const pasosCreacion: Array<{ id: TabId; label: string; summary: string }> = [
+    {
+      id: 'general' as const,
+      label: 'General',
+      summary: generalCompleto
+        ? `${audiencias.length} ${audiencias.length === 1 ? 'audiencia' : 'audiencias'}`
+        : 'Código, nombre y audiencia',
+    },
+    {
+      id: 'campos' as const,
+      label: 'Campos',
+      summary: `${campos.length} ${campos.length === 1 ? 'campo' : 'campos'}`,
+    },
+    {
+      id: 'adjuntos' as const,
+      label: 'Adjuntos',
+      summary: `${adjuntos.length} ${adjuntos.length === 1 ? 'adjunto' : 'adjuntos'}`,
+    },
+  ];
+
+  const irAPaso = (nextTab: TabId) => {
+    setError(null);
+    setActiveTab(nextTab);
+  };
+
+  const handleGuardar = async () => {
+    setError(null);
+
+    if (!validarDatosGenerales()) {
       return;
     }
 
@@ -234,73 +276,84 @@ export function FormularioTipoDocumento({
   const seccionesUnicas = Array.from(new Set(campos.map((c) => c.seccion).filter(Boolean)));
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">
-              {esEdicion ? 'Editar Tipo de Documento' : 'Nuevo Tipo de Documento'}
-            </h2>
-            {esEdicion && (
-              <p className="text-sm text-gray-500">{tipoDocumento.codigo}</p>
-            )}
+    <div className="fixed inset-0 z-50 bg-black/50 sm:p-4">
+      <div className="flex h-[100dvh] w-full flex-col bg-white sm:mx-auto sm:h-[92vh] sm:max-w-5xl sm:rounded-2xl sm:shadow-2xl">
+        <div className="shrink-0 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
+          <div className="flex items-start justify-between gap-4 px-4 py-4 sm:px-6">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
+                {esEdicion ? 'Editar Tipo de Documento' : 'Nuevo Tipo de Documento'}
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                {esEdicion ? tipoDocumento?.codigo : 'Configurá datos generales, campos y adjuntos requeridos.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-2 transition-colors hover:bg-white/60"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
+
+          <div className="border-t border-orange-100 bg-white/90 px-2 backdrop-blur sm:px-6">
+            <div className="flex">
+              <button
+                type="button"
+                onClick={() => irAPaso('general')}
+                className={cn(
+                  'flex min-w-0 flex-1 items-center justify-center gap-2 border-b-2 px-2 py-3 text-sm font-medium transition-colors sm:justify-start sm:px-4',
+                  activeTab === 'general'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                )}
+              >
+                <Settings className="w-4 h-4" />
+                General
+              </button>
+              <button
+                type="button"
+                onClick={() => irAPaso('campos')}
+                className={cn(
+                  'flex min-w-0 flex-1 items-center justify-center gap-2 border-b-2 px-2 py-3 text-sm font-medium transition-colors sm:justify-start sm:px-4',
+                  activeTab === 'campos'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                )}
+              >
+                <FileText className="w-4 h-4" />
+                Campos
+                <span className="text-xs text-gray-400">({campos.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => irAPaso('adjuntos')}
+                className={cn(
+                  'flex min-w-0 flex-1 items-center justify-center gap-2 border-b-2 px-2 py-3 text-sm font-medium transition-colors sm:justify-start sm:px-4',
+                  activeTab === 'adjuntos'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                )}
+              >
+                <Paperclip className="w-4 h-4" />
+                Adjuntos
+                <span className="text-xs text-gray-400">({adjuntos.length})</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('general')}
-            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'general'
-                ? 'text-orange-600 border-b-2 border-orange-500'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            Datos Generales
-          </button>
-          <button
-            onClick={() => setActiveTab('campos')}
-            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'campos'
-                ? 'text-orange-600 border-b-2 border-orange-500'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            Campos ({campos.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('adjuntos')}
-            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'adjuntos'
-                ? 'text-orange-600 border-b-2 border-orange-500'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Paperclip className="w-4 h-4" />
-            Adjuntos ({adjuntos.length})
-          </button>
-        </div>
-
-        {/* Error message */}
         {error && (
-          <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span className="text-sm">{error}</span>
+          <div className="shrink-0 px-4 pt-4 sm:px-6">
+            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm">{error}</span>
+            </div>
           </div>
         )}
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
           {activeTab === 'general' && (
             <TabGeneral
               codigo={codigo}
@@ -316,6 +369,9 @@ export function FormularioTipoDocumento({
               requiereFirma={requiereFirma}
               setRequiereFirma={setRequiereFirma}
               esEdicion={esEdicion}
+              mostrarIntroCreacion={!esEdicion}
+              pasosCreacion={pasosCreacion}
+              irAPaso={irAPaso}
               pdfTemplateId={pdfTemplateId}
               setPdfTemplateId={setPdfTemplateId}
               templatesDisponibles={templatesDisponibles}
@@ -349,26 +405,30 @@ export function FormularioTipoDocumento({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleGuardar}
-            disabled={guardando}
-            className="flex items-center gap-2 px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
-          >
-            {guardando ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            {esEdicion ? 'Guardar cambios' : 'Crear tipo de documento'}
-          </button>
+        <div className="shrink-0 border-t border-gray-100 bg-white/95 px-4 py-4 backdrop-blur sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void handleGuardar()}
+              disabled={guardando}
+              className="flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-5 py-2 text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
+            >
+              {guardando ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {esEdicion ? 'Guardar cambios' : 'Crear tipo de documento'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -393,6 +453,13 @@ interface TabGeneralProps {
   requiereFirma: boolean;
   setRequiereFirma: (v: boolean) => void;
   esEdicion: boolean;
+  mostrarIntroCreacion: boolean;
+  pasosCreacion: Array<{
+    id: TabId;
+    label: string;
+    summary: string;
+  }>;
+  irAPaso: (tab: TabId) => void;
   pdfTemplateId: number | null;
   setPdfTemplateId: (v: number | null) => void;
   templatesDisponibles: PdfTemplateResponse[];
@@ -419,6 +486,9 @@ function TabGeneral({
   requiereFirma,
   setRequiereFirma,
   esEdicion,
+  mostrarIntroCreacion,
+  pasosCreacion,
+  irAPaso,
   pdfTemplateId,
   setPdfTemplateId,
   templatesDisponibles,
@@ -431,6 +501,66 @@ function TabGeneral({
 }: TabGeneralProps) {
   return (
     <div className="space-y-6 max-w-2xl">
+      {mostrarIntroCreacion && (
+        <div className="rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Paso actual
+              </p>
+              <p className="text-sm font-medium text-gray-800">
+                General. Después seguís con Campos y Adjuntos.
+              </p>
+            </div>
+            <span className="inline-flex shrink-0 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-700">
+              1 de 3
+            </span>
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {pasosCreacion.map((paso, index) => {
+              const isActive = index === 0;
+
+              return (
+                <button
+                  key={paso.id}
+                  type="button"
+                  onClick={() => irAPaso(paso.id)}
+                  className={cn(
+                    'rounded-lg border px-3 py-2 text-left transition-colors',
+                    isActive
+                      ? 'border-orange-300 bg-white text-orange-900 shadow-sm'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-orange-200 hover:bg-orange-50/60'
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
+                        isActive
+                          ? 'border-orange-500 bg-orange-500 text-white'
+                          : 'border-gray-300 bg-white text-gray-600'
+                      )}
+                    >
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className={cn('truncate text-sm font-semibold', isActive ? 'text-orange-900' : 'text-gray-900')}>
+                        {paso.label}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className={cn('mt-1 truncate text-[11px]', isActive ? 'text-orange-700' : 'text-gray-500')}>
+                    {paso.summary}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -651,13 +781,14 @@ function TabCampos({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-2xl text-sm text-gray-500">
           Define los campos que el usuario debe completar en este documento.
         </p>
         <button
+          type="button"
           onClick={onAgregar}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm"
+          className="flex items-center gap-2 self-start rounded-lg bg-orange-500 px-4 py-2 text-sm text-white transition-colors hover:bg-orange-600"
         >
           <Plus className="w-4 h-4" />
           Agregar campo
@@ -936,13 +1067,14 @@ function TabAdjuntos({
 }: TabAdjuntosProps) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-2xl text-sm text-gray-500">
           Define los archivos que el usuario debe adjuntar.
         </p>
         <button
+          type="button"
           onClick={onAgregar}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm"
+          className="flex items-center gap-2 self-start rounded-lg bg-orange-500 px-4 py-2 text-sm text-white transition-colors hover:bg-orange-600"
         >
           <Plus className="w-4 h-4" />
           Agregar adjunto

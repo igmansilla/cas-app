@@ -5,6 +5,7 @@
 import { client } from '../client';
 import type {
   TipoDocumento,
+  TipoDocumentoImprimible,
   DocumentoCompletado,
   ArchivoAdjunto,
   ResumenDocumentosMiembro,
@@ -176,6 +177,24 @@ export const documentosService = {
    */
   getDetalleDocumentosUsuario: async (usuarioId: number): Promise<DocumentoCompletado[]> => {
     const response = await client.get(`/documentos/reportes/usuario/${usuarioId}/detalle`);
+    return response.data;
+  },
+
+  /**
+   * Obtiene los tipos de documento imprimibles para un usuario específico.
+   */
+  getTiposImprimiblesUsuario: async (usuarioId: number): Promise<TipoDocumentoImprimible[]> => {
+    const response = await client.get(`/documentos/reportes/usuario/${usuarioId}/tipos-imprimibles`);
+    return response.data;
+  },
+
+  /**
+   * Descarga el PDF compuesto a partir de adjuntos PDF cargados.
+   */
+  descargarAdjuntosPdf: async (tipoDocumentoId: number, usuarioId: number): Promise<Blob> => {
+    const response = await client.get(`/documentos/tipo/${tipoDocumentoId}/usuario/${usuarioId}/adjuntos-pdf`, {
+      responseType: 'blob',
+    });
     return response.data;
   },
 

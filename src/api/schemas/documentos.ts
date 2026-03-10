@@ -28,6 +28,9 @@ export type EstadoDocumento = InferOutput<typeof EstadoDocumentoSchema>;
 export const TipoCampoSchema = picklist(['TEXTO', 'TEXTAREA', 'SELECCION', 'RADIO', 'BOOLEAN', 'FECHA', 'EMAIL', 'TELEFONO', 'NUMERO']);
 export type TipoCampo = InferOutput<typeof TipoCampoSchema>;
 
+export const ModoImpresionDocumentoSchema = picklist(['TEMPLATE', 'ADJUNTOS']);
+export type ModoImpresionDocumento = InferOutput<typeof ModoImpresionDocumentoSchema>;
+
 // ============================================
 // Schemas de Tipos de Documento (Configuración)
 // ============================================
@@ -83,6 +86,18 @@ export const TipoDocumentoSchema = object({
 });
 
 export type TipoDocumento = InferOutput<typeof TipoDocumentoSchema>;
+
+export const TipoDocumentoImprimibleSchema = object({
+  id: number(),
+  codigo: string(),
+  nombre: string(),
+  audiencias: array(AudienciaDocumentoSchema),
+  pdfTemplateId: optional(nullable(number())),
+  pdfTemplateCodigo: optional(nullable(string())),
+  modoImpresion: ModoImpresionDocumentoSchema,
+});
+
+export type TipoDocumentoImprimible = InferOutput<typeof TipoDocumentoImprimibleSchema>;
 
 // ============================================
 // Schemas de Documentos Completados

@@ -20,6 +20,7 @@ export const documentosKeys = {
   resumenFamilia: (familiaId: number) => [...documentosKeys.all, 'familia', familiaId] as const,
   documentosUsuario: (usuarioId: number) => [...documentosKeys.all, 'usuario', usuarioId] as const,
   documento: (tipoId: number, usuarioId: number) => [...documentosKeys.all, 'tipo', tipoId, 'usuario', usuarioId] as const,
+  tiposImprimiblesUsuario: (usuarioId: number) => [...documentosKeys.all, 'reportes', 'usuario', usuarioId, 'tipos-imprimibles'] as const,
   reportes: () => [...documentosKeys.all, 'reportes'] as const,
   reporteGrupo: (grupoId: string) => [...documentosKeys.reportes(), 'grupo', grupoId] as const,
   reporteGeneral: () => [...documentosKeys.reportes(), 'general'] as const,
@@ -175,6 +176,24 @@ export function useDetalleDocumentosUsuario(usuarioId: number) {
     documentos: query.data || [],
     cargando: query.isLoading,
     error: query.error,
+  };
+}
+
+/**
+ * Hook para obtener los tipos de documento imprimibles de un usuario.
+ */
+export function useTiposImprimiblesUsuario(usuarioId: number) {
+  const query = useQuery({
+    queryKey: documentosKeys.tiposImprimiblesUsuario(usuarioId),
+    queryFn: () => documentosService.getTiposImprimiblesUsuario(usuarioId),
+    enabled: usuarioId > 0,
+  });
+
+  return {
+    tipos: query.data || [],
+    cargando: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
   };
 }
 

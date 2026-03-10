@@ -5,8 +5,8 @@
  * Muestra estadísticas generales y detalle por usuario.
  */
 
-import { useState, useMemo } from 'react';
-import { Users, CheckCircle, Clock, AlertTriangle, Search, ChevronDown, Printer, Loader2, FileDown } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Users, Eye, CheckCircle, Clock, AlertTriangle, Search, ChevronDown, Printer, Loader2, FileDown } from 'lucide-react';
 import { useReporteDocumentosGeneral, useReporteDocumentosGrupo } from '../../hooks/useDocumentos';
 import { useGruposAcampantes } from '../../hooks/useGrupos';
 import { useAuth } from '../../hooks/useAuth';
@@ -53,6 +53,12 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
     nombreMostrar: string;
     email: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (!esSecretario && !grupoSeleccionado && gruposKeycloak.length > 0) {
+      setGrupoSeleccionado(gruposKeycloak[0].id);
+    }
+  }, [esSecretario, grupoSeleccionado, gruposKeycloak]);
 
   // Usar reporte general para secretario, o reporte de grupo para dirigentes
   const { reporte: reporteGeneral, cargando: cargandoGeneral } = useReporteDocumentosGeneral();
@@ -129,11 +135,11 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
       )}
 
       {/* Botones de acciones */}
-      <div className="flex flex-wrap gap-3 justify-end">
+      <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:justify-end">
         <button
           onClick={handleBulkPrint}
-          disabled={cargandoBulk}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 shadow-sm"
+          disabled={cargandoBulk || usuariosFiltrados.length === 0}
+          className="flex h-11 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
         >
           {cargandoBulk ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -144,7 +150,8 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
         </button>
         <button
           onClick={() => setMostrarGenerarPdf(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 shadow-sm"
+          disabled={usuariosFiltrados.length === 0}
+          className="flex h-11 items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-white shadow-sm transition-colors hover:bg-orange-600 disabled:opacity-50"
         >
           <FileDown className="w-4 h-4" />
           Generar PDFs
@@ -256,59 +263,133 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
         </div>
       </div>
 
-      {/* Lista de usuarios */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">
-                  Usuario
-                </th>
-                <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">
-                  Progreso
-                </th>
-                <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 hidden md:table-cell">
-                  Completos
-                </th>
-                <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 hidden md:table-cell">
-                  Pendientes
-                </th>
-                <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">
-                  Estado
-                </th>
-                <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {usuariosFiltrados.map((usuario) => (
-                <UsuarioRow
-                  key={usuario.usuarioId}
-                  usuario={usuario}
-                  onClick={() => onSelectUsuario?.(usuario.usuarioId, usuario.usuarioNombre ?? undefined)}
-                  onGenerarPdf={() => {
-                    setUsuarioParaPdf({
-                      id: usuario.usuarioId,
-                      nombreMostrar: usuario.usuarioNombre || 'Sin nombre',
-                      email: usuario.usuarioEmail || '',
-                    });
-                    setMostrarGenerarPdf(true);
-                  }}
-                />
-              ))}
-              {usuariosFiltrados.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-500">
-                    No se encontraron usuarios
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="space-y-3 lg:hidden">
+        {usuariosFiltrados.map((usuario) => (
+          <UsuarioMobileCard
+            key={usuario.usuarioId}
+            usuario={usuario}
+            onClick={onSelectUsuario ? () => onSelectUsuario(usuario.usuarioId, usuario.usuarioNombre ?? undefined) : undefined}
+            onGenerarPdf={() => {
+              setUsuarioParaPdf({
+                id: usuario.usuarioId,
+                nombreMostrar: usuario.usuarioNombre || 'Sin nombre',
+                email: usuario.usuarioEmail || '',
+              });
+              setMostrarGenerarPdf(true);
+            }}
+          />
+        ))}
+
+        {usuariosFiltrados.length === 0 && (
+          <div className="rounded-xl border border-gray-100 bg-white px-4 py-8 text-center text-gray-500 shadow-sm">
+            No se encontraron usuarios
+          </div>
+        )}
       </div>
+
+      <div className="hidden overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm lg:block">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                Usuario
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                Progreso
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                Completos
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                Pendientes
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                Estado
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {usuariosFiltrados.map((usuario) => (
+              <UsuarioRow
+                key={usuario.usuarioId}
+                usuario={usuario}
+                onClick={() => onSelectUsuario?.(usuario.usuarioId, usuario.usuarioNombre ?? undefined)}
+                onGenerarPdf={() => {
+                  setUsuarioParaPdf({
+                    id: usuario.usuarioId,
+                    nombreMostrar: usuario.usuarioNombre || 'Sin nombre',
+                    email: usuario.usuarioEmail || '',
+                  });
+                  setMostrarGenerarPdf(true);
+                }}
+              />
+            ))}
+            {usuariosFiltrados.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-gray-500">
+                  No se encontraron usuarios
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function getPorcentaje(usuario: ResumenDocumentosMiembro) {
+  return usuario.totalDocumentos > 0
+    ? Math.round((usuario.documentosCompletos / usuario.totalDocumentos) * 100)
+    : 0;
+}
+
+function getEstadoInfo(porcentaje: number) {
+  if (porcentaje === 100) {
+    return {
+      label: 'Completo',
+      className: 'bg-green-100 text-green-700',
+    };
+  }
+
+  if (porcentaje === 0) {
+    return {
+      label: 'Sin iniciar',
+      className: 'bg-gray-100 text-gray-600',
+    };
+  }
+
+  return {
+    label: 'En progreso',
+    className: 'bg-yellow-100 text-yellow-700',
+  };
+}
+
+function EstadoBadge({ porcentaje }: { porcentaje: number }) {
+  const estado = getEstadoInfo(porcentaje);
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${estado.className}`}>
+      {estado.label}
+    </span>
+  );
+}
+
+function ProgresoBar({ porcentaje }: { porcentaje: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+        <div
+          className={`h-full transition-all ${
+            porcentaje === 100 ? 'bg-green-500' : porcentaje > 0 ? 'bg-yellow-500' : 'bg-gray-300'
+          }`}
+          style={{ width: `${porcentaje}%` }}
+        />
+      </div>
+      <span className="w-10 text-right text-sm font-medium text-gray-700">{porcentaje}%</span>
     </div>
   );
 }
@@ -346,19 +427,7 @@ interface UsuarioRowProps {
 }
 
 function UsuarioRow({ usuario, onClick, onGenerarPdf }: UsuarioRowProps) {
-  const porcentaje = usuario.totalDocumentos > 0
-    ? Math.round((usuario.documentosCompletos / usuario.totalDocumentos) * 100)
-    : 0;
-
-  const getEstadoBadge = () => {
-    if (porcentaje === 100) {
-      return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">Completo</span>;
-    }
-    if (porcentaje === 0) {
-      return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">Sin iniciar</span>;
-    }
-    return <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700">En progreso</span>;
-  };
+  const porcentaje = getPorcentaje(usuario);
 
   return (
     <tr
@@ -372,15 +441,9 @@ function UsuarioRow({ usuario, onClick, onGenerarPdf }: UsuarioRowProps) {
       </td>
       <td className="px-4 py-3 cursor-pointer" onClick={onClick}>
         <div className="flex items-center justify-center gap-2">
-          <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full transition-all ${
-                porcentaje === 100 ? 'bg-green-500' : porcentaje > 0 ? 'bg-yellow-500' : 'bg-gray-300'
-              }`}
-              style={{ width: `${porcentaje}%` }}
-            />
+          <div className="w-full max-w-[180px]">
+            <ProgresoBar porcentaje={porcentaje} />
           </div>
-          <span className="text-sm font-medium text-gray-700 w-10">{porcentaje}%</span>
         </div>
       </td>
       <td className="px-4 py-3 text-center hidden md:table-cell">
@@ -392,18 +455,77 @@ function UsuarioRow({ usuario, onClick, onGenerarPdf }: UsuarioRowProps) {
         </span>
       </td>
       <td className="px-4 py-3 text-center">
-        {getEstadoBadge()}
+        <EstadoBadge porcentaje={porcentaje} />
       </td>
       <td className="px-4 py-3 text-center">
         <button
           onClick={(e) => { e.stopPropagation(); onGenerarPdf?.(); }}
-          className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-orange-600 transition-colors hover:bg-orange-50"
           title="Generar PDF"
         >
           <FileDown className="w-4 h-4" />
         </button>
       </td>
     </tr>
+  );
+}
+
+function UsuarioMobileCard({ usuario, onClick, onGenerarPdf }: UsuarioRowProps) {
+  const porcentaje = getPorcentaje(usuario);
+  const pendientes = usuario.documentosPendientes + usuario.documentosSinIniciar;
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-medium text-gray-900">{usuario.usuarioNombre || 'Sin nombre'}</p>
+          <p className="mt-1 break-all text-sm text-gray-500">{usuario.usuarioEmail || 'Sin email'}</p>
+        </div>
+        <EstadoBadge porcentaje={porcentaje} />
+      </div>
+
+      <div className="mt-4 rounded-xl bg-gray-50 p-3">
+        <div className="mb-2 flex items-center justify-between text-sm text-gray-600">
+          <span>Progreso</span>
+          <span className="font-medium text-gray-900">{porcentaje}%</span>
+        </div>
+        <ProgresoBar porcentaje={porcentaje} />
+
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-lg bg-white px-2 py-2">
+            <p className="text-xs text-gray-500">Completos</p>
+            <p className="text-sm font-semibold text-gray-900">{usuario.documentosCompletos}</p>
+          </div>
+          <div className="rounded-lg bg-white px-2 py-2">
+            <p className="text-xs text-gray-500">Pendientes</p>
+            <p className="text-sm font-semibold text-gray-900">{pendientes}</p>
+          </div>
+          <div className="rounded-lg bg-white px-2 py-2">
+            <p className="text-xs text-gray-500">Total</p>
+            <p className="text-sm font-semibold text-gray-900">{usuario.totalDocumentos}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex gap-2">
+        {onClick && (
+          <button
+            onClick={onClick}
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <Eye className="w-4 h-4" />
+            Ver detalle
+          </button>
+        )}
+        <button
+          onClick={onGenerarPdf}
+          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 text-sm font-medium text-white transition-colors hover:bg-orange-600"
+        >
+          <FileDown className="w-4 h-4" />
+          Generar PDF
+        </button>
+      </div>
+    </div>
   );
 }
 

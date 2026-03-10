@@ -188,7 +188,7 @@ function TemplateEditorPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          {viewMode === 'list' && (
+          {viewMode === 'list' && templates.length > 0 && (
             <button
               onClick={handleNuevoTemplate}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg whitespace-nowrap"
