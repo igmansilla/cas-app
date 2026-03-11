@@ -50,6 +50,9 @@ function AcampantesPage() {
     const activeTab: UsuariosTab = tab === 'reuniones' && !puedePlanificarReuniones
         ? 'acampantes'
         : tab ?? 'acampantes';
+    const tabsListClassName = puedePlanificarReuniones
+        ? 'grid h-auto w-full grid-cols-2 gap-1 p-1 sm:max-w-2xl sm:grid-cols-4'
+        : 'grid h-auto w-full grid-cols-2 gap-1 p-1 sm:max-w-lg sm:grid-cols-3';
 
     // Filtrar solo acampantes para esta vista
     const acampantes = usuarios.filter(u => u.roles.includes('ACAMPANTE'));
@@ -72,11 +75,11 @@ function AcampantesPage() {
     };
 
     return (
-        <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        <div className="mx-auto max-w-7xl space-y-5 p-4 sm:space-y-6 sm:p-6">
             {/* Header */}
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Acampantes y grupos</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Acampantes y grupos</h1>
+                <p className="text-sm text-muted-foreground sm:text-base">
                     Gestión de acampantes, jerarquía de grupos, asignaciones y planificación de reuniones.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-2">
@@ -90,24 +93,24 @@ function AcampantesPage() {
             </div>
 
             {/* Main content with tabs */}
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-                <TabsList className={puedePlanificarReuniones ? 'grid w-full max-w-2xl grid-cols-4' : 'grid w-full max-w-lg grid-cols-3'}>
-                    <TabsTrigger value="acampantes" className="flex items-center gap-2">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6">
+                <TabsList className={tabsListClassName}>
+                    <TabsTrigger value="acampantes" className="flex min-h-10 min-w-0 items-center gap-2 px-3 py-2 text-xs sm:text-sm">
                         <Users className="w-4 h-4" />
-                        <span className="hidden sm:inline">Acampantes</span>
+                        <span className="truncate">Acampantes</span>
                     </TabsTrigger>
-                    <TabsTrigger value="grupos" className="flex items-center gap-2">
+                    <TabsTrigger value="grupos" className="flex min-h-10 min-w-0 items-center gap-2 px-3 py-2 text-xs sm:text-sm">
                         <Tent className="w-4 h-4" />
-                        <span className="hidden sm:inline">Grupos</span>
+                        <span className="truncate">Grupos</span>
                     </TabsTrigger>
-                    <TabsTrigger value="asignar" className="flex items-center gap-2">
+                    <TabsTrigger value="asignar" className="flex min-h-10 min-w-0 items-center gap-2 px-3 py-2 text-xs sm:text-sm">
                         <Kanban className="w-4 h-4" />
-                        <span className="hidden sm:inline">Asignar</span>
+                        <span className="truncate">Asignar</span>
                     </TabsTrigger>
                     {puedePlanificarReuniones && (
-                        <TabsTrigger value="reuniones" className="flex items-center gap-2">
+                        <TabsTrigger value="reuniones" className="flex min-h-10 min-w-0 items-center gap-2 px-3 py-2 text-xs sm:text-sm">
                             <CalendarClock className="w-4 h-4" />
-                            <span className="hidden sm:inline">Reuniones</span>
+                            <span className="truncate">Reuniones</span>
                         </TabsTrigger>
                     )}
                 </TabsList>

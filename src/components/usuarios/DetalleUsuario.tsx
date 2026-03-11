@@ -44,23 +44,23 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
 
     return (
         <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-            <SheetContent className="overflow-y-auto w-full sm:max-w-md">
-                <SheetHeader className="pb-4">
-                    <SheetTitle className="text-xl">Ficha de acampante</SheetTitle>
+            <SheetContent className="w-full max-w-full gap-0 overflow-y-auto sm:max-w-md">
+                <SheetHeader className="border-b pb-3 sm:pb-4">
+                    <SheetTitle className="pr-8 text-lg sm:text-xl">Ficha de acampante</SheetTitle>
                 </SheetHeader>
 
-                <div className="space-y-6 py-4">
+                <div className="space-y-5 px-4 py-3 sm:space-y-6 sm:px-6 sm:py-4">
                     {/* Header con avatar grande */}
-                    <div className="flex flex-col items-center text-center gap-4 p-6 rounded-xl bg-gradient-to-br from-muted/50 to-muted">
-                        <Avatar className="w-24 h-24 border-4 border-background shadow-lg">
+                    <div className="flex flex-col items-center gap-3 rounded-xl bg-gradient-to-br from-muted/50 to-muted p-4 text-center sm:gap-4 sm:p-6">
+                        <Avatar className="h-20 w-20 border-4 border-background shadow-lg sm:h-24 sm:w-24">
                             <AvatarImage src={usuario.urlFoto ?? undefined} />
                             <AvatarFallback className="text-2xl font-semibold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                                 {getInitials(usuario.nombreMostrar)}
                             </AvatarFallback>
                         </Avatar>
                         <div className="space-y-1">
-                            <h3 className="font-bold text-xl">{usuario.nombreMostrar}</h3>
-                            <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                            <h3 className="text-lg font-bold sm:text-xl">{usuario.nombreMostrar}</h3>
+                            <p className="flex items-center justify-center gap-2 break-all text-xs text-muted-foreground sm:text-sm">
                                 <Mail className="w-4 h-4" />
                                 {usuario.email}
                             </p>
@@ -98,7 +98,7 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
                             </div>
                             <h4 className="font-semibold">Roles del Sistema</h4>
                         </div>
-                        <div className="p-4 rounded-xl border bg-card">
+                        <div className="rounded-xl border bg-card p-3 sm:p-4">
                             <GestorRoles 
                                 usuarioId={usuario.id}
                                 rolesActuales={usuario.roles}
@@ -120,7 +120,7 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
                             </div>
                             <h4 className="font-semibold">Grupos</h4>
                         </div>
-                        <div className="p-4 rounded-xl border bg-card">
+                        <div className="rounded-xl border bg-card p-3 sm:p-4">
                             <GestorGrupos 
                                 usuarioId={usuario.id}
                                 gruposActuales={grupos}
@@ -143,10 +143,10 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
                             <h4 className="font-semibold">Información del Sistema</h4>
                         </div>
                         
-                        <div className="grid gap-3 p-4 rounded-xl border bg-card">
+                        <div className="grid gap-3 rounded-xl border bg-card p-3 sm:p-4">
                             <InfoRow 
                                 label="ID interno" 
-                                value={<code className="bg-muted px-2 py-1 rounded text-xs font-mono">{usuario.id}</code>}
+                                value={<code className="break-all rounded bg-muted px-2 py-1 text-xs font-mono">{usuario.id}</code>}
                             />
                             <InfoRow 
                                 label="Email verificado" 
@@ -179,7 +179,7 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
 // Helper component for info rows
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
     return (
-        <div className="flex items-center justify-between py-1">
+        <div className="flex flex-col gap-1 py-1 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm text-muted-foreground">{label}</span>
             <div className="text-sm">{value}</div>
         </div>

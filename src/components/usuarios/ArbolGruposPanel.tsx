@@ -174,22 +174,23 @@ export function ArbolGruposPanel() {
 
     return (
         <>
-            <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-            <section className="rounded-2xl border bg-card shadow-sm">
-                <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+            <div className="grid gap-4 lg:gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+            <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                <div className="flex flex-col gap-3 border-b px-4 py-4 sm:px-5 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h2 className="text-lg font-semibold">Jerarquía de grupos</h2>
                         <p className="text-sm text-muted-foreground">
                             Navegación por click sobre la estructura real del campamento.
                         </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
                         {canManageGroups && (
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setIsCreateDialogOpen(true)}
                                 disabled={isMutatingGroups}
+                                className="flex-1 sm:flex-none"
                             >
                                 {createMutation.isPending ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -202,7 +203,7 @@ export function ArbolGruposPanel() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="shrink-0"
+                            className="min-w-0 flex-1 shrink-0 sm:flex-none"
                             onClick={handleSync}
                             disabled={syncMutation.isPending || isMutatingGroups}
                         >
@@ -216,7 +217,7 @@ export function ArbolGruposPanel() {
                     </div>
                 </div>
 
-                <div className="max-h-[72vh] overflow-y-auto px-3 py-4">
+                <div className="max-h-[45vh] overflow-y-auto px-3 py-4 sm:max-h-[72vh]">
                     {error ? (
                         <Alert variant="destructive">
                             <AlertDescription>
@@ -254,9 +255,9 @@ export function ArbolGruposPanel() {
                 </div>
             </section>
 
-            <section className="rounded-2xl border bg-card shadow-sm">
+            <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
                 {cargandoDetalle ? (
-                    <div className="flex min-h-[360px] items-center justify-center">
+                    <div className="flex min-h-[320px] items-center justify-center sm:min-h-[360px]">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                 ) : detalle ? (
@@ -269,7 +270,7 @@ export function ArbolGruposPanel() {
                         onDeleteGroup={setDeleteTarget}
                     />
                 ) : (
-                    <div className="flex min-h-[360px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                    <div className="flex min-h-[320px] items-center justify-center px-4 text-center text-sm text-muted-foreground sm:min-h-[360px] sm:px-6">
                         Seleccioná un nodo del árbol para ver integrantes, subgrupos y dirigentes a cargo.
                     </div>
                 )}
@@ -366,7 +367,7 @@ function GrupoTreeNode({
         <div className="space-y-1">
             <div
                 className={cn(
-                    'flex items-center gap-2 rounded-2xl border px-3 py-2 transition-colors',
+                    'flex items-center gap-2 rounded-2xl border px-2.5 py-2 transition-colors sm:px-3',
                     isSelected
                         ? 'border-primary bg-primary/8 shadow-sm'
                         : 'border-transparent hover:border-border hover:bg-muted/40'
@@ -446,16 +447,16 @@ function GrupoDetallePanel({
     const isAcampantesRoot = isAcampantesRootPath(detalle.path);
 
     return (
-        <div className="space-y-6 px-6 py-5">
+        <div className="space-y-5 px-4 py-4 sm:space-y-6 sm:px-6 sm:py-5">
             <div className="space-y-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-3">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-start gap-3">
                             <div className={cn('rounded-2xl p-3', descriptor.iconContainerClass)}>
                                 <Icon className={cn('h-5 w-5', descriptor.iconClass)} />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-semibold tracking-tight">{detalle.nombre}</h2>
+                                <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">{detalle.nombre}</h2>
                                 <p className="text-sm text-muted-foreground">{descriptor.description}</p>
                             </div>
                         </div>
@@ -477,11 +478,11 @@ function GrupoDetallePanel({
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
                         {canEditGroup && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" disabled={isMutatingGroups}>
+                                    <Button variant="outline" size="sm" disabled={isMutatingGroups} className="flex-1 lg:flex-none">
                                         <MoreVertical className="mr-2 h-4 w-4" />
                                         Gestionar
                                     </Button>
@@ -502,21 +503,21 @@ function GrupoDetallePanel({
                             </DropdownMenu>
                         )}
                         {detalle.padreId && detalle.padreNombre && (
-                            <Button variant="outline" onClick={() => onSelectNode(detalle.padreId!)}>
+                            <Button variant="outline" onClick={() => onSelectNode(detalle.padreId!)} className="flex-1 lg:flex-none">
                                 Volver a {detalle.padreNombre}
                             </Button>
                         )}
                     </div>
                 </div>
 
-                <div className="rounded-2xl border bg-muted/20 p-4">
+                <div className="rounded-2xl border bg-muted/20 p-3 sm:p-4">
                     <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         Ubicación en el árbol
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                         {breadcrumbs.map((crumb, index) => (
                             <div key={`${crumb}-${index}`} className="flex items-center gap-2">
-                                <span className="rounded-full bg-background px-3 py-1 shadow-sm">{crumb}</span>
+                                <span className="max-w-full rounded-full bg-background px-3 py-1 shadow-sm">{crumb}</span>
                                 {index < breadcrumbs.length - 1 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                             </div>
                         ))}
@@ -526,7 +527,7 @@ function GrupoDetallePanel({
 
             <Separator />
 
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]">
+            <div className="grid gap-5 sm:gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]">
                 <div className="space-y-6">
                     <section className="space-y-3">
                         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -547,7 +548,7 @@ function GrupoDetallePanel({
                                             key={child.id}
                                             type="button"
                                             onClick={() => onSelectNode(child.id)}
-                                            className="flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                                            className="flex w-full items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition-colors hover:bg-muted/40 sm:px-4"
                                         >
                                             <div className="flex min-w-0 items-center gap-3">
                                                 <div className={cn('rounded-xl p-2', childDescriptor.iconContainerClass)}>
@@ -602,11 +603,11 @@ function MiembrosList({ miembros, emptyLabel }: { miembros: MiembroGrupo[]; empt
                 .slice()
                 .sort((left, right) => left.nombreMostrar.localeCompare(right.nombreMostrar, 'es', { sensitivity: 'base' }))
                 .map((miembro) => (
-                    <div key={`${miembro.keycloakId}-${miembro.email}`} className="rounded-2xl border px-4 py-3">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="space-y-1">
+                    <div key={`${miembro.keycloakId}-${miembro.email}`} className="rounded-2xl border px-3 py-3 sm:px-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0 space-y-1">
                                 <div className="font-medium">{miembro.nombreMostrar}</div>
-                                <div className="text-sm text-muted-foreground">{miembro.email}</div>
+                                <div className="break-all text-sm text-muted-foreground">{miembro.email}</div>
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {(miembro.roles ?? []).length > 0 ? (

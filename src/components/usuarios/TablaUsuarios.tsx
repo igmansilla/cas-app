@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type KeyboardEvent } from 'react';
 import { 
     Table, 
     TableBody, 
@@ -17,6 +17,7 @@ import {
 } from '../ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
+import { Card, CardContent } from '../ui/card';
 import { GestorRoles } from './GestorRoles';
 import { Search, Users, Loader2 } from 'lucide-react';
 import type { UsuarioAdmin } from '../../api/services/usuariosAdmin';
@@ -56,6 +57,17 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
             .slice(0, 2);
     };
 
+    const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, usuario: UsuarioAdmin) => {
+        if (!onVerDetalle) {
+            return;
+        }
+
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onVerDetalle(usuario);
+        }
+    };
+
     if (cargando) {
         return (
             <div className="flex items-center justify-center py-12">
@@ -67,7 +79,7 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
     return (
         <div className="space-y-4">
             {/* Filtros */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -96,8 +108,65 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
                 <span>{usuariosFiltrados.length} acampantes</span>
             </div>
 
+            <div className="space-y-3 md:hidden">
+                {usuariosFiltrados.length === 0 ? (
+                    <div className="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
+                        No se encontraron acampantes
+                    </div>
+                ) : (
+                    usuariosFiltrados.map(usuario => (
+                        <Card
+                            key={usuario.id}
+                            className="gap-0 py-0 transition-colors hover:border-primary/40 hover:bg-muted/20"
+                            role={onVerDetalle ? 'button' : undefined}
+                            tabIndex={onVerDetalle ? 0 : undefined}
+                            onClick={() => onVerDetalle?.(usuario)}
+                            onKeyDown={(event) => handleCardKeyDown(event, usuario)}
+                        >
+                            <div className="flex items-start gap-3 px-4 py-4">
+                                <Avatar className="h-10 w-10 shrink-0">
+                                    <AvatarImage src={usuario.urlFoto ?? undefined} />
+                                    <AvatarFallback className="text-xs">
+                                        {getInitials(usuario.nombreMostrar)}
+                                    </AvatarFallback>
+                                </Avatar>
+
+                                <div className="min-w-0 flex-1 space-y-2">
+                                    <div className="flex flex-wrap items-start justify-between gap-2">
+                                        <div className="min-w-0">
+                                            <div className="truncate font-medium">{usuario.nombreMostrar}</div>
+                                            <div className="break-all text-xs text-muted-foreground">{usuario.email}</div>
+                                        </div>
+                                        <Badge variant={usuario.estado === 'ACTIVO' ? 'default' : 'secondary'}>
+                                            {usuario.estado}
+                                        </Badge>
+                                    </div>
+
+                                    <p className="text-xs text-muted-foreground">
+                                        {usuario.roles.length} roles asignados
+                                    </p>
+                                </div>
+                            </div>
+
+                            <CardContent
+                                className="space-y-2 border-t px-4 py-3"
+                                onClick={(event) => event.stopPropagation()}
+                            >
+                                <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                                    Roles
+                                </div>
+                                <GestorRoles
+                                    usuarioId={usuario.id}
+                                    rolesActuales={usuario.roles}
+                                />
+                            </CardContent>
+                        </Card>
+                    ))
+                )}
+            </div>
+
             {/* Tabla */}
-            <div className="rounded-lg border">
+            <div className="hidden rounded-lg border md:block">
                 <Table>
                     <TableHeader>
                         <TableRow>
