@@ -76,6 +76,10 @@ function getInlineErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+function isNotFoundAxiosError(error: unknown) {
+  return axios.isAxiosError(error) && error.response?.status === 404;
+}
+
 async function getApiErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data;
@@ -152,7 +156,9 @@ export function GenerarPdfModal({ usuario, usuarios, onClose }: GenerarPdfModalP
       modoImpresion: 'TEMPLATE',
     }));
 
-  const opcionesTipo = esMasivo ? tiposConTemplate : tiposImprimibles;
+  const usarFallbackTemplates = !esMasivo && isNotFoundAxiosError(errorTiposImprimibles);
+  const mostrarErrorTiposImprimibles = !esMasivo && Boolean(errorTiposImprimibles) && !usarFallbackTemplates;
+  const opcionesTipo = esMasivo || usarFallbackTemplates ? tiposConTemplate : tiposImprimibles;
   const tipoSeleccionado = opcionesTipo.find((tipo) => tipo.id === tipoSeleccionadoId) ?? null;
   const requiereTemplate = tipoSeleccionado?.modoImpresion === 'TEMPLATE';
   const puedeGenerar = Boolean(tipoSeleccionado)
@@ -297,10 +303,14 @@ export function GenerarPdfModal({ usuario, usuarios, onClose }: GenerarPdfModalP
 
   const tituloEmptyState = esMasivo
     ? 'No hay templates PDF asociados'
-    : 'No hay documentos imprimibles';
+    : usarFallbackTemplates
+      ? 'No hay documentos con template disponibles'
+      : 'No hay documentos imprimibles';
   const detalleEmptyState = esMasivo
     ? 'Primero asociá un template PDF desde Configuración para habilitar la impresión masiva.'
-    : 'Este usuario no tiene documentos aplicables con template o adjuntos PDF disponibles para imprimir.';
+    : usarFallbackTemplates
+      ? 'Este entorno todavía no expone el listado de imprimibles por usuario. Como compatibilidad, solo se muestran documentos con template PDF asociado.'
+      : 'Este usuario no tiene documentos aplicables con template o adjuntos PDF disponibles para imprimir.';
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 sm:p-4">
@@ -341,13 +351,19 @@ export function GenerarPdfModal({ usuario, usuarios, onClose }: GenerarPdfModalP
             </div>
           )}
 
-          {!esMasivo && errorTiposImprimibles && (
+          {usarFallbackTemplates && (
+            <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
+              Este backend todav\u00eda no expone el listado de imprimibles por usuario. Se muestran solo documentos con template PDF asociado.
+            </div>
+          )}
+
+          {mostrarErrorTiposImprimibles && (
             <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
               {getInlineErrorMessage(errorTiposImprimibles, 'No se pudo cargar el listado de documentos imprimibles.')}
             </div>
           )}
 
-          {(!(!esMasivo && errorTiposImprimibles) && opcionesTipo.length > 0) && (
+          {(!mostrarErrorTiposImprimibles && opcionesTipo.length > 0) && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {esMasivo ? 'Tipo de documento' : 'Documento imprimible'}
@@ -371,7 +387,7 @@ export function GenerarPdfModal({ usuario, usuarios, onClose }: GenerarPdfModalP
             </div>
           )}
 
-          {!cargandoTiposImprimibles && !errorTiposImprimibles && opcionesTipo.length === 0 && (
+          {!cargandoTiposImprimibles && !mostrarErrorTiposImprimibles && opcionesTipo.length === 0 && (
             <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-gray-500">
               <p className="font-medium text-gray-700">{tituloEmptyState}</p>
               <p className="mt-1 text-sm">{detalleEmptyState}</p>

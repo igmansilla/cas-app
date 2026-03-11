@@ -4,6 +4,7 @@
  * Proporcionan estado reactivo para operaciones de documentos usando TanStack Query.
  */
 
+import axios from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { documentosService } from '../api/services/documentos';
 import type { GuardarDocumentoRequest, CrearTipoDocumentoRequest } from '../api/schemas/documentos';
@@ -187,6 +188,13 @@ export function useTiposImprimiblesUsuario(usuarioId: number) {
     queryKey: documentosKeys.tiposImprimiblesUsuario(usuarioId),
     queryFn: () => documentosService.getTiposImprimiblesUsuario(usuarioId),
     enabled: usuarioId > 0,
+    retry: (failureCount, error) => {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return false;
+      }
+
+      return failureCount < 3;
+    },
   });
 
   return {

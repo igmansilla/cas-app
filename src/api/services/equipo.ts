@@ -61,6 +61,52 @@ export interface ActualizarItemRequest {
   requisitosFoto?: RequisitoFotoRequest[];
 }
 
+const notNullish = <T>(value: T | null | undefined): value is T => value != null;
+
+const normalizeRequisitosFoto = (
+  requisitosFoto: ItemEquipo['requisitosFoto'] | null | undefined,
+): ItemEquipo['requisitosFoto'] => {
+  if (!Array.isArray(requisitosFoto)) {
+    return [];
+  }
+
+  return requisitosFoto.filter(notNullish);
+};
+
+const normalizeItem = (item: ItemEquipo | null | undefined): ItemEquipo | null => {
+  if (!item) {
+    return null;
+  }
+
+  return {
+    ...item,
+    requisitosFoto: normalizeRequisitosFoto(item.requisitosFoto),
+  };
+};
+
+const normalizeCategorias = (categorias: CategoriaEquipo[] | null | undefined): CategoriaEquipo[] => {
+  if (!Array.isArray(categorias)) {
+    return [];
+  }
+
+  return categorias
+    .filter(notNullish)
+    .map((categoria) => ({
+      ...categoria,
+      items: Array.isArray(categoria.items)
+        ? categoria.items.map((item) => normalizeItem(item)).filter(notNullish)
+        : [],
+    }));
+};
+
+const normalizeFotos = (fotos: FotoCargadaEquipo[] | null | undefined): FotoCargadaEquipo[] => {
+  if (!Array.isArray(fotos)) {
+    return [];
+  }
+
+  return fotos.filter(notNullish);
+};
+
 // ============================================
 // Servicio de Equipo
 // ============================================
@@ -75,7 +121,7 @@ export const equipoService = {
    */
   getCategorias: async (): Promise<CategoriaEquipo[]> => {
     const response = await client.get('/equipo/categorias');
-    return response.data;
+    return normalizeCategorias(response.data);
   },
 
   /**
@@ -213,7 +259,7 @@ export const equipoService = {
    */
   getMisFotos: async (): Promise<FotoCargadaEquipo[]> => {
     const response = await client.get('/equipo/mis-fotos');
-    return response.data;
+    return normalizeFotos(response.data);
   },
 
   /**
