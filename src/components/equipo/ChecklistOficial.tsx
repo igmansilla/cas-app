@@ -250,22 +250,24 @@ export function ChecklistOficial() {
 
       {/* Modal de detalle de categoría (Desktop) */}
       <Dialog open={!!categoriaSeleccionada} onOpenChange={() => setCategoriaSeleccionada(null)}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-xl flex-col overflow-hidden p-0 sm:max-h-[90vh] sm:w-full">
+          <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 text-left sm:px-6">
             <DialogTitle className="text-lg">{categoriaSeleccionada?.nombre}</DialogTitle>
           </DialogHeader>
-          <div className="divide-y divide-gray-100 -mx-2">
-            {categoriaSeleccionada?.items.map((item) => (
-              <ItemEquipoCheck
-                key={item.id}
-                item={item}
-                completado={progreso?.progreso[item.id]?.completado || false}
-                fotoResumen={getFotoResumen(item)}
-                onToggle={() => handleToggleItem(item.id)}
-                onPhotoClick={item.requisitosFoto.length > 0 ? () => setItemSeleccionadoParaFoto(item) : undefined}
-                cargando={itemCargando === item.id}
-              />
-            ))}
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+            <div className="divide-y divide-gray-100 -mx-2">
+              {categoriaSeleccionada?.items.map((item) => (
+                <ItemEquipoCheck
+                  key={item.id}
+                  item={item}
+                  completado={progreso?.progreso[item.id]?.completado || false}
+                  fotoResumen={getFotoResumen(item)}
+                  onToggle={() => handleToggleItem(item.id)}
+                  onPhotoClick={item.requisitosFoto.length > 0 ? () => setItemSeleccionadoParaFoto(item) : undefined}
+                  cargando={itemCargando === item.id}
+                />
+              ))}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

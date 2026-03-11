@@ -4,3 +4,4 @@ export { GestorRoles } from './GestorRoles';
 export { GestorGrupos } from './GestorGrupos';
 export { AsignadorGruposKanban } from './AsignadorGruposKanban';
 export { ArbolGruposPanel } from './ArbolGruposPanel';
+export { PlanificacionReunionesGruposPanel } from './PlanificacionReunionesGruposPanel';

@@ -541,195 +541,197 @@ function ModalItem({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-2xl flex-col overflow-hidden p-0 sm:max-h-[90vh] sm:w-full">
+        <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 text-left sm:px-6">
           <DialogTitle>{editar ? 'Editar item' : 'Nuevo item'}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="item-nombre">Nombre</Label>
-            <Input
-              id="item-nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ej: Botas de trekking"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="cantidad">Cantidad</Label>
+              <Label htmlFor="item-nombre">Nombre</Label>
               <Input
-                id="cantidad"
-                type="number"
-                min={1}
-                value={cantidad}
-                onChange={(e) => setCantidad(Number(e.target.value))}
+                id="item-nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Ej: Botas de trekking"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cantidad">Cantidad</Label>
+                <Input
+                  id="cantidad"
+                  type="number"
+                  min={1}
+                  value={cantidad}
+                  onChange={(e) => setCantidad(Number(e.target.value))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Criticidad</Label>
+                <Select value={criticidad} onValueChange={(v) => setCriticidad(v as Criticidad)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CRITICO">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-500" />
+                        Crítico
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="IMPORTANTE">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-orange-500" />
+                        Importante
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="NORMAL">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-gray-400" />
+                        Normal
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notas">Notas (opcional)</Label>
+              <Input
+                id="notas"
+                value={notas}
+                onChange={(e) => setNotas(e.target.value)}
+                placeholder="Ej: mejor micropolar"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Criticidad</Label>
-              <Select value={criticidad} onValueChange={(v) => setCriticidad(v as Criticidad)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CRITICO">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-500" />
-                      Crítico
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="IMPORTANTE">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-orange-500" />
-                      Importante
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="NORMAL">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-gray-400" />
-                      Normal
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notas">Notas (opcional)</Label>
-            <Input
-              id="notas"
-              value={notas}
-              onChange={(e) => setNotas(e.target.value)}
-              placeholder="Ej: mejor micropolar"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="evitar">Evitar (opcional)</Label>
-            <Input
-              id="evitar"
-              value={evitar}
-              onChange={(e) => setEvitar(e.target.value)}
-              placeholder="Ej: algodón, tela"
-            />
-          </div>
-
-          {/* Toggle Requiere Foto */}
-          <div className="flex items-center justify-between border rounded-lg p-3 bg-indigo-50/50">
-            <div className="flex items-center gap-2">
-              <Camera className="w-4 h-4 text-indigo-600" />
-              <div>
-                <Label htmlFor="requiereFoto" className="cursor-pointer">Requiere foto</Label>
-                <p className="text-xs text-gray-500">El acampante deberá subir una foto de este item</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={requiereFoto}
-              onClick={toggleRequiereFoto}
-              className={cn(
-                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                requiereFoto ? "bg-indigo-600" : "bg-gray-200"
-              )}
-            >
-              <span
-                className={cn(
-                  "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                  requiereFoto ? "translate-x-6" : "translate-x-1"
-                )}
+              <Label htmlFor="evitar">Evitar (opcional)</Label>
+              <Input
+                id="evitar"
+                value={evitar}
+                onChange={(e) => setEvitar(e.target.value)}
+                placeholder="Ej: algodón, tela"
               />
-            </button>
-          </div>
+            </div>
 
-          {requiereFoto && (
-            <div className="space-y-3 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
-              <div className="flex items-center justify-between gap-3">
+            {/* Toggle Requiere Foto */}
+            <div className="flex items-center justify-between border rounded-lg p-3 bg-indigo-50/50">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-indigo-600" />
                 <div>
-                  <Label>Fotos guiadas</Label>
-                  <p className="text-xs text-gray-500">
-                    Definí qué vistas o detalles necesita ver el dirigente para revisar este item.
-                  </p>
+                  <Label htmlFor="requiereFoto" className="cursor-pointer">Requiere foto</Label>
+                  <p className="text-xs text-gray-500">El acampante deberá subir una foto de este item</p>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={agregarRequisitoFoto}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Agregar foto
-                </Button>
               </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={requiereFoto}
+                onClick={toggleRequiereFoto}
+                className={cn(
+                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                  requiereFoto ? "bg-indigo-600" : "bg-gray-200"
+                )}
+              >
+                <span
+                  className={cn(
+                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                    requiereFoto ? "translate-x-6" : "translate-x-1"
+                  )}
+                />
+              </button>
+            </div>
 
-              <div className="space-y-3">
-                {requisitosFoto.map((requisito, index) => (
-                  <div key={requisito.id ?? `nuevo-${index}`} className="rounded-xl border border-gray-200 bg-white p-3 space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
-                        Foto {index + 1}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => moverRequisitoFoto(index, 'up')}
-                          disabled={index === 0}
-                        >
-                          <ArrowUp className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => moverRequisitoFoto(index, 'down')}
-                          disabled={index === requisitosFoto.length - 1}
-                        >
-                          <ArrowDown className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-red-500"
-                          onClick={() => eliminarRequisitoFoto(index)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+            {requiereFoto && (
+              <div className="space-y-3 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <Label>Fotos guiadas</Label>
+                    <p className="text-xs text-gray-500">
+                      Definí qué vistas o detalles necesita ver el dirigente para revisar este item.
+                    </p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={agregarRequisitoFoto}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Agregar foto
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  {requisitosFoto.map((requisito, index) => (
+                    <div key={requisito.id ?? `nuevo-${index}`} className="rounded-xl border border-gray-200 bg-white p-3 space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                          Foto {index + 1}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => moverRequisitoFoto(index, 'up')}
+                            disabled={index === 0}
+                          >
+                            <ArrowUp className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => moverRequisitoFoto(index, 'down')}
+                            disabled={index === requisitosFoto.length - 1}
+                          >
+                            <ArrowDown className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-500"
+                            onClick={() => eliminarRequisitoFoto(index)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`requisito-titulo-${index}`}>Título</Label>
+                        <Input
+                          id={`requisito-titulo-${index}`}
+                          value={requisito.titulo}
+                          onChange={(e) => actualizarRequisitoFoto(index, 'titulo', e.target.value)}
+                          placeholder="Ej: Suelas"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`requisito-descripcion-${index}`}>Qué necesitamos ver</Label>
+                        <Textarea
+                          id={`requisito-descripcion-${index}`}
+                          value={requisito.descripcion}
+                          onChange={(e) => actualizarRequisitoFoto(index, 'descripcion', e.target.value)}
+                          placeholder="Ej: Foto de las suelas desde abajo para revisar dibujo, desgaste y agarre"
+                          rows={2}
+                        />
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`requisito-titulo-${index}`}>Título</Label>
-                      <Input
-                        id={`requisito-titulo-${index}`}
-                        value={requisito.titulo}
-                        onChange={(e) => actualizarRequisitoFoto(index, 'titulo', e.target.value)}
-                        placeholder="Ej: Suelas"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`requisito-descripcion-${index}`}>Qué necesitamos ver</Label>
-                      <Textarea
-                        id={`requisito-descripcion-${index}`}
-                        value={requisito.descripcion}
-                        onChange={(e) => actualizarRequisitoFoto(index, 'descripcion', e.target.value)}
-                        placeholder="Ej: Foto de las suelas desde abajo para revisar dibujo, desgaste y agarre"
-                        rows={2}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0 border-t px-4 py-4 sm:px-6">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={creando || actualizando}>
             {creando || actualizando ? 'Guardando...' : 'Guardar'}

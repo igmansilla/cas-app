@@ -196,7 +196,15 @@ export function DepartamentosHubPage() {
         )}
 
         <section className="mt-8 rounded-3xl border border-dashed border-orange-200 bg-white/70 p-5 text-sm text-gray-600">
-          Las reuniones con grupos siguen siendo una superficie separada: viven en <strong>Reuniones</strong> porque no pertenecen a ningún departamento.
+          Las reuniones con grupos se planifican desde{" "}
+          <Link
+            to="/usuarios"
+            search={{ tab: "reuniones" }}
+            className="font-medium text-orange-700 underline underline-offset-4"
+          >
+            Acampantes y grupos
+          </Link>{" "}
+          porque no pertenecen a ningún departamento.
         </section>
       </div>
     </div>

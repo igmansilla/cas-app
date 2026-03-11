@@ -39,7 +39,7 @@ export function ReportesEquipo() {
   const promedioProgreso = totalUsuarios > 0
     ? Math.round(usuarios.reduce((acc, u) => acc + u.porcentaje, 0) / totalUsuarios)
     : 0;
-  const conCriticos = usuarios.filter(u => u.criticosFaltantes > 0).length;
+  const conCriticos = usuarios.filter((u) => u.criticosFaltantes > 0).length;
 
   if (cargando) {
     return (
@@ -52,9 +52,9 @@ export function ReportesEquipo() {
   return (
     <div className="space-y-6">
       {/* Header con filtro */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="font-semibold text-gray-900">Reporte de Progreso</h3>
-        
+
         <Select value={grupoId || '_all'} onValueChange={(v) => setGrupoId(v === '_all' ? '' : v)}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Todos los grupos" />
@@ -67,7 +67,7 @@ export function ReportesEquipo() {
       </div>
 
       {/* Cards de estadísticas */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           icon={<Users className="w-5 h-5" />}
           label="Usuarios"
@@ -87,9 +87,9 @@ export function ReportesEquipo() {
       </div>
 
       {/* Tabla de usuarios */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
         {/* Header */}
-        <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 text-xs font-medium text-gray-500 uppercase">
+        <div className="hidden grid-cols-12 gap-2 bg-gray-50 px-4 py-3 text-xs font-medium text-gray-500 uppercase sm:grid">
           <div className="col-span-3">Usuario</div>
           <div className="col-span-3">Email</div>
           <div className="col-span-2">Progreso</div>
@@ -103,10 +103,10 @@ export function ReportesEquipo() {
           {usuarios.map((usuario) => (
             <div
               key={usuario.usuarioId}
-              className="grid grid-cols-1 sm:grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50"
+              className="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-gray-50 sm:grid-cols-12"
             >
               {/* Mobile: Todo junto */}
-              <div className="sm:hidden space-y-2">
+              <div className="space-y-2 sm:hidden">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-gray-900">{usuario.nombreMostrar || 'Sin nombre'}</p>
@@ -177,8 +177,8 @@ export function ReportesEquipo() {
           ))}
 
           {usuarios.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <Users className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+            <div className="py-12 text-center text-gray-500">
+              <Users className="mx-auto mb-2 w-10 h-10 text-gray-300" />
               <p>No hay usuarios registrados</p>
             </div>
           )}
@@ -212,8 +212,8 @@ function StatCard({
 }) {
   return (
     <div className={cn(
-      'flex items-center gap-3 p-4 rounded-lg border',
-      highlight ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'
+      'flex items-center gap-3 rounded-lg border p-4',
+      highlight ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-white'
     )}>
       <div className="text-gray-400">{icon}</div>
       <div>
@@ -229,8 +229,8 @@ function StatCard({
  */
 function ProgressBar({ progress }: { progress: number }) {
   return (
-    <div className="flex items-center gap-2 flex-1">
-      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+    <div className="flex flex-1 items-center gap-2">
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
         <div
           className={cn(
             'h-full transition-all duration-300',
@@ -239,7 +239,7 @@ function ProgressBar({ progress }: { progress: number }) {
           style={{ width: `${progress}%` }}
         />
       </div>
-      <span className="text-sm font-medium text-gray-600 w-10 text-right">
+      <span className="w-10 text-right text-sm font-medium text-gray-600">
         {Math.round(progress)}%
       </span>
     </div>
@@ -260,118 +260,120 @@ function DetalleUsuarioModal({
 
   return (
     <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-2xl flex-col overflow-hidden p-0 sm:max-h-[90vh] sm:w-full">
+        <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 text-left sm:px-6">
           <DialogTitle>
             {cargando ? 'Cargando...' : detalle?.nombreMostrar || detalle?.email || 'Usuario'}
           </DialogTitle>
         </DialogHeader>
 
-        {cargando ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : detalle ? (
-          <div className="space-y-6">
-            {/* Resumen */}
-            <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">{detalle.resumen.porcentajeGeneral}%</p>
-                <p className="text-xs text-gray-500">Completado</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">
-                  {detalle.resumen.criticosCompletados}/{detalle.resumen.criticosTotal}
-                </p>
-                <p className="text-xs text-gray-500">Críticos</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-orange-600">
-                  {detalle.resumen.importantesCompletados}/{detalle.resumen.importantesTotal}
-                </p>
-                <p className="text-xs text-gray-500">Importantes</p>
-              </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+          {cargando ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
             </div>
+          ) : detalle ? (
+            <div className="space-y-6">
+              {/* Resumen */}
+              <div className="grid grid-cols-3 gap-4 rounded-lg bg-gray-50 p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900">{detalle.resumen.porcentajeGeneral}%</p>
+                  <p className="text-xs text-gray-500">Completado</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">
+                    {detalle.resumen.criticosCompletados}/{detalle.resumen.criticosTotal}
+                  </p>
+                  <p className="text-xs text-gray-500">Críticos</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-orange-600">
+                    {detalle.resumen.importantesCompletados}/{detalle.resumen.importantesTotal}
+                  </p>
+                  <p className="text-xs text-gray-500">Importantes</p>
+                </div>
+              </div>
 
-            {/* Categorías */}
-            <div className="space-y-4">
-              {detalle.categorias.map((cat) => (
-                <div key={cat.categoriaId} className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-2 bg-gray-50">
-                    <h4 className="font-medium text-gray-900">{cat.nombre}</h4>
-                    <span className="text-sm text-gray-500">
-                      {cat.completados}/{cat.total}
-                    </span>
-                  </div>
-                  <div className="divide-y divide-gray-50">
-                    {cat.items.map((item) => (
-                      <div
-                        key={item.itemId}
-                        className="flex items-center gap-3 px-4 py-2"
-                      >
-                        {/* Checkbox visual (solo lectura) */}
-                        <div className={cn(
-                          'w-5 h-5 rounded border-2 flex items-center justify-center',
-                          item.completado
-                            ? 'bg-green-500 border-green-500 text-white'
-                            : 'border-gray-300'
-                        )}>
-                          {item.completado && (
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
+              {/* Categorías */}
+              <div className="space-y-4">
+                {detalle.categorias.map((cat) => (
+                  <div key={cat.categoriaId} className="overflow-hidden rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between bg-gray-50 px-4 py-2">
+                      <h4 className="font-medium text-gray-900">{cat.nombre}</h4>
+                      <span className="text-sm text-gray-500">
+                        {cat.completados}/{cat.total}
+                      </span>
+                    </div>
+                    <div className="divide-y divide-gray-50">
+                      {cat.items.map((item) => (
+                        <div
+                          key={item.itemId}
+                          className="flex items-center gap-3 px-4 py-2"
+                        >
+                          {/* Checkbox visual (solo lectura) */}
+                          <div className={cn(
+                            'flex h-5 w-5 items-center justify-center rounded border-2',
+                            item.completado
+                              ? 'border-green-500 bg-green-500 text-white'
+                              : 'border-gray-300'
+                          )}>
+                            {item.completado && (
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+
+                          {/* Dot de criticidad */}
+                          {item.criticidad !== 'NORMAL' && !item.completado && (
+                            <span className={cn(
+                              'w-2 h-2 rounded-full',
+                              CRITICIDAD_CONFIG[item.criticidad].dotColor,
+                              item.criticidad === 'CRITICO' && 'animate-pulse'
+                            )} />
+                          )}
+
+                          {/* Nombre */}
+                          <span className={cn(
+                            'flex-1',
+                            item.completado && 'line-through text-gray-400'
+                          )}>
+                            {item.cantidad > 1 && <span className="mr-1 text-gray-500">{item.cantidad}x</span>}
+                            {item.nombre}
+                          </span>
+
+                          {item.totalFotosSugeridas > 0 && (
+                            <span className={cn(
+                              'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
+                              item.fotosCargadas === item.totalFotosSugeridas
+                                ? 'border-green-200 bg-green-50 text-green-700'
+                                : 'border-indigo-200 bg-indigo-50 text-indigo-700'
+                            )}>
+                              <Camera className="h-3 w-3" />
+                              {item.fotosCargadas}/{item.totalFotosSugeridas}
+                            </span>
+                          )}
+
+                          {item.totalFotosSugeridas > 0 && (
+                            <FotosItemViewer
+                              usuarioId={usuarioId}
+                              itemName={item.nombre}
+                              requisitosFoto={item.requisitosFoto}
+                            />
                           )}
                         </div>
-
-                        {/* Dot de criticidad */}
-                        {item.criticidad !== 'NORMAL' && !item.completado && (
-                          <span className={cn(
-                            'w-2 h-2 rounded-full',
-                            CRITICIDAD_CONFIG[item.criticidad].dotColor,
-                            item.criticidad === 'CRITICO' && 'animate-pulse'
-                          )} />
-                        )}
-
-                        {/* Nombre */}
-                        <span className={cn(
-                          'flex-1',
-                          item.completado && 'text-gray-400 line-through'
-                        )}>
-                          {item.cantidad > 1 && <span className="text-gray-500 mr-1">{item.cantidad}x</span>}
-                          {item.nombre}
-                        </span>
-
-                        {item.totalFotosSugeridas > 0 && (
-                          <span className={cn(
-                            'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
-                            item.fotosCargadas === item.totalFotosSugeridas
-                              ? 'border-green-200 bg-green-50 text-green-700'
-                              : 'border-indigo-200 bg-indigo-50 text-indigo-700'
-                          )}>
-                            <Camera className="h-3 w-3" />
-                            {item.fotosCargadas}/{item.totalFotosSugeridas}
-                          </span>
-                        )}
-
-                        {item.totalFotosSugeridas > 0 && (
-                          <FotosItemViewer
-                            usuarioId={usuarioId}
-                            itemName={item.nombre}
-                            requisitosFoto={item.requisitosFoto}
-                          />
-                        )}
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="text-center py-12 text-gray-500">
-            No se pudo cargar el detalle
-          </div>
-        )}
+          ) : (
+            <div className="py-12 text-center text-gray-500">
+              No se pudo cargar el detalle
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -403,61 +405,63 @@ function FotosItemViewer({
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 w-8 p-0 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+        className="h-8 w-8 p-0 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"
         onClick={() => setIsOpen(true)}
       >
         <Camera className="h-4 w-4" />
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden p-0 sm:max-h-[90vh] sm:w-full">
+          <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 text-left sm:px-6">
             <DialogTitle>{itemName}</DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Revisión visual del item</p>
-              <p className="text-xs text-gray-500">Vistas cargadas: {cargadas}/{requisitosFoto.length}</p>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+            <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Revisión visual del item</p>
+                <p className="text-xs text-gray-500">Vistas cargadas: {cargadas}/{requisitosFoto.length}</p>
+              </div>
             </div>
-          </div>
-          <div className="space-y-4 mt-4">
-            {requisitosFoto.map((requisito) => (
-              <div key={requisito.requisitoId} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-                <div className="border-b border-gray-100 bg-gray-50/70 px-4 py-3 flex items-start justify-between gap-3">
-                  <div>
-                    <h4 className="font-medium text-gray-900">{requisito.titulo}</h4>
-                    {requisito.descripcion && (
-                      <p className="mt-1 text-sm text-gray-600 leading-relaxed">{requisito.descripcion}</p>
+            <div className="mt-4 space-y-4">
+              {requisitosFoto.map((requisito) => (
+                <div key={requisito.requisitoId} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                  <div className="flex items-start justify-between gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-3">
+                    <div>
+                      <h4 className="font-medium text-gray-900">{requisito.titulo}</h4>
+                      {requisito.descripcion && (
+                        <p className="mt-1 text-sm leading-relaxed text-gray-600">{requisito.descripcion}</p>
+                      )}
+                    </div>
+                    <span className={cn(
+                      'inline-flex rounded-full border px-2.5 py-1 text-xs font-medium',
+                      requisito.hasFoto
+                        ? 'border-green-200 bg-green-50 text-green-700'
+                        : 'border-amber-200 bg-amber-50 text-amber-700'
+                    )}>
+                      {requisito.hasFoto ? 'Cargada' : 'Faltante'}
+                    </span>
+                  </div>
+
+                  <div className="p-4">
+                    {requisito.hasFoto ? (
+                      <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-gray-100">
+                        <ProtectedEquipoImage
+                          url={equipoService.getAdminRequisitoFotoUrl(usuarioId, requisito.requisitoId)}
+                          alt={`${itemName} - ${requisito.titulo}`}
+                          className="h-full w-full object-contain"
+                          loadingFallback={<div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
+                        Todavía no cargó esta vista.
+                      </div>
                     )}
                   </div>
-                  <span className={cn(
-                    'inline-flex rounded-full border px-2.5 py-1 text-xs font-medium',
-                    requisito.hasFoto
-                      ? 'border-green-200 bg-green-50 text-green-700'
-                      : 'border-amber-200 bg-amber-50 text-amber-700'
-                  )}>
-                    {requisito.hasFoto ? 'Cargada' : 'Faltante'}
-                  </span>
                 </div>
-
-                <div className="p-4">
-                  {requisito.hasFoto ? (
-                    <div className="aspect-video w-full overflow-hidden rounded-xl bg-gray-100 flex items-center justify-center">
-                      <ProtectedEquipoImage
-                        url={equipoService.getAdminRequisitoFotoUrl(usuarioId, requisito.requisitoId)}
-                        alt={`${itemName} - ${requisito.titulo}`}
-                        className="h-full w-full object-contain"
-                        loadingFallback={<div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
-                      Todavía no cargó esta vista.
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

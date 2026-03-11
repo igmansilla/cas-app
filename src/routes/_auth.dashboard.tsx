@@ -1,8 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "../hooks/useAuth";
-import { Backpack, Building2, ChevronRight, FileText, ShieldAlert, Users, UsersRound } from "lucide-react";
+import { Backpack, Building2, ChevronRight, FileText, ShieldAlert, Users } from "lucide-react";
 import { FamiliaWidget } from "../components/familia/FamiliaWidget";
-import { groupsScreen } from "../components/calendario/departamentos/departamentoScreens";
 import { usePlanificacionAnual } from "../hooks/useCalendario";
 import { Badge } from "../components/ui/badge";
 
@@ -90,11 +89,11 @@ function DashboardComponent() {
 
           <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 px-4 py-3 text-sm text-orange-900">
             {hasRole('admin')
-              ? 'Como admin, desde acá podés entrar a las pantallas operativas de departamentos y reuniones. El calendario general queda unificado en el footer.'
-              : 'Desde acá podés entrar a las pantallas operativas de departamentos y reuniones. El calendario general queda unificado en el footer.'}
+              ? 'Como admin, desde acá podés entrar a las pantallas operativas de departamentos. La planificación de reuniones de grupos ahora vive en Acampantes y grupos, y el calendario general queda unificado en el footer.'
+              : 'Desde acá podés entrar a las pantallas operativas de departamentos. La planificación de reuniones de grupos ahora vive en Acampantes y grupos, y el calendario general queda unificado en el footer.'}
           </div>
 
-          <div className="grid gap-3 xl:grid-cols-2">
+          <div className="grid gap-3">
             <Link
               to="/departamentos"
               className="flex items-center justify-between rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 p-4 transition-all hover:shadow-md group"
@@ -120,22 +119,6 @@ function DashboardComponent() {
               </div>
               <ChevronRight className="w-5 h-5 text-orange-400 group-hover:translate-x-1 transition-transform" />
             </Link>
-
-            <Link
-              to={groupsScreen.path as any}
-              className="flex items-center justify-between rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 transition-all hover:shadow-md group"
-            >
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/80">
-                  <UsersRound className="w-6 h-6 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-emerald-900">{groupsScreen.nombre}</h3>
-                  <p className="text-sm text-emerald-700">{groupsScreen.resumen}</p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-emerald-400 group-hover:translate-x-1 transition-transform" />
-            </Link>
           </div>
         </section>
       )}
@@ -160,7 +143,7 @@ function DashboardComponent() {
                     Acampantes y grupos
                   </h3>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    Gestión de acampantes, jerarquía y asignaciones
+                    Gestión de acampantes, jerarquía, asignaciones y reuniones de grupo
                   </p>
                 </div>
               </div>

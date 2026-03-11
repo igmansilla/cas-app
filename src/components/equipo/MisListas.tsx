@@ -94,9 +94,9 @@ export function MisListas() {
 
       {/* Detail Modal (Desktop mainly, or derived from card click) */}
       <Dialog open={!!listaSeleccionada} onOpenChange={(open) => !open && setListaSeleccionadaId(null)}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-                <div className="flex justify-between items-center pr-8">
+        <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-xl flex-col overflow-hidden p-0 sm:max-h-[90vh] sm:w-full">
+            <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 text-left sm:px-6">
+                <div className="flex items-center justify-between gap-3">
                     <DialogTitle className="text-lg">{listaSeleccionada?.nombre}</DialogTitle>
                     {listaSeleccionada && (
                          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-red-500"
@@ -113,12 +113,14 @@ export function MisListas() {
             </DialogHeader>
             
             {listaSeleccionada && (
-                <DetalleListaContenido 
-                    lista={listaSeleccionada}
-                    onToggleItem={(itemId) => toggleItem(listaSeleccionada.id, itemId)}
-                    onAddItem={(nombre) => agregarItem(listaSeleccionada.id, nombre)}
-                    onDeleteItem={(itemId) => eliminarItem(listaSeleccionada.id, itemId)}
-                />
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+                    <DetalleListaContenido 
+                        lista={listaSeleccionada}
+                        onToggleItem={(itemId) => toggleItem(listaSeleccionada.id, itemId)}
+                        onAddItem={(nombre) => agregarItem(listaSeleccionada.id, nombre)}
+                        onDeleteItem={(itemId) => eliminarItem(listaSeleccionada.id, itemId)}
+                    />
+                </div>
             )}
         </DialogContent>
       </Dialog>

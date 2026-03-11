@@ -1,4 +1,4 @@
-import { CalendarDays, Coins, Megaphone, Sparkles, Users, Wrench, type LucideProps } from "lucide-react";
+import { CalendarDays, Coins, Megaphone, Sparkles, Wrench, type LucideProps } from "lucide-react";
 import type { ComponentType } from "react";
 
 export type DepartamentoOperativoCodigo =
@@ -65,13 +65,6 @@ export const departmentScreens: DepartamentoScreen[] = [
     iconClass: "text-orange-600",
   },
 ];
-
-export const groupsScreen = {
-  path: "/reuniones",
-  nombre: "Grupos",
-  resumen: "Reuniones con grupos de acampantes o dirigentes y seguimiento de asistencia.",
-  icon: Users,
-};
 
 export const departmentScreenByCode = Object.fromEntries(
   departmentScreens.map((screen) => [screen.codigo, screen])

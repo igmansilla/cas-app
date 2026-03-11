@@ -1,14 +1,35 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { TablaUsuarios, DetalleUsuario, AsignadorGruposKanban, ArbolGruposPanel } from '../components/usuarios';
+import {
+    TablaUsuarios,
+    DetalleUsuario,
+    AsignadorGruposKanban,
+    ArbolGruposPanel,
+    PlanificacionReunionesGruposPanel,
+} from '../components/usuarios';
 import { useUsuariosAdmin } from '../hooks/useUsuariosAdmin';
 import { useGruposAcampantes, useGruposDirigentes } from '../hooks/useGrupos';
+import { useAuth } from '../hooks/useAuth';
 import type { UsuarioAdmin } from '../api/services/usuariosAdmin';
-import { Users, Tent, Shield, Kanban } from 'lucide-react';
+import { CalendarClock, Users, Tent, Shield, Kanban } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 
+const usuariosTabs = ['acampantes', 'grupos', 'asignar', 'reuniones'] as const;
+
+type UsuariosTab = typeof usuariosTabs[number];
+type UsuariosSearch = {
+    tab?: UsuariosTab;
+};
+
+function isUsuariosTab(value: unknown): value is UsuariosTab {
+    return typeof value === 'string' && usuariosTabs.some((tab) => tab === value);
+}
+
 export const Route = createFileRoute('/_auth/usuarios')({
+    validateSearch: (search: Record<string, unknown>): UsuariosSearch => ({
+        tab: isUsuariosTab(search.tab) ? search.tab : undefined,
+    }),
     component: AcampantesPage,
 });
 
@@ -17,23 +38,46 @@ export const Route = createFileRoute('/_auth/usuarios')({
  * Accesible por DIRIGENTE y ADMIN.
  */
 function AcampantesPage() {
-    const [activeTab, setActiveTab] = useState('acampantes');
+    const navigate = Route.useNavigate();
+    const { tab } = Route.useSearch();
+    const { hasRole } = useAuth();
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<UsuarioAdmin | null>(null);
 
     const { usuarios, cargando } = useUsuariosAdmin();
     const { grupos: gruposAcampantes } = useGruposAcampantes();
     const { grupos: gruposDirigentes } = useGruposDirigentes();
+    const puedePlanificarReuniones = hasRole('dirigente') || hasRole('admin');
+    const activeTab: UsuariosTab = tab === 'reuniones' && !puedePlanificarReuniones
+        ? 'acampantes'
+        : tab ?? 'acampantes';
 
     // Filtrar solo acampantes para esta vista
     const acampantes = usuarios.filter(u => u.roles.includes('ACAMPANTE'));
+
+    useEffect(() => {
+        if (tab === 'reuniones' && !puedePlanificarReuniones) {
+            navigate({ to: '/usuarios', search: {}, replace: true });
+        }
+    }, [tab, puedePlanificarReuniones, navigate]);
+
+    const handleTabChange = (nextTab: string) => {
+        if (!isUsuariosTab(nextTab)) return;
+        if (nextTab === 'reuniones' && !puedePlanificarReuniones) return;
+
+        navigate({
+            to: '/usuarios',
+            search: nextTab === 'acampantes' ? {} : { tab: nextTab },
+            replace: true,
+        });
+    };
 
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto">
             {/* Header */}
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Acampantes</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Acampantes y grupos</h1>
                 <p className="text-muted-foreground">
-                    Gestión de acampantes, jerarquía de grupos y asignaciones.
+                    Gestión de acampantes, jerarquía de grupos, asignaciones y planificación de reuniones.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-2">
                     <Badge variant="outline" className="text-green-700">
@@ -46,8 +90,8 @@ function AcampantesPage() {
             </div>
 
             {/* Main content with tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid w-full max-w-lg grid-cols-3">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+                <TabsList className={puedePlanificarReuniones ? 'grid w-full max-w-2xl grid-cols-4' : 'grid w-full max-w-lg grid-cols-3'}>
                     <TabsTrigger value="acampantes" className="flex items-center gap-2">
                         <Users className="w-4 h-4" />
                         <span className="hidden sm:inline">Acampantes</span>
@@ -60,6 +104,12 @@ function AcampantesPage() {
                         <Kanban className="w-4 h-4" />
                         <span className="hidden sm:inline">Asignar</span>
                     </TabsTrigger>
+                    {puedePlanificarReuniones && (
+                        <TabsTrigger value="reuniones" className="flex items-center gap-2">
+                            <CalendarClock className="w-4 h-4" />
+                            <span className="hidden sm:inline">Reuniones</span>
+                        </TabsTrigger>
+                    )}
                 </TabsList>
 
                 {/* Acampantes Tab */}
@@ -102,6 +152,12 @@ function AcampantesPage() {
                         </Tabs>
                     </div>
                 </TabsContent>
+
+                {puedePlanificarReuniones && (
+                    <TabsContent value="reuniones" className="space-y-6">
+                        <PlanificacionReunionesGruposPanel />
+                    </TabsContent>
+                )}
             </Tabs>
 
             {/* Detail sheet */}
