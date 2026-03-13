@@ -19,6 +19,11 @@ import {
 import { Badge } from "../ui/badge";
 import type { EventoCalendarioFormateado } from "../../api/schemas/calendario";
 import { buildGoogleMapsSearchUrl } from "../../lib/google-maps";
+import {
+  getEstadoEventoBadge,
+  getPoliticaNotificacionBadge,
+  getPublicoObjetivoBadge,
+} from "../../lib/calendario/eventoMeta";
 
 interface EventoDetalleModalProps {
   eventoSeleccionado: EventoCalendarioFormateado | null;
@@ -41,6 +46,9 @@ export function EventoDetalleModal({
 }: EventoDetalleModalProps) {
   const urlMapa = eventoSeleccionado?.urlMapa || (eventoSeleccionado?.ubicacion ? buildGoogleMapsSearchUrl(eventoSeleccionado.ubicacion) : "");
   const permiteVideollamada = !eventoSeleccionado?.grupoId;
+  const estadoBadge = getEstadoEventoBadge(eventoSeleccionado?.estadoEvento);
+  const publicoBadge = getPublicoObjetivoBadge(eventoSeleccionado?.publicoObjetivo);
+  const politicaBadge = getPoliticaNotificacionBadge(eventoSeleccionado?.politicaNotificacion);
 
   const diaLabel = (dia?: string) => {
     const map: Record<string, string> = {
@@ -77,6 +85,15 @@ export function EventoDetalleModal({
             <div className="space-y-1">
               <h4 className="text-sm font-medium leading-none text-muted-foreground">Descripción</h4>
               <p className="text-sm text-foreground">{eventoSeleccionado.descripcion || "Sin descripción"}</p>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium leading-none text-muted-foreground">Estado y comunicacion</h4>
+              <div className="flex flex-wrap gap-2">
+                <Badge className={estadoBadge.className}>{estadoBadge.label}</Badge>
+                <Badge className={publicoBadge.className}>{publicoBadge.label}</Badge>
+                <Badge className={politicaBadge.className}>{politicaBadge.label}</Badge>
+              </div>
             </div>
 
             {(eventoSeleccionado.departamentoNombre || eventoSeleccionado.grupoNombre) && (

@@ -14,6 +14,11 @@ import {
 import type { Evento, ReunionInstancia } from "../../../api/schemas/calendario";
 import { useInstanciasReunion } from "../../../hooks/useCalendario";
 import { obtenerIdSerieReunion } from "../../../lib/calendario/reuniones";
+import {
+  getEstadoEventoBadge,
+  getPoliticaNotificacionBadge,
+  getPublicoObjetivoBadge,
+} from "../../../lib/calendario/eventoMeta";
 import { buildGoogleMapsSearchUrl } from "../../../lib/google-maps";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../ui/accordion";
 import { Badge } from "../../ui/badge";
@@ -50,6 +55,9 @@ export function ReunionSerieCard({ reunion, puedeEditar, onEditar, onEliminar }:
   const reunionId = obtenerIdSerieReunion(reunion);
   const esReunionDeGrupo = Boolean(reunion.grupoId);
   const urlMapa = reunion.urlMapa || (reunion.ubicacion ? buildGoogleMapsSearchUrl(reunion.ubicacion) : "");
+  const estadoBadge = getEstadoEventoBadge(reunion.estadoEvento);
+  const publicoBadge = getPublicoObjetivoBadge(reunion.publicoObjetivo);
+  const politicaBadge = getPoliticaNotificacionBadge(reunion.politicaNotificacion);
 
   const hoy = useMemo(() => new Date(), []);
   const hasta = useMemo(() => addDays(hoy, 60), [hoy]);
@@ -86,6 +94,11 @@ export function ReunionSerieCard({ reunion, puedeEditar, onEditar, onEliminar }:
                   ? "Reunión operativa de grupo con seguimiento de próximas ocurrencias y asistencia."
                   : "Reunión interna del departamento, sin toma de asistencia por ocurrencia."}
               </p>
+              <div className="flex flex-wrap gap-2">
+                <Badge className={estadoBadge.className}>{estadoBadge.label}</Badge>
+                <Badge className={publicoBadge.className}>{publicoBadge.label}</Badge>
+                <Badge className={politicaBadge.className}>{politicaBadge.label}</Badge>
+              </div>
             </div>
 
             {puedeEditar && (

@@ -19,6 +19,11 @@ import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../../ui/tabs";
 import { obtenerColorEvento, obtenerIconoEvento } from "../helpers";
+import {
+  getEstadoEventoBadge,
+  getPoliticaNotificacionBadge,
+  getPublicoObjetivoBadge,
+} from "../../../lib/calendario/eventoMeta";
 import { getEventoPlannerDefinition, supportsCustomPlanning } from "./plannerRegistry";
 
 interface EventosPlanningPanelProps {
@@ -292,6 +297,11 @@ function PlantillaCard({
   const color = obtenerColorEvento(plantilla.codigo);
   const icono = obtenerIconoEvento(plantilla.codigo);
   const criticaPendiente = plantilla.critico && !plantilla.programado;
+  const estadoBadge = getEstadoEventoBadge(eventoProgramado?.estadoEvento);
+  const publicoBadge = getPublicoObjetivoBadge(eventoProgramado?.publicoObjetivo ?? plantilla.publicoObjetivo);
+  const politicaBadge = getPoliticaNotificacionBadge(
+    eventoProgramado?.politicaNotificacion ?? plantilla.politicaNotificacion
+  );
 
   return (
     <article
@@ -354,6 +364,12 @@ function PlantillaCard({
               )}
             </div>
 
+            <div className="flex flex-wrap gap-2">
+              <Badge className={estadoBadge.className}>{estadoBadge.label}</Badge>
+              <Badge className={publicoBadge.className}>{publicoBadge.label}</Badge>
+              <Badge className={politicaBadge.className}>{politicaBadge.label}</Badge>
+            </div>
+
             {puedeEditar && (
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={onEditar}>
@@ -397,6 +413,9 @@ function EventoAdicionalCard({
   onEliminar: () => void;
 }) {
   const color = obtenerColorEvento(evento.tipo);
+  const estadoBadge = getEstadoEventoBadge(evento.estadoEvento);
+  const publicoBadge = getPublicoObjetivoBadge(evento.publicoObjetivo);
+  const politicaBadge = getPoliticaNotificacionBadge(evento.politicaNotificacion);
 
   return (
     <article className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -410,6 +429,11 @@ function EventoAdicionalCard({
                 {evento.departamentoNombre}
               </Badge>
             )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge className={estadoBadge.className}>{estadoBadge.label}</Badge>
+            <Badge className={publicoBadge.className}>{publicoBadge.label}</Badge>
+            <Badge className={politicaBadge.className}>{politicaBadge.label}</Badge>
           </div>
           <p className="text-sm text-gray-600">{evento.descripcion || "Sin descripción"}</p>
           <div className="flex flex-wrap gap-3 text-sm text-gray-500">
