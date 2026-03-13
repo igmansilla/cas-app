@@ -23,6 +23,7 @@ import { Route as AuthEquipoRouteImport } from './routes/_auth.equipo'
 import { Route as AuthDocumentosRouteImport } from './routes/_auth.documentos'
 import { Route as AuthDepartamentosRouteImport } from './routes/_auth.departamentos'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
+import { Route as AuthConfiguracionRouteImport } from './routes/_auth.configuracion'
 import { Route as AuthCalendarioRouteImport } from './routes/_auth.calendario'
 import { Route as AuthDepartamentosIndexRouteImport } from './routes/_auth.departamentos.index'
 import { Route as AuthDepartamentosOperacionesRouteImport } from './routes/_auth.departamentos.operaciones'
@@ -104,6 +105,11 @@ const AuthDashboardRoute = AuthDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthConfiguracionRoute = AuthConfiguracionRouteImport.update({
+  id: '/configuracion',
+  path: '/configuracion',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthCalendarioRoute = AuthCalendarioRouteImport.update({
   id: '/calendario',
   path: '/calendario',
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/pago-resultado': typeof PagoResultadoRoute
   '/calendario': typeof AuthCalendarioRoute
+  '/configuracion': typeof AuthConfiguracionRoute
   '/dashboard': typeof AuthDashboardRoute
   '/departamentos': typeof AuthDepartamentosRouteWithChildren
   '/documentos': typeof AuthDocumentosRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/pago-resultado': typeof PagoResultadoRoute
   '/calendario': typeof AuthCalendarioRoute
+  '/configuracion': typeof AuthConfiguracionRoute
   '/dashboard': typeof AuthDashboardRoute
   '/documentos': typeof AuthDocumentosRoute
   '/equipo': typeof AuthEquipoRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/pago-resultado': typeof PagoResultadoRoute
   '/_auth/calendario': typeof AuthCalendarioRoute
+  '/_auth/configuracion': typeof AuthConfiguracionRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/departamentos': typeof AuthDepartamentosRouteWithChildren
   '/_auth/documentos': typeof AuthDocumentosRoute
@@ -253,6 +262,7 @@ export interface FileRouteTypes {
     | '/'
     | '/pago-resultado'
     | '/calendario'
+    | '/configuracion'
     | '/dashboard'
     | '/departamentos'
     | '/documentos'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/'
     | '/pago-resultado'
     | '/calendario'
+    | '/configuracion'
     | '/dashboard'
     | '/documentos'
     | '/equipo'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/pago-resultado'
     | '/_auth/calendario'
+    | '/_auth/configuracion'
     | '/_auth/dashboard'
     | '/_auth/departamentos'
     | '/_auth/documentos'
@@ -433,6 +445,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/configuracion': {
+      id: '/_auth/configuracion'
+      path: '/configuracion'
+      fullPath: '/configuracion'
+      preLoaderRoute: typeof AuthConfiguracionRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/calendario': {
       id: '/_auth/calendario'
       path: '/calendario'
@@ -558,6 +577,7 @@ const AuthDepartamentosRouteWithChildren =
 
 interface AuthRouteChildren {
   AuthCalendarioRoute: typeof AuthCalendarioRoute
+  AuthConfiguracionRoute: typeof AuthConfiguracionRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthDepartamentosRoute: typeof AuthDepartamentosRouteWithChildren
   AuthDocumentosRoute: typeof AuthDocumentosRoute
@@ -573,6 +593,7 @@ interface AuthRouteChildren {
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthCalendarioRoute: AuthCalendarioRoute,
+  AuthConfiguracionRoute: AuthConfiguracionRoute,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthDepartamentosRoute: AuthDepartamentosRouteWithChildren,
   AuthDocumentosRoute: AuthDocumentosRoute,

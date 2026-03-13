@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { ChevronDown, LogOut, User as UserIcon } from 'lucide-react'
+import { ChevronDown, LogOut, Settings, User as UserIcon } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 
 type AvatarStyle =
@@ -156,6 +156,14 @@ export default function UserAvatar({
             >
               <UserIcon className="w-4 h-4 mr-3 text-gray-400" />
               Mi perfil
+            </Link>
+            <Link
+              to="/configuracion"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Settings className="w-4 h-4 mr-3 text-gray-400" />
+              Configuracion
             </Link>
           </div>
 
