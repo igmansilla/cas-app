@@ -73,7 +73,6 @@ function showForegroundSystemNotification(payload: any) {
       badge: APP_NOTIFICATION_BADGE,
       data: payload?.data,
       tag: payload?.data?.eventoId ? `evento-${payload.data.eventoId}` : undefined,
-      renotify: Boolean(payload?.data?.eventoId),
     });
 
     notification.onclick = () => {
