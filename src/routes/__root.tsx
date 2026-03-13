@@ -2,23 +2,147 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import { Toaster } from "../components/ui/sonner";
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { requestForToken, onMessageListener } from "../lib/firebase";
+import {
+  getNotificationPermission,
+  onMessageListener,
+  requestForToken,
+} from "../lib/firebase";
 import { useAuth } from "../hooks/useAuth";
+import { notificacionesService } from "../api/services/notificaciones";
+import { Button } from "../components/ui/button";
+
+const NOTIFICATIONS_PROMPT_DISMISSED_KEY = "cas.notifications.prompt.dismissed.v1";
+const NOTIFICATIONS_FALLBACK_USER_KEY = "cas.notifications.fallback-user-id.v1";
+
+function resolvePlatform() {
+  if (typeof navigator === "undefined") {
+    return "web";
+  }
+
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes("android")) {
+    return "android";
+  }
+  if (ua.includes("iphone") || ua.includes("ipad") || ua.includes("ios")) {
+    return "ios";
+  }
+
+  return "web";
+}
 
 export const Route = createRootRoute({
   component: RootRouteComponent,
 });
 
 function RootRouteComponent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const [showNotificationsPrompt, setShowNotificationsPrompt] = useState(false);
+  const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
+
+  const backendUserId = useMemo(() => {
+    const uid = user?.uid?.trim();
+    if (uid) {
+      return uid;
+    }
+
+    const email = user?.email?.trim();
+    if (email) {
+      return email;
+    }
+
+    if (typeof window === "undefined") {
+      return "web-user";
+    }
+
+    const existing = window.localStorage.getItem(NOTIFICATIONS_FALLBACK_USER_KEY);
+    if (existing && existing.trim()) {
+      return existing;
+    }
+
+    const generated = `web-${Date.now()}`;
+    window.localStorage.setItem(NOTIFICATIONS_FALLBACK_USER_KEY, generated);
+    return generated;
+  }, [user?.uid, user?.email]);
+
+  const registerTokenInBackend = useCallback(
+    async (token: string) => {
+      await notificacionesService.registrarTokenDispositivo(token, backendUserId, resolvePlatform());
+    },
+    [backendUserId],
+  );
+
+  const enableNotifications = useCallback(
+    async (silent: boolean) => {
+      if (!silent) {
+        setIsEnablingNotifications(true);
+      }
+
+      try {
+        const token = await requestForToken();
+        if (!token) {
+          if (!silent) {
+            const permission = getNotificationPermission();
+            if (permission === "denied") {
+              toast.error("Permiso bloqueado", {
+                description: "Revisa la configuracion del navegador para habilitar notificaciones.",
+              });
+            } else if (permission === "unsupported") {
+              toast.error("Notificaciones no soportadas", {
+                description: "Este navegador no soporta notificaciones push para esta app.",
+              });
+            } else {
+              toast.error("No se pudo activar notificaciones", {
+                description: "No se obtuvo un token de Firebase para este dispositivo.",
+              });
+            }
+          }
+          return;
+        }
+
+        await registerTokenInBackend(token);
+
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(NOTIFICATIONS_PROMPT_DISMISSED_KEY, "1");
+        }
+
+        setShowNotificationsPrompt(false);
+        if (!silent) {
+          toast.success("Notificaciones activadas", {
+            description: "Este dispositivo ya puede recibir avisos del campamento.",
+          });
+        }
+      } catch (error) {
+        console.error("Error activando notificaciones", error);
+        if (!silent) {
+          toast.error("Error al activar notificaciones", {
+            description: "No pudimos registrar este dispositivo en el backend.",
+          });
+        }
+      } finally {
+        if (!silent) {
+          setIsEnablingNotifications(false);
+        }
+      }
+    },
+    [registerTokenInBackend],
+  );
+
+  const dismissNotificationsPrompt = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(NOTIFICATIONS_PROMPT_DISMISSED_KEY, "1");
+    }
+    setShowNotificationsPrompt(false);
+  }, []);
 
   useEffect(() => {
     // Solo mostrar si el usuario está autenticado
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      setShowNotificationsPrompt(false);
+      return;
+    }
 
-    // Only set up the listener, don't auto-request token which might be blocked
     const unsubscribe = onMessageListener((payload: any) => {
       console.log("Foreground message received:", payload);
       toast(payload.notification?.title || "New Message", {
@@ -26,30 +150,54 @@ function RootRouteComponent() {
       });
     });
 
-    // Check if permission is already granted, if so, get token.
-    // If 'default', show a toast asking for permission.
-    if (Notification.permission === "granted") {
-      requestForToken();
-    } else if (Notification.permission === "default") {
-      toast("Activar notificaciones?", {
-        id: "activate-notifications",
-        description: "Recibí novedades del campamento",
-        action: {
-          label: "Activar",
-          onClick: () => requestForToken(),
-        },
-        duration: 8000,
-      });
+    const permission = getNotificationPermission();
+    if (permission === "granted") {
+      setShowNotificationsPrompt(false);
+      void enableNotifications(true);
+    } else if (permission === "default") {
+      const dismissed =
+        typeof window !== "undefined" &&
+        window.localStorage.getItem(NOTIFICATIONS_PROMPT_DISMISSED_KEY) === "1";
+      setShowNotificationsPrompt(!dismissed);
+    } else {
+      setShowNotificationsPrompt(false);
     }
 
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [isAuthenticated]);
+  }, [enableNotifications, isAuthenticated]);
+
+  const onEnableClick = useCallback(() => {
+    void enableNotifications(false);
+  }, [enableNotifications]);
 
   return (
     <>
       <Outlet />
+      {showNotificationsPrompt && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 sm:items-center">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl">
+            <h2 className="text-base font-semibold text-zinc-900">Activar notificaciones</h2>
+            <p className="mt-2 text-sm text-zinc-600">
+              Para recibir avisos de calendario y difusion, habilita notificaciones en este dispositivo.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={dismissNotificationsPrompt}
+                disabled={isEnablingNotifications}
+              >
+                Ahora no
+              </Button>
+              <Button type="button" onClick={onEnableClick} disabled={isEnablingNotifications}>
+                {isEnablingNotifications ? "Activando..." : "Activar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       <TanStackRouterDevtools />
       {/*<ReactQueryDevtools />*/}
       <Toaster />

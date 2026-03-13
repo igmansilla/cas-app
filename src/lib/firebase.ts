@@ -17,6 +17,31 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 let messagingPromise: Promise<Messaging | null> | null = null;
 
+type NotificationPermissionState = NotificationPermission | 'unsupported';
+
+function notificationsAreSupported() {
+  return typeof window !== 'undefined' && 'Notification' in window;
+}
+
+export function getNotificationPermission(): NotificationPermissionState {
+  if (!notificationsAreSupported()) {
+    return 'unsupported';
+  }
+  return Notification.permission;
+}
+
+async function ensureNotificationPermission(): Promise<NotificationPermissionState> {
+  if (!notificationsAreSupported()) {
+    return 'unsupported';
+  }
+
+  if (Notification.permission === 'default') {
+    return Notification.requestPermission();
+  }
+
+  return Notification.permission;
+}
+
 async function getMessagingInstance() {
   if (typeof window === 'undefined') {
     return null;
@@ -41,9 +66,21 @@ export const requestForToken = async () => {
       return null;
     }
 
+    const permission = await ensureNotificationPermission();
+    if (permission !== 'granted') {
+      console.log('Notificaciones no habilitadas. Estado:', permission);
+      return null;
+    }
+
+    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+    if (!vapidKey) {
+      console.log('No se encontro VITE_FIREBASE_VAPID_KEY.');
+      return null;
+    }
+
     const serviceWorkerRegistration = await ensureAppServiceWorker();
     const currentToken = await getToken(messaging, {
-      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+      vapidKey,
       ...(serviceWorkerRegistration ? { serviceWorkerRegistration } : {}),
     });
     if (currentToken) {
