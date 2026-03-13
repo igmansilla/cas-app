@@ -15,6 +15,8 @@ import { Button } from "../components/ui/button";
 
 const NOTIFICATIONS_PROMPT_DISMISSED_KEY = "cas.notifications.prompt.dismissed.v1";
 const NOTIFICATIONS_FALLBACK_USER_KEY = "cas.notifications.fallback-user-id.v1";
+const APP_NOTIFICATION_ICON = "/pwa-192x192.png";
+const APP_NOTIFICATION_BADGE = "/pwa-64x64.png";
 
 function resolvePlatform() {
   if (typeof navigator === "undefined") {
@@ -30,6 +32,60 @@ function resolvePlatform() {
   }
 
   return "web";
+}
+
+function setAppBadgeSafe(value: number) {
+  if (typeof navigator === "undefined" || !("setAppBadge" in navigator)) {
+    return;
+  }
+
+  void (navigator as Navigator & { setAppBadge: (value?: number) => Promise<void> })
+    .setAppBadge(value)
+    .catch(() => undefined);
+}
+
+function clearAppBadgeSafe() {
+  if (typeof navigator === "undefined" || !("clearAppBadge" in navigator)) {
+    return;
+  }
+
+  void (navigator as Navigator & { clearAppBadge: () => Promise<void> })
+    .clearAppBadge()
+    .catch(() => undefined);
+}
+
+function showForegroundSystemNotification(payload: any) {
+  if (typeof window === "undefined" || !("Notification" in window)) {
+    return;
+  }
+
+  if (Notification.permission !== "granted") {
+    return;
+  }
+
+  const title = payload?.notification?.title || "Nuevo mensaje";
+  const body = payload?.notification?.body || "Tenes una nueva notificacion";
+
+  try {
+    const notification = new Notification(title, {
+      body,
+      icon: APP_NOTIFICATION_ICON,
+      badge: APP_NOTIFICATION_BADGE,
+      data: payload?.data,
+      tag: payload?.data?.eventoId ? `evento-${payload.data.eventoId}` : undefined,
+      renotify: Boolean(payload?.data?.eventoId),
+    });
+
+    notification.onclick = () => {
+      window.focus();
+      clearAppBadgeSafe();
+      notification.close();
+    };
+
+    setAppBadgeSafe(1);
+  } catch (error) {
+    console.error("No se pudo mostrar notificacion del sistema en foreground", error);
+  }
 }
 
 export const Route = createRootRoute({
@@ -108,6 +164,7 @@ function RootRouteComponent() {
         }
 
         setShowNotificationsPrompt(false);
+        clearAppBadgeSafe();
         if (!silent) {
           toast.success("Notificaciones activadas", {
             description: "Este dispositivo ya puede recibir avisos del campamento.",
@@ -148,6 +205,7 @@ function RootRouteComponent() {
       toast(payload.notification?.title || "New Message", {
         description: payload.notification?.body,
       });
+      showForegroundSystemNotification(payload);
     });
 
     const permission = getNotificationPermission();
