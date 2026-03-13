@@ -81,6 +81,11 @@ function aEventoCalendario(evento: Evento): EventoCalendarioFormateado {
     grupoNombre: evento.grupoNombre ?? undefined,
     plantillaAnualId: evento.plantillaAnualId ?? undefined,
     enlaceVideollamada: evento.enlaceVideollamada ?? undefined,
+    audiencia: evento.audiencia ?? undefined,
+    visibilidad: evento.visibilidad ?? undefined,
+    estadoEvento: evento.estadoEvento ?? undefined,
+    publicoObjetivo: evento.publicoObjetivo ?? undefined,
+    politicaNotificacion: evento.politicaNotificacion ?? undefined,
     esVirtual,
   };
 }
@@ -252,6 +257,8 @@ export const calendarioService = {
       critico: Boolean(item.critico),
       programado: Boolean(item.programado),
       eventoId: item.eventoId != null ? Number(item.eventoId) : null,
+      publicoObjetivo: item.publicoObjetivo ? String(item.publicoObjetivo) : null,
+      politicaNotificacion: item.politicaNotificacion ? String(item.politicaNotificacion) : null,
     }));
   },
 

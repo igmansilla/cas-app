@@ -70,6 +70,11 @@ export const EventoSchema = object({
   horaInicio: optional(nullable(string())), // Formato HH:mm:ss
   horaFin: optional(nullable(string())),
   enlaceVideollamada: optional(nullable(string())),
+  audiencia: optional(nullable(string())),
+  visibilidad: optional(nullable(string())),
+  estadoEvento: optional(nullable(string())),
+  publicoObjetivo: optional(nullable(string())),
+  politicaNotificacion: optional(nullable(string())),
   fechaCreacion: optional(string()),
   fechaActualizacion: optional(string()),
 });
@@ -158,6 +163,8 @@ export const EventoFieldSchema = object({
   horaInicio: optional(string()),
   horaFin: optional(string()),
   enlaceVideollamada: optional(string()),
+  publicoObjetivo: optional(string()),
+  politicaNotificacion: optional(string()),
   grupoId: optional(string()),
   departamentoId: optional(string()),
   plantillaAnualId: optional(number()),
@@ -234,6 +241,11 @@ export const EventoRequestSchema = object({
   horaInicio: optional(string()),
   horaFin: optional(string()),
   enlaceVideollamada: optional(string()),
+  audiencia: optional(string()),
+  visibilidad: optional(string()),
+  estadoEvento: optional(string()),
+  publicoObjetivo: optional(string()),
+  politicaNotificacion: optional(string()),
 });
 
 export type EventoRequest = InferOutput<typeof EventoRequestSchema>;
@@ -267,6 +279,11 @@ export interface EventoCalendarioFormateado {
    departamentoNombre?: string | null;
   plantillaAnualId?: number | null;
   enlaceVideollamada?: string;
+  audiencia?: string;
+  visibilidad?: string;
+  estadoEvento?: string;
+  publicoObjetivo?: string;
+  politicaNotificacion?: string;
   esVirtual?: boolean;
 }
 
@@ -285,6 +302,8 @@ export const PlantillaEventoAnualSchema = object({
   critico: boolean(),
   programado: boolean(),
   eventoId: nullable(number()),
+  publicoObjetivo: optional(nullable(string())),
+  politicaNotificacion: optional(nullable(string())),
 });
 
 /**
@@ -302,5 +321,7 @@ export interface PlantillaEventoAnual {
   critico: boolean;
   programado: boolean;
   eventoId: number | null;
+  publicoObjetivo?: string | null;
+  politicaNotificacion?: string | null;
 }
 

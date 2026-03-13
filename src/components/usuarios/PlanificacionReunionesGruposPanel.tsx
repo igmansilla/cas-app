@@ -135,6 +135,8 @@ export function PlanificacionReunionesGruposPanel() {
       grupoId: reunion.grupoId ?? "",
       departamentoId: reunion.departamentoId ?? undefined,
       plantillaAnualId: reunion.plantillaAnualId ?? undefined,
+      publicoObjetivo: reunion.publicoObjetivo ?? "grupo-y-padres",
+      politicaNotificacion: reunion.politicaNotificacion ?? "automatica-al-difundir",
       enlaceVideollamada: reunion.enlaceVideollamada ?? "",
     });
     setIdEventoEditando(reunionId);
@@ -148,6 +150,8 @@ export function PlanificacionReunionesGruposPanel() {
       tipo: "REUNION",
       grupoId: grupo.id,
       titulo: `Reunión ${grupo.nombre}`,
+      publicoObjetivo: "grupo-y-padres",
+      politicaNotificacion: "automatica-al-difundir",
     });
     setIdEventoEditando(null);
     setModoEdicion(false);

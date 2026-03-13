@@ -29,6 +29,12 @@ import { Textarea } from "../../ui/textarea";
 import { useGruposAcampantes, useGruposDirigentes } from "../../../hooks/useGrupos";
 import { useDepartamentos } from "../../../hooks/useDepartamentos";
 import { buildGoogleMapsSearchUrl, getDefaultMeetingLocation } from "../../../lib/google-maps";
+import {
+  PUBLICO_OBJETIVO_OPTIONS,
+  POLITICA_NOTIFICACION_OPTIONS,
+  getPoliticaNotificacionBadge,
+  getPublicoObjetivoBadge,
+} from "../../../lib/calendario/eventoMeta";
 import { 
   CalendarRange, Building2, Users, MapPin, Video, CheckCircle2, 
   Tag, Clock, ChevronRight, ChevronLeft 
@@ -227,6 +233,8 @@ function WizardEventoContent({
       diaSemana: naturaleza === "REUNION" ? defaultMeetingSchedule.diaSemana : "",
       horaInicio: "15:00",
       horaFin: "17:00",
+      publicoObjetivo: "comunidad",
+      politicaNotificacion: "automatica-al-difundir",
       grupoId: "",
       departamentoId: "",
       plantillaAnualId: undefined as number | undefined,
@@ -245,6 +253,8 @@ function WizardEventoContent({
         plantillaAnualId: value.plantillaAnualId,
         fechaInicio: new Date(value.fechaInicio).toISOString(),
         fechaFin: new Date(value.fechaFin).toISOString(),
+        publicoObjetivo: value.publicoObjetivo || undefined,
+        politicaNotificacion: value.politicaNotificacion || undefined,
         enlaceVideollamada: permiteVideollamada ? value.enlaceVideollamada || undefined : undefined,
       };
       await onGuardar(payload);
@@ -281,6 +291,8 @@ function WizardEventoContent({
       form.setFieldValue("diaSemana", valoresIniciales.diaSemana || (naturaleza === "REUNION" ? defaultMeetingSchedule.diaSemana : ""));
       form.setFieldValue("horaInicio", valoresIniciales.horaInicio || "15:00");
       form.setFieldValue("horaFin", valoresIniciales.horaFin || "17:00");
+      form.setFieldValue("publicoObjetivo", valoresIniciales.publicoObjetivo || "comunidad");
+      form.setFieldValue("politicaNotificacion", valoresIniciales.politicaNotificacion || "automatica-al-difundir");
       form.setFieldValue("grupoId", mostrarGrupoEnReunion ? valoresIniciales.grupoId || "" : "");
       form.setFieldValue(
         "departamentoId",
@@ -313,6 +325,8 @@ function WizardEventoContent({
         case "clasificacion":
           return [
             "titulo",
+            "publicoObjetivo",
+            "politicaNotificacion",
             ...(naturaleza === "EVENTO" && !esEventoPlantillado ? ["tipo"] : []),
             ...(naturaleza === "REUNION" && mostrarGrupoEnReunion ? ["grupoId"] : []),
             ...(naturaleza === "REUNION" && !mostrarGrupoEnReunion ? ["departamentoId"] : []),
@@ -514,6 +528,52 @@ function WizardEventoContent({
                     </div>
                   )}
                 </form.Field>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <form.Field name="publicoObjetivo" validators={{ onChange: validateRequiredValue("Selecciona el publico objetivo.") }}>
+                    {(field) => (
+                      <div className="space-y-1.5">
+                        <Label>Publico objetivo *</Label>
+                        <Select value={field.state.value} onValueChange={field.handleChange}>
+                          <SelectTrigger><SelectValue placeholder="Selecciona a quien va dirigido" /></SelectTrigger>
+                          <SelectContent>
+                            {PUBLICO_OBJETIVO_OPTIONS.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Define quien recibe la difusion cuando el evento pasa a estado difundido.
+                        </p>
+                        <FieldError field={field} />
+                      </div>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="politicaNotificacion" validators={{ onChange: validateRequiredValue("Selecciona la politica de notificacion.") }}>
+                    {(field) => (
+                      <div className="space-y-1.5">
+                        <Label>Politica de notificacion *</Label>
+                        <Select value={field.state.value} onValueChange={field.handleChange}>
+                          <SelectTrigger><SelectValue placeholder="Selecciona como se notifica" /></SelectTrigger>
+                          <SelectContent>
+                            {POLITICA_NOTIFICACION_OPTIONS.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Controla si se notifica automaticamente al difundir, manualmente o sin push.
+                        </p>
+                        <FieldError field={field} />
+                      </div>
+                    )}
+                  </form.Field>
+                </div>
 
                 {naturaleza === "REUNION" && mostrarGrupoEnReunion && (
                   <form.Field name="grupoId" validators={{ onChange: validateRequiredValue("Seleccioná un grupo.") }}>
@@ -835,6 +895,24 @@ function WizardEventoContent({
                         <div className="px-4 py-3 flex justify-between">
                           <span className="text-muted-foreground">Tipo</span>
                           <span className="font-medium capitalize">{values.tipo}</span>
+                        </div>
+                      )}
+
+                      {values.publicoObjetivo && (
+                        <div className="px-4 py-3 flex justify-between gap-3">
+                          <span className="text-muted-foreground">Publico objetivo</span>
+                          <span className="font-medium text-right">
+                            {getPublicoObjetivoBadge(values.publicoObjetivo).label}
+                          </span>
+                        </div>
+                      )}
+
+                      {values.politicaNotificacion && (
+                        <div className="px-4 py-3 flex justify-between gap-3">
+                          <span className="text-muted-foreground">Notificacion</span>
+                          <span className="font-medium text-right">
+                            {getPoliticaNotificacionBadge(values.politicaNotificacion).label}
+                          </span>
                         </div>
                       )}
 

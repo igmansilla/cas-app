@@ -140,6 +140,8 @@ export function DepartamentoPlanningPage({
       diaSemana: evento.diaSemana ?? "",
       horaInicio: evento.horaInicio ?? "15:00",
       horaFin: evento.horaFin ?? "17:00",
+      publicoObjetivo: evento.publicoObjetivo ?? "comunidad",
+      politicaNotificacion: evento.politicaNotificacion ?? "automatica-al-difundir",
       enlaceVideollamada: evento.enlaceVideollamada ?? "",
     });
     setIdEventoEditando(eventoId);
@@ -151,6 +153,8 @@ export function DepartamentoPlanningPage({
     setEventoEditando({
       naturaleza: "EVENTO",
       departamentoId: departamento?.id,
+      publicoObjetivo: "comunidad",
+      politicaNotificacion: "automatica-al-difundir",
     });
     setIdEventoEditando(null);
     setModoEdicion(false);
@@ -162,6 +166,8 @@ export function DepartamentoPlanningPage({
       naturaleza: "REUNION",
       tipo: "REUNION",
       departamentoId: departamento?.id,
+      publicoObjetivo: "dirigentes",
+      politicaNotificacion: "automatica-al-difundir",
     });
     setIdEventoEditando(null);
     setModoEdicion(false);
@@ -176,6 +182,8 @@ export function DepartamentoPlanningPage({
       descripcion: plantilla.descripcion,
       departamentoId: plantilla.departamentoId,
       plantillaAnualId: plantilla.id,
+      publicoObjetivo: plantilla.publicoObjetivo ?? "comunidad",
+      politicaNotificacion: plantilla.politicaNotificacion ?? "automatica-al-difundir",
     });
     setIdEventoEditando(null);
     setModoEdicion(false);
