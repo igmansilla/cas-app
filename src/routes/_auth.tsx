@@ -10,6 +10,26 @@ import { useOidc } from "../oidc";
 // VIP roles that skip onboarding
 const VIP_ROLES = ["dirigente"];
 
+function getMobileHeaderTitle(pathname: string): string | undefined {
+    if (pathname.startsWith("/calendario")) return "Calendario";
+    if (pathname.startsWith("/dashboard")) return "Inicio";
+    if (pathname.startsWith("/pagos")) return "Pagos";
+    if (pathname.startsWith("/documentos")) return "Documentos";
+    if (pathname.startsWith("/equipo")) return "Equipo";
+    if (pathname.startsWith("/usuarios")) return "Acampantes";
+    if (pathname.startsWith("/perfil")) return "Perfil";
+    if (pathname.startsWith("/configuracion")) return "Configuracion";
+    if (pathname.startsWith("/departamentos/economia/planificacion")) return "Economia - Planificacion";
+    if (pathname.startsWith("/departamentos/economia/tesoreria")) return "Economia - Tesoreria";
+    if (pathname.startsWith("/departamentos/economia/planes")) return "Economia - Planes";
+    if (pathname.startsWith("/departamentos/economia")) return "Economia";
+    if (pathname.startsWith("/departamentos")) return "Departamentos";
+    if (pathname.startsWith("/reuniones")) return "Reuniones";
+    if (pathname.startsWith("/planes")) return "Planes";
+    if (pathname.startsWith("/template-editor")) return "Editor";
+    return undefined;
+}
+
 export const Route = createFileRoute("/_auth")({
     component: AuthLayout,
 });
@@ -24,6 +44,7 @@ function AuthLayout() {
 
     // Ocultar navegación durante onboarding
     const isOnboarding = location.pathname === "/onboarding";
+    const mobileHeaderTitle = isOnboarding ? undefined : getMobileHeaderTitle(location.pathname);
 
     // Redirect to login if not authenticated
     useEffect(() => {
@@ -94,7 +115,7 @@ function AuthLayout() {
     return (
         <div className="min-h-dvh bg-white">
             <div className={`h-full ${isOnboarding ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_auto_1fr] md:grid-rows-[auto_1fr]'}`}>
-                {!isOnboarding && <MobileHeader />}
+                {!isOnboarding && <MobileHeader title={mobileHeaderTitle} />}
                 {!isOnboarding && <MobileFooter />}
                 <main className={`overflow-auto ${isOnboarding ? '' : 'pb-24 md:pb-6'}`}>
                     <Outlet />

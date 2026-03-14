@@ -85,8 +85,8 @@ function CalendarioPage() {
   );
 
   return (
-    <div className="min-h-full bg-gradient-to-br from-orange-50 via-orange-50 to-red-50 pb-20 md:pb-8">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-full bg-gradient-to-br from-orange-50 via-orange-50 to-red-50 pb-6 md:pb-8">
+      <div className="container mx-auto px-3 py-3 md:px-4 md:py-8">
         
         <CalendarioHeader 
           diasRestantes={diasRestantes} 
