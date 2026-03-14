@@ -16,7 +16,7 @@ import { GenerarPdfModal } from './GenerarPdfModal';
 import { documentosService } from '../../api/services/documentos';
 
 interface ReportesDocumentosProps {
-  onSelectUsuario?: (usuarioId: number, usuarioNombre?: string) => void;
+  onSelectUsuario?: (keycloakId: string, usuarioNombre?: string) => void;
 }
 
 export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps) {
@@ -43,13 +43,14 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
   const [cargandoBulk, setCargandoBulk] = useState(false);
   const [documentosBulk, setDocumentosBulk] = useState<Array<{
     documento: DocumentoCompletado;
-    usuario: { id: number; nombreMostrar: string; dni?: string | null; fechaNacimiento?: string | null; direccion?: string | null; localidad?: string | null; telefono?: string | null; email: string };
+    usuario: { id: number; keycloakId: string; nombreMostrar: string; dni?: string | null; fechaNacimiento?: string | null; direccion?: string | null; localidad?: string | null; telefono?: string | null; email: string };
   }>>([]);
 
   // Estado para generación de PDFs
   const [mostrarGenerarPdf, setMostrarGenerarPdf] = useState(false);
   const [usuarioParaPdf, setUsuarioParaPdf] = useState<{
     id: number;
+    keycloakId: string;
     nombreMostrar: string;
     email: string;
   } | null>(null);
@@ -85,8 +86,9 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
       // Cargar documentos de cada usuario que tenga documentos completos
       for (const usuario of reporte.detalleUsuarios) {
         if (usuario.documentosCompletos === 0) continue;
+        if (!usuario.keycloakId) continue;
         
-        const documentosUsuario = await documentosService.getDetalleDocumentosUsuario(usuario.usuarioId);
+        const documentosUsuario = await documentosService.getDetalleDocumentosUsuario(usuario.keycloakId);
         const fichaMedica = documentosUsuario.find(d => d.tipoDocumentoCodigo === 'FICHA_MEDICA' && d.id !== null);
         
         if (fichaMedica) {
@@ -94,6 +96,7 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
             documento: fichaMedica,
             usuario: {
               id: usuario.usuarioId,
+              keycloakId: usuario.keycloakId,
               nombreMostrar: usuario.usuarioNombre || 'Sin nombre',
               email: usuario.usuarioEmail || '',
               dni: null,
@@ -163,6 +166,7 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
         <GenerarPdfModal
           usuario={usuarioParaPdf ? {
             id: usuarioParaPdf.id,
+            keycloakId: usuarioParaPdf.keycloakId,
             nombreMostrar: usuarioParaPdf.nombreMostrar,
             email: usuarioParaPdf.email,
             dni: null,
@@ -171,16 +175,21 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
             localidad: null,
             telefono: null,
           } : undefined}
-          usuarios={!usuarioParaPdf ? usuariosFiltrados.map(u => ({
-            id: u.usuarioId,
-            nombreMostrar: u.usuarioNombre || 'Sin nombre',
-            email: u.usuarioEmail || '',
-            dni: null,
-            fechaNacimiento: null,
-            direccion: null,
-            localidad: null,
-            telefono: null,
-          })) : undefined}
+          usuarios={!usuarioParaPdf
+            ? usuariosFiltrados
+                .filter((u) => !!u.keycloakId)
+                .map((u) => ({
+                  id: u.usuarioId,
+                  keycloakId: u.keycloakId!,
+                  nombreMostrar: u.usuarioNombre || 'Sin nombre',
+                  email: u.usuarioEmail || '',
+                  dni: null,
+                  fechaNacimiento: null,
+                  direccion: null,
+                  localidad: null,
+                  telefono: null,
+                }))
+            : undefined}
           onClose={() => {
             setMostrarGenerarPdf(false);
             setUsuarioParaPdf(null);
@@ -266,12 +275,14 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
       <div className="space-y-3 lg:hidden">
         {usuariosFiltrados.map((usuario) => (
           <UsuarioMobileCard
-            key={usuario.usuarioId}
+            key={usuario.keycloakId || String(usuario.usuarioId)}
             usuario={usuario}
-            onClick={onSelectUsuario ? () => onSelectUsuario(usuario.usuarioId, usuario.usuarioNombre ?? undefined) : undefined}
+            onClick={onSelectUsuario && usuario.keycloakId ? () => onSelectUsuario(usuario.keycloakId, usuario.usuarioNombre ?? undefined) : undefined}
             onGenerarPdf={() => {
+              if (!usuario.keycloakId) return;
               setUsuarioParaPdf({
                 id: usuario.usuarioId,
+                keycloakId: usuario.keycloakId,
                 nombreMostrar: usuario.usuarioNombre || 'Sin nombre',
                 email: usuario.usuarioEmail || '',
               });
@@ -314,12 +325,14 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
           <tbody className="divide-y divide-gray-100">
             {usuariosFiltrados.map((usuario) => (
               <UsuarioRow
-                key={usuario.usuarioId}
+                key={usuario.keycloakId || String(usuario.usuarioId)}
                 usuario={usuario}
-                onClick={() => onSelectUsuario?.(usuario.usuarioId, usuario.usuarioNombre ?? undefined)}
+                onClick={usuario.keycloakId ? () => onSelectUsuario?.(usuario.keycloakId, usuario.usuarioNombre ?? undefined) : undefined}
                 onGenerarPdf={() => {
+                  if (!usuario.keycloakId) return;
                   setUsuarioParaPdf({
                     id: usuario.usuarioId,
+                    keycloakId: usuario.keycloakId,
                     nombreMostrar: usuario.usuarioNombre || 'Sin nombre',
                     email: usuario.usuarioEmail || '',
                   });
