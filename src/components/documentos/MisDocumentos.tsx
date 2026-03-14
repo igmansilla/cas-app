@@ -13,12 +13,12 @@ import { ESTADO_CONFIG, type DocumentoCompletado } from '../../api/schemas/docum
 import { FichaMedicaPdfView } from './FichaMedicaPdfView';
 
 interface MisDocumentosProps {
-  onSelectDocumento?: (tipoDocumentoId: number, usuarioId: number) => void;
+  onSelectDocumento?: (tipoDocumentoId: number, keycloakId: string) => void;
 }
 
 export function MisDocumentos({ onSelectDocumento }: MisDocumentosProps) {
   const { data: usuario } = useUsuarioActual();
-  const { documentos, cargando, error } = useDocumentosUsuario(usuario?.id || 0);
+  const { documentos, cargando, error } = useDocumentosUsuario(usuario?.keycloakId || '');
   const [pdfDocumento, setPdfDocumento] = useState<DocumentoCompletado | null>(null);
 
   if (!usuario) {
@@ -138,7 +138,7 @@ export function MisDocumentos({ onSelectDocumento }: MisDocumentosProps) {
                     </div>
                   </div>
                   <button
-                    onClick={() => onSelectDocumento?.(item.docId, usuario.id)}
+                    onClick={() => onSelectDocumento?.(item.docId, usuario.keycloakId)}
                     className="text-xs font-medium text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg transition-colors"
                   >
                     Ver detalles
@@ -190,7 +190,7 @@ export function MisDocumentos({ onSelectDocumento }: MisDocumentosProps) {
             <DocumentoItem
               key={doc.tipoDocumentoId}
               documento={doc}
-              onClick={() => onSelectDocumento?.(doc.tipoDocumentoId, usuario.id)}
+              onClick={() => onSelectDocumento?.(doc.tipoDocumentoId, usuario.keycloakId)}
               onDownload={() => handleOpenPdf(doc)}
             />
           ))}
