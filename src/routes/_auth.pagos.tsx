@@ -60,6 +60,11 @@ function RouteComponent() {
 
   const handlePagarCuota = async (cuota: Cuota, idInscripcion: number) => {
     try {
+      if (cuota.esPagable === false) {
+        toast.error("Debés pagar en orden: primero la próxima cuota pendiente.");
+        return;
+      }
+
       // Validar que la cuota tenga ID
       if (!cuota.id) {
         toast.error("Error: Cuota sin identificador válido");
@@ -79,9 +84,14 @@ function RouteComponent() {
       } else {
         toast.error("No se recibió link de pago");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Error al iniciar el pago");
+      const mensaje = err?.response?.data?.detail
+        || err?.response?.data?.message
+        || err?.response?.data?.title
+        || err?.message
+        || "Error al iniciar el pago";
+      toast.error(mensaje);
     } finally {
       setPagandoCuota(null);
     }

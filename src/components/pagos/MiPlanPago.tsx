@@ -436,6 +436,7 @@ function CuotaCard({
 }) {
   const isPagada = cuota.estado === 'PAGADA' || cuota.estado === 'REGULARIZADA';
   const isAtrasada = cuota.estado === 'ATRASADA';
+  const isPagable = !isPagada && cuota.esPagable === true;
   const [descargando, setDescargando] = useState(false);
 
   const fechaVenc = cuota.fechaVencimiento
@@ -529,11 +530,11 @@ function CuotaCard({
         ) : (
           <Button
             size="sm"
-            variant={isAtrasada ? "destructive" : "default"}
+            variant={isAtrasada ? "destructive" : (isPagable ? "default" : "secondary")}
             onClick={() => onPagar(cuota)}
-            disabled={pagando || isAtrasada}
+            disabled={pagando || isAtrasada || !isPagable}
           >
-            {pagando ? "Procesando..." : isAtrasada ? "Atrasada" : "Pagar"}
+            {pagando ? "Procesando..." : isAtrasada ? "Atrasada" : isPagable ? "Pagar" : "No habilitada"}
           </Button>
         )}
       </div>
