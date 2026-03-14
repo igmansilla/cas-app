@@ -12,6 +12,7 @@ interface DocumentoConUsuario {
   documento: DocumentoCompletado;
   usuario: {
     id: number;
+    keycloakId: string;
     nombreMostrar: string;
     dni?: string | null;
     fechaNacimiento?: string | null;
