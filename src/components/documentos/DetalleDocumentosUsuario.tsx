@@ -17,17 +17,17 @@ import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 
 interface DetalleDocumentosUsuarioProps {
-  usuarioId: number;
+  keycloakId: string;
   usuarioNombre?: string;
   onClose: () => void;
 }
 
 export function DetalleDocumentosUsuario({
-  usuarioId,
+  keycloakId,
   usuarioNombre,
   onClose,
 }: DetalleDocumentosUsuarioProps) {
-  const { documentos, cargando, error } = useDetalleDocumentosUsuario(usuarioId);
+  const { documentos, cargando, error } = useDetalleDocumentosUsuario(keycloakId);
   const { hasRole } = useAuth();
   const puedeObservar = hasRole('SECRETARIO') || hasRole('DIRIGENTE') || hasRole('ADMIN');
   const { observarDocumento, cargando: observandoDocumento } = useObservarDocumento();
@@ -144,7 +144,7 @@ export function DetalleDocumentosUsuario({
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              Documentos de {usuarioNombre || `Usuario #${usuarioId}`}
+              Documentos de {usuarioNombre || `Usuario ${keycloakId}`}
             </h2>
             <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
               <span>{stats.completos}/{stats.total} completos</span>

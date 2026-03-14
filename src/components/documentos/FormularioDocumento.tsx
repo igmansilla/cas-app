@@ -12,6 +12,7 @@ import type { CampoFormulario, AdjuntoRequerido, ArchivoAdjunto } from '../../ap
 
 interface FormularioDocumentoProps {
   tipoDocumentoId: number;
+  keycloakId: string;
   usuarioId: number;
   onClose: () => void;
   onComplete?: () => void;
@@ -19,12 +20,13 @@ interface FormularioDocumentoProps {
 
 export function FormularioDocumento({
   tipoDocumentoId,
+  keycloakId,
   usuarioId,
   onClose,
   onComplete,
 }: FormularioDocumentoProps) {
   const { tipo, cargando: cargandoTipo } = useTipoDocumento(tipoDocumentoId);
-  const { documento, cargando: cargandoDoc } = useDocumento(tipoDocumentoId, usuarioId);
+  const { documento, cargando: cargandoDoc } = useDocumento(tipoDocumentoId, keycloakId);
   const { guardarDocumento, cargando: guardando } = useGuardarDocumento();
   const { subirAdjunto, cargando: subiendo } = useSubirAdjunto();
 
@@ -96,6 +98,7 @@ export function FormularioDocumento({
       await guardarDocumento({
         tipoDocumentoId,
         usuarioId,
+        usuarioKeycloakId: keycloakId,
         respuestas,
         finalizar: false,
       });
@@ -113,6 +116,7 @@ export function FormularioDocumento({
       await guardarDocumento({
         tipoDocumentoId,
         usuarioId,
+        usuarioKeycloakId: keycloakId,
         respuestas,
         finalizar: true,
       });
@@ -130,6 +134,7 @@ export function FormularioDocumento({
       await guardarDocumento({
         tipoDocumentoId,
         usuarioId,
+        usuarioKeycloakId: keycloakId,
         respuestas,
         finalizar: false,
       });
@@ -140,7 +145,7 @@ export function FormularioDocumento({
         documentoId: documento.id,
         adjuntoRequeridoId,
         file,
-        usuarioId,
+        usuarioKeycloakId: keycloakId,
       });
     }
   };

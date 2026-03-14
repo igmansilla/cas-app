@@ -17,6 +17,7 @@ import type { TipoDocumento, TipoDocumentoImprimible } from '../../api/schemas/d
 
 interface UsuarioDatos {
   id: number;
+  keycloakId: string;
   nombreMostrar: string;
   dni?: string | null;
   fechaNacimiento?: string | null;
@@ -136,7 +137,7 @@ export function GenerarPdfModal({ usuario, usuarios, onClose }: GenerarPdfModalP
     tipos: tiposImprimibles,
     cargando: cargandoTiposImprimibles,
     error: errorTiposImprimibles,
-  } = useTiposImprimiblesUsuario(usuario?.id ?? 0);
+  } = useTiposImprimiblesUsuario(usuario?.keycloakId ?? '');
   
   const [tipoSeleccionadoId, setTipoSeleccionadoId] = useState<number | ''>('');
   const [template, setTemplate] = useState<PdfTemplateResponse | null>(null);
@@ -258,10 +259,10 @@ export function GenerarPdfModal({ usuario, usuarios, onClose }: GenerarPdfModalP
         await descargarPdfsMasivos(templateConfig, datosMultiples, filename);
       } else if (usuario) {
         if (tipoSeleccionado.modoImpresion === 'ADJUNTOS') {
-          const blob = await documentosService.descargarAdjuntosPdf(tipoSeleccionado.id, usuario.id);
+          const blob = await documentosService.descargarAdjuntosPdf(tipoSeleccionado.id, usuario.keycloakId);
           descargarBlob(blob, buildPdfFilename(tipoSeleccionado.nombre, usuario.nombreMostrar, 'adjuntos'));
         } else {
-          const pdfData = await documentosService.getPdfData(tipoSeleccionado.id, usuario.id);
+          const pdfData = await documentosService.getPdfData(tipoSeleccionado.id, usuario.keycloakId);
 
           const templateConfig: TemplateConfig = {
             codigo: pdfData.template.codigo,
