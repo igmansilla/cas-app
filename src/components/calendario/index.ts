@@ -6,6 +6,5 @@ export { CalendarioHeader } from './CalendarioHeader';
 export { CalendarioLegend } from './CalendarioLegend';
 export { CalendarioView } from './CalendarioView';
 export { EventoDetalleModal } from './EventoDetalleModal';
-export { EventoFormularioModal } from './EventoFormularioModal';
 export { PlanificadorAnual } from './PlanificadorAnual';
 export { obtenerColorEvento, obtenerIconoEvento } from './helpers';

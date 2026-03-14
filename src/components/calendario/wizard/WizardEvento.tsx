@@ -36,7 +36,7 @@ import {
   getPublicoObjetivoBadge,
 } from "../../../lib/calendario/eventoMeta";
 import { 
-  CalendarRange, Building2, Users, MapPin, Video, CheckCircle2, 
+  CalendarRange, Building2, Users, MapPin, CheckCircle2,
   Tag, Clock, ChevronRight, ChevronLeft 
 } from "lucide-react";
 import { MapsAutocomplete } from "./MapsAutocomplete";
@@ -45,7 +45,6 @@ import { MapsAutocomplete } from "./MapsAutocomplete";
 const stepperEvento = defineStepper(
   { id: "clasificacion", title: "Definición", icon: Tag },
   { id: "tiempos",       title: "Tiempos",       icon: Clock },
-  { id: "responsable",   title: "Responsable",   icon: Building2 },
   { id: "ubicacion",     title: "Ubicación",     icon: MapPin },
   { id: "confirmacion",  title: "Confirmar",     icon: CheckCircle2 }
 );
@@ -213,7 +212,6 @@ function WizardEventoContent({
   ], [gruposAcampantes, gruposDirigentes]);
   const defaultMeetingLocation = getDefaultMeetingLocation();
   const defaultMeetingSchedule = getDefaultMeetingScheduleValues();
-  const permiteVideollamada = !(naturaleza === "REUNION" && mostrarGrupoEnReunion);
 
   const useStepper = stepper.useStepper();
 
@@ -238,7 +236,6 @@ function WizardEventoContent({
       grupoId: "",
       departamentoId: "",
       plantillaAnualId: undefined as number | undefined,
-      enlaceVideollamada: "",
     } as EventoFormData,
     validators: { onChange: EventoFormSchema },
     onSubmit: async ({ value }) => {
@@ -255,7 +252,7 @@ function WizardEventoContent({
         fechaFin: new Date(value.fechaFin).toISOString(),
         publicoObjetivo: value.publicoObjetivo || undefined,
         politicaNotificacion: value.politicaNotificacion || undefined,
-        enlaceVideollamada: permiteVideollamada ? value.enlaceVideollamada || undefined : undefined,
+        enlaceVideollamada: undefined,
       };
       await onGuardar(payload);
     },
@@ -301,9 +298,8 @@ function WizardEventoContent({
           : valoresIniciales.departamentoId ? String(valoresIniciales.departamentoId) : "",
       );
       form.setFieldValue("plantillaAnualId", valoresIniciales.plantillaAnualId);
-      form.setFieldValue("enlaceVideollamada", permiteVideollamada ? valoresIniciales.enlaceVideollamada || "" : "");
     }
-  }, [abierto, defaultMeetingLocation.direccion, defaultMeetingLocation.lat, defaultMeetingLocation.lng, defaultMeetingLocation.url, defaultMeetingSchedule.diaSemana, defaultMeetingSchedule.fechaFin, defaultMeetingSchedule.fechaInicio, mostrarGrupoEnReunion, naturaleza, permiteVideollamada, valoresIniciales]);
+  }, [abierto, defaultMeetingLocation.direccion, defaultMeetingLocation.lat, defaultMeetingLocation.lng, defaultMeetingLocation.url, defaultMeetingSchedule.diaSemana, defaultMeetingSchedule.fechaFin, defaultMeetingSchedule.fechaInicio, mostrarGrupoEnReunion, naturaleza, valoresIniciales]);
 
   // ── Stepper header ─────────────────────────────────────────────────────────
   const allSteps = useStepper.all;
@@ -328,6 +324,7 @@ function WizardEventoContent({
             "publicoObjetivo",
             "politicaNotificacion",
             ...(naturaleza === "EVENTO" && !esEventoPlantillado ? ["tipo"] : []),
+            ...(naturaleza === "EVENTO" && !esEventoPlantillado ? ["departamentoId"] : []),
             ...(naturaleza === "REUNION" && mostrarGrupoEnReunion ? ["grupoId"] : []),
             ...(naturaleza === "REUNION" && !mostrarGrupoEnReunion ? ["departamentoId"] : []),
           ];
@@ -335,8 +332,6 @@ function WizardEventoContent({
           return naturaleza === "EVENTO"
             ? ["fechaInicio", "fechaFin"]
             : ["fechaInicio", "fechaFin", "periodicidad", "diaSemana", "horaInicio", "horaFin"];
-        case "responsable":
-          return naturaleza === "EVENTO" && !esEventoPlantillado ? ["departamentoId"] : [];
         default:
           return [];
       }
@@ -517,8 +512,8 @@ function WizardEventoContent({
                       <Label>Descripción <span className="text-muted-foreground text-xs">(opcional)</span></Label>
                       <Textarea
                         placeholder={naturaleza === "REUNION"
-                          ? "Orden del día, equipamiento sugerido..."
-                          : "Detalles, materiales necesarios..."}
+                          ? "Para hacer... (objetivo de la reunión, dinámica, materiales)"
+                          : "Para hacer... (objetivo, actividades y recursos necesarios)"}
                         className="resize-none"
                         rows={3}
                         value={field.state.value}
@@ -528,6 +523,47 @@ function WizardEventoContent({
                     </div>
                   )}
                 </form.Field>
+
+                {naturaleza === "EVENTO" && (
+                  <form.Field
+                    name="departamentoId"
+                    validators={{
+                      onChange: ({ value }) => {
+                        if (esEventoPlantillado) {
+                          return undefined;
+                        }
+
+                        return validateRequiredValue("Seleccioná un departamento.")({ value });
+                      },
+                    }}
+                  >
+                    {(field) => (
+                      <div className="space-y-1.5">
+                        <Label className="flex items-center gap-1.5"><Building2 className="w-4 h-4" /> Departamento organizador *</Label>
+                        <Select
+                          value={field.state.value}
+                          onValueChange={field.handleChange}
+                          disabled={cargandoDepartamentos || esEventoPlantillado || bloquearDepartamento}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Seleccioná un departamento..." /></SelectTrigger>
+                          <SelectContent>
+                            {departamentos.filter(d => d.activo).map(d => (
+                              <SelectItem key={d.id} value={String(d.id)}>{d.nombre}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          {esEventoPlantillado
+                            ? "El departamento viene fijado por la plantilla anual elegida."
+                            : bloquearDepartamento
+                              ? "El departamento queda fijado por la pantalla desde la que abriste esta planificación."
+                              : "Departamento organizador de la actividad."}
+                        </p>
+                        <FieldError field={field} />
+                      </div>
+                    )}
+                  </form.Field>
+                )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <form.Field name="publicoObjetivo" validators={{ onChange: validateRequiredValue("Selecciona el publico objetivo.") }}>
@@ -772,42 +808,7 @@ function WizardEventoContent({
               </div>
             )}
 
-            {/* PASO 3: Responsable / Grupo */}
-            {useStepper.current.id === "responsable" && naturaleza === "EVENTO" && (
-              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-3">
-                {
-                  <form.Field name="departamentoId" validators={{ onChange: validateRequiredValue("Seleccioná un departamento.") }}>
-                    {(field) => (
-                      <div className="space-y-1.5">
-                        <Label className="flex items-center gap-1.5"><Building2 className="w-4 h-4" /> Departamento {departamentoEsObligatorio ? "*" : ""}</Label>
-                        <Select
-                          value={field.state.value}
-                          onValueChange={field.handleChange}
-                          disabled={cargandoDepartamentos || esEventoPlantillado || bloquearDepartamento}
-                        >
-                          <SelectTrigger><SelectValue placeholder="Selecciona un departamento..." /></SelectTrigger>
-                          <SelectContent>
-                            {departamentos.filter(d => d.activo).map(d => (
-                              <SelectItem key={d.id} value={String(d.id)}>{d.nombre}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">
-                          {esEventoPlantillado
-                            ? "El departamento viene fijado por la plantilla anual elegida."
-                            : bloquearDepartamento
-                              ? "El departamento queda fijado por la pantalla desde la que abriste esta planificación."
-                              : "Departamento organizador de la actividad."}
-                        </p>
-                        <FieldError field={field} />
-                      </div>
-                    )}
-                  </form.Field>
-                }
-              </div>
-            )}
-
-            {/* PASO 4: Ubicación */}
+            {/* PASO 3: Ubicación */}
             {useStepper.current.id === "ubicacion" && (
               <div className="space-y-5 animate-in fade-in slide-in-from-bottom-3">
                 <form.Field name="ubicacion">
@@ -860,27 +861,10 @@ function WizardEventoContent({
                     </div>
                   )}
                 </form.Field>
-
-                {permiteVideollamada && (
-                  <form.Field name="enlaceVideollamada">
-                    {(field) => (
-                      <div className="space-y-1.5 p-4 border rounded-xl bg-muted/20">
-                        <Label className="flex items-center gap-1.5 text-sm font-semibold">
-                          <Video className="w-4 h-4 text-blue-500" /> Enlace de videollamada
-                        </Label>
-                        <Input
-                          placeholder="https://meet.google.com/... (opcional)"
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                        />
-                      </div>
-                    )}
-                  </form.Field>
-                )}
               </div>
             )}
 
-            {/* PASO 5: Confirmación */}
+            {/* PASO 4: Confirmación */}
             {useStepper.current.id === "confirmacion" && (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3">
                 <form.Subscribe selector={(s) => s.values}>
@@ -955,20 +939,14 @@ function WizardEventoContent({
                         </div>
                       )}
 
-                      {(values.ubicacion || (permiteVideollamada && values.enlaceVideollamada)) && (
+                      {values.ubicacion && (
                         <div className="px-4 py-3">
-                          <span className="text-muted-foreground block mb-1">{permiteVideollamada ? "Lugar / Conexión" : "Lugar"}</span>
+                          <span className="text-muted-foreground block mb-1">Lugar</span>
                           {values.ubicacion && (
                             <span className="flex items-center gap-1">
                               <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
                               {values.ubicacion}
                             </span>
-                          )}
-                          {permiteVideollamada && values.enlaceVideollamada && (
-                            <a href={values.enlaceVideollamada} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-blue-500 hover:underline text-xs">
-                              <Video className="w-3.5 h-3.5 shrink-0" />
-                              {values.enlaceVideollamada}
-                            </a>
                           )}
                         </div>
                       )}
@@ -1022,11 +1000,48 @@ function WizardEventoContent({
   );
 }
 
+function toErrorMessage(error: unknown): string {
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (error && typeof error === "object") {
+    const maybeMessage = (error as { message?: unknown }).message;
+    if (typeof maybeMessage === "string" && maybeMessage.trim()) {
+      return maybeMessage;
+    }
+
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  }
+
+  return String(error);
+}
+
 function FieldError({ field }: { field: any }) {
   if (!field.state.meta.errors?.length) return null;
+
+  const messages = field.state.meta.errors
+    .map((error: unknown) => toErrorMessage(error))
+    .map((message: string) => message.trim())
+    .filter((message: string) => message.length > 0);
+
+  if (!messages.length) {
+    return null;
+  }
+
+  const uniqueMessages = [...new Set(messages)];
+
   return (
     <p className="text-xs text-red-500 font-medium animate-in fade-in">
-      {field.state.meta.errors.join(", ")}
+      {uniqueMessages.join(", ")}
     </p>
   );
 }

@@ -49,7 +49,11 @@ function RouteComponent() {
     } catch (err: any) {
       console.error(err);
       // Mostrar mensaje de error del backend
-      const mensaje = err?.response?.data?.message || err?.message || "Error al realizar la inscripción";
+      const mensaje = err?.response?.data?.detail
+        || err?.response?.data?.message
+        || err?.response?.data?.title
+        || err?.message
+        || "Error al realizar la inscripción";
       toast.error(mensaje);
     }
   };
