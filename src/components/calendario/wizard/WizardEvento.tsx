@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { defineStepper } from "@stepperize/react";
 import { 
@@ -60,6 +60,11 @@ const APRIL_MONTH_INDEX = 3;
 const DECEMBER_MONTH_INDEX = 11;
 const ARGENTINA_HOLIDAY_SEASON_START_DAY = 24;
 const SATURDAY_DAY_INDEX = 6;
+const LOCATION_OPTION_BULIN = "BULIN" as const;
+const LOCATION_OPTION_OTRO = "OTRO" as const;
+const BULIN_COORDINATE_TOLERANCE = 0.00001;
+
+type LocationOption = typeof LOCATION_OPTION_BULIN | typeof LOCATION_OPTION_OTRO;
 
 function formatDateInputValue(date: Date) {
   const year = date.getFullYear();
@@ -154,6 +159,50 @@ function validateHoraFinPosterior({ value, fieldApi }: { value: string | undefin
     : "La hora de fin debe ser posterior a la hora de inicio.";
 }
 
+function normalizeLocationLabel(value: string | undefined | null) {
+  if (!value) {
+    return "";
+  }
+
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isSameCoordinate(
+  latA: number | undefined,
+  lngA: number | undefined,
+  latB: number,
+  lngB: number,
+) {
+  if (typeof latA !== "number" || typeof lngA !== "number") {
+    return false;
+  }
+
+  return Math.abs(latA - latB) < BULIN_COORDINATE_TOLERANCE
+    && Math.abs(lngA - lngB) < BULIN_COORDINATE_TOLERANCE;
+}
+
+function isBulinLocationSelection(
+  ubicacion: string | undefined,
+  latitud: number | undefined,
+  longitud: number | undefined,
+  defaultMeetingLocation: ReturnType<typeof getDefaultMeetingLocation>,
+) {
+  const normalizedLabel = normalizeLocationLabel(ubicacion);
+  const hasBulinLabel = normalizedLabel === "bulin";
+  const hasBulinCoordinates = isSameCoordinate(
+    latitud,
+    longitud,
+    defaultMeetingLocation.lat,
+    defaultMeetingLocation.lng,
+  );
+
+  return hasBulinLabel || hasBulinCoordinates;
+}
+
 // ─── Props ─────────────────────────────────────────────────────────────────
 interface WizardEventoProps {
   abierto: boolean;
@@ -212,6 +261,9 @@ function WizardEventoContent({
   ], [gruposAcampantes, gruposDirigentes]);
   const defaultMeetingLocation = getDefaultMeetingLocation();
   const defaultMeetingSchedule = getDefaultMeetingScheduleValues();
+  const [locationOption, setLocationOption] = useState<LocationOption>(() =>
+    naturaleza === "REUNION" ? LOCATION_OPTION_BULIN : LOCATION_OPTION_OTRO,
+  );
 
   const useStepper = stepper.useStepper();
 
@@ -271,6 +323,12 @@ function WizardEventoContent({
         : (naturaleza === "REUNION" ? defaultMeetingSchedule.fechaFin : "");
       const urlMapaInicial = valoresIniciales.urlMapa
         || buildGoogleMapsSearchUrl(ubicacionInicial, { lat: latitudInicial, lng: longitudInicial });
+      const ubicacionInicialEsBulin = isBulinLocationSelection(
+        ubicacionInicial,
+        latitudInicial,
+        longitudInicial,
+        defaultMeetingLocation,
+      );
 
       useStepper.reset();
       form.reset();
@@ -298,6 +356,7 @@ function WizardEventoContent({
           : valoresIniciales.departamentoId ? String(valoresIniciales.departamentoId) : "",
       );
       form.setFieldValue("plantillaAnualId", valoresIniciales.plantillaAnualId);
+      setLocationOption(ubicacionInicialEsBulin ? LOCATION_OPTION_BULIN : LOCATION_OPTION_OTRO);
     }
   }, [abierto, defaultMeetingLocation.direccion, defaultMeetingLocation.lat, defaultMeetingLocation.lng, defaultMeetingLocation.url, defaultMeetingSchedule.diaSemana, defaultMeetingSchedule.fechaFin, defaultMeetingSchedule.fechaInicio, mostrarGrupoEnReunion, naturaleza, valoresIniciales]);
 
@@ -314,6 +373,20 @@ function WizardEventoContent({
   const departamentoEsObligatorio = naturaleza === "EVENTO" || esReunionDepartamental || !grupoSeleccionado;
 
   const esUltimoStep = useStepper.isLast;
+
+  const applyBulinLocation = () => {
+    form.setFieldValue("ubicacion", defaultMeetingLocation.direccion);
+    form.setFieldValue("latitud", defaultMeetingLocation.lat);
+    form.setFieldValue("longitud", defaultMeetingLocation.lng);
+    form.setFieldValue("urlMapa", defaultMeetingLocation.url);
+  };
+
+  const clearLocation = () => {
+    form.setFieldValue("ubicacion", "");
+    form.setFieldValue("latitud", undefined);
+    form.setFieldValue("longitud", undefined);
+    form.setFieldValue("urlMapa", "");
+  };
 
   const validateCurrentStep = async () => {
     const fieldsToValidate = (() => {
@@ -812,54 +885,88 @@ function WizardEventoContent({
             {useStepper.current.id === "ubicacion" && (
               <div className="space-y-5 animate-in fade-in slide-in-from-bottom-3">
                 <form.Field name="ubicacion">
-                  {(field) => (
-                    <div className="space-y-1.5 p-4 border rounded-xl bg-muted/20">
-                      <Label className="flex items-center gap-1.5 text-sm font-semibold">
-                        <MapPin className="w-4 h-4 text-red-500" /> Lugar físico
-                      </Label>
-                      <MapsAutocomplete
-                        lat={form.getFieldValue("latitud")}
-                        lng={form.getFieldValue("longitud")}
-                        value={field.state.value || ""}
-                        onChange={(ubicacion) => {
-                          const debeRestaurarDefault = naturaleza === "REUNION" && ubicacion.source === "clear";
+                  {(field) => {
+                    const usaBulin = locationOption === LOCATION_OPTION_BULIN;
 
-                          if (debeRestaurarDefault) {
-                            field.handleChange(defaultMeetingLocation.direccion);
-                            form.setFieldValue("latitud", defaultMeetingLocation.lat);
-                            form.setFieldValue("longitud", defaultMeetingLocation.lng);
-                            form.setFieldValue("urlMapa", defaultMeetingLocation.url);
-                            return;
-                          }
+                    return (
+                      <div className="space-y-3 p-4 border rounded-xl bg-muted/20">
+                        <Label className="flex items-center gap-1.5 text-sm font-semibold">
+                          <MapPin className="w-4 h-4 text-red-500" /> Lugar físico
+                        </Label>
 
-                          if (ubicacion.source === "clear") {
-                            field.handleChange("");
-                            form.setFieldValue("latitud", undefined);
-                            form.setFieldValue("longitud", undefined);
-                            form.setFieldValue("urlMapa", "");
-                            return;
-                          }
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            type="button"
+                            variant={usaBulin ? "default" : "outline"}
+                            className={usaBulin ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                            onClick={() => {
+                              setLocationOption(LOCATION_OPTION_BULIN);
+                              applyBulinLocation();
+                            }}
+                          >
+                            Bulin
+                          </Button>
 
-                          field.handleChange(ubicacion.direccion);
-                          form.setFieldValue("latitud", ubicacion.lat);
-                          form.setFieldValue("longitud", ubicacion.lng);
-                          form.setFieldValue("urlMapa", ubicacion.url);
-                        }}
-                        placeholder="Cómo querés que figure el lugar"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Buscá o marcá el punto. El nombre visible se edita aparte.
-                      </p>
-                      {field.state.value && form.getFieldValue("urlMapa") && (
-                        <p className="text-xs text-muted-foreground pt-1 border-t mt-2">
-                          📍 {field.state.value} ·{" "}
-                          <a href={form.getFieldValue("urlMapa") || "#"} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">
-                            Ver en Maps
-                          </a>
-                        </p>
-                      )}
-                    </div>
-                  )}
+                          <Button
+                            type="button"
+                            variant={!usaBulin ? "default" : "outline"}
+                            onClick={() => {
+                              setLocationOption(LOCATION_OPTION_OTRO);
+
+                              if (isBulinLocationSelection(
+                                field.state.value,
+                                form.getFieldValue("latitud"),
+                                form.getFieldValue("longitud"),
+                                defaultMeetingLocation,
+                              )) {
+                                clearLocation();
+                              }
+                            }}
+                          >
+                            Otro
+                          </Button>
+                        </div>
+
+                        {usaBulin ? (
+                          <p className="text-xs text-muted-foreground">
+                            Se usará el lugar de encuentro habitual (Bulin).
+                          </p>
+                        ) : (
+                          <>
+                            <MapsAutocomplete
+                              lat={form.getFieldValue("latitud")}
+                              lng={form.getFieldValue("longitud")}
+                              value={field.state.value || ""}
+                              onChange={(ubicacion) => {
+                                if (ubicacion.source === "clear") {
+                                  clearLocation();
+                                  return;
+                                }
+
+                                field.handleChange(ubicacion.direccion);
+                                form.setFieldValue("latitud", ubicacion.lat);
+                                form.setFieldValue("longitud", ubicacion.lng);
+                                form.setFieldValue("urlMapa", ubicacion.url);
+                              }}
+                              placeholder="Cómo querés que figure el lugar"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Buscá o marcá el punto. El nombre visible se edita aparte.
+                            </p>
+                          </>
+                        )}
+
+                        {field.state.value && form.getFieldValue("urlMapa") && (
+                          <p className="text-xs text-muted-foreground pt-1 border-t mt-2">
+                            📍 {field.state.value} ·{" "}
+                            <a href={form.getFieldValue("urlMapa") || "#"} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">
+                              Ver en Maps
+                            </a>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }}
                 </form.Field>
               </div>
             )}
