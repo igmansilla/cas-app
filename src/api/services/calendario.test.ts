@@ -43,6 +43,38 @@ describe('calendarioService', () => {
     expect(mapped.politicaNotificacion).toBe('manual');
   });
 
+  it('tolerates null string fields when listing events', async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: {
+        _embedded: {
+          eventoCalendarioModels: [
+            {
+              id: 99,
+              titulo: 'Evento legacy',
+              descripcion: null,
+              tipo: null,
+              naturaleza: null,
+              fechaInicio: '2026-03-14T15:00:00Z',
+              fechaFin: '2026-03-14T17:00:00Z',
+              ubicacion: null,
+              participantes: null,
+              fechaCreacion: null,
+              fechaActualizacion: null,
+            },
+          ],
+        },
+      },
+    });
+
+    const eventos = await calendarioService.listarEventos();
+    const mapped = calendarioService.aEventoCalendario(eventos[0]);
+
+    expect(eventos).toHaveLength(1);
+    expect(mapped.tipo).toBe('');
+    expect(mapped.naturaleza).toBeUndefined();
+    expect(mapped.participantes).toBeUndefined();
+  });
+
   it('maps planificacion anual metadata from backend response', async () => {
     mockedGet.mockResolvedValueOnce({
       data: [
