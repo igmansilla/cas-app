@@ -88,16 +88,16 @@ export const documentosService = {
   /**
    * Obtiene todos los documentos de un usuario
    */
-  getDocumentosUsuario: async (usuarioId: number): Promise<DocumentoCompletado[]> => {
-    const response = await client.get(`/documentos/usuario/${usuarioId}`);
+  getDocumentosUsuario: async (keycloakId: string): Promise<DocumentoCompletado[]> => {
+    const response = await client.get(`/documentos/keycloak/${encodeURIComponent(keycloakId)}`);
     return response.data;
   },
 
   /**
    * Obtiene un documento específico de un usuario
    */
-  getDocumento: async (tipoDocumentoId: number, usuarioId: number): Promise<DocumentoCompletado> => {
-    const response = await client.get(`/documentos/tipo/${tipoDocumentoId}/usuario/${usuarioId}`);
+  getDocumento: async (tipoDocumentoId: number, keycloakId: string): Promise<DocumentoCompletado> => {
+    const response = await client.get(`/documentos/tipo/${tipoDocumentoId}/keycloak/${encodeURIComponent(keycloakId)}`);
     return response.data;
   },
 
@@ -184,24 +184,24 @@ export const documentosService = {
   /**
    * Obtiene el detalle de documentos de un usuario específico
    */
-  getDetalleDocumentosUsuario: async (usuarioId: number): Promise<DocumentoCompletado[]> => {
-    const response = await client.get(`/documentos/reportes/usuario/${usuarioId}/detalle`);
+  getDetalleDocumentosUsuario: async (keycloakId: string): Promise<DocumentoCompletado[]> => {
+    const response = await client.get(`/documentos/reportes/keycloak/${encodeURIComponent(keycloakId)}/detalle`);
     return response.data;
   },
 
   /**
    * Obtiene los tipos de documento imprimibles para un usuario específico.
    */
-  getTiposImprimiblesUsuario: async (usuarioId: number): Promise<TipoDocumentoImprimible[]> => {
-    const response = await client.get(`/documentos/reportes/usuario/${usuarioId}/tipos-imprimibles`);
+  getTiposImprimiblesUsuario: async (keycloakId: string): Promise<TipoDocumentoImprimible[]> => {
+    const response = await client.get(`/documentos/reportes/keycloak/${encodeURIComponent(keycloakId)}/tipos-imprimibles`);
     return response.data;
   },
 
   /**
    * Descarga el PDF compuesto a partir de adjuntos PDF cargados.
    */
-  descargarAdjuntosPdf: async (tipoDocumentoId: number, usuarioId: number): Promise<Blob> => {
-    const response = await client.get(`/documentos/tipo/${tipoDocumentoId}/usuario/${usuarioId}/adjuntos-pdf`, {
+  descargarAdjuntosPdf: async (tipoDocumentoId: number, keycloakId: string): Promise<Blob> => {
+    const response = await client.get(`/documentos/tipo/${tipoDocumentoId}/keycloak/${encodeURIComponent(keycloakId)}/adjuntos-pdf`, {
       responseType: 'blob',
     });
     return response.data;
@@ -210,7 +210,7 @@ export const documentosService = {
   /**
    * Obtiene los datos necesarios para generar un PDF (template + datos del usuario + respuestas)
    */
-  getPdfData: async (tipoDocumentoId: number, usuarioId: number): Promise<{
+  getPdfData: async (tipoDocumentoId: number, keycloakId: string): Promise<{
     template: {
       id: number;
       codigo: string;
@@ -232,7 +232,7 @@ export const documentosService = {
     documentoExiste: boolean;
     nombreUsuario: string;
   }> => {
-    const response = await client.get(`/documentos/tipo/${tipoDocumentoId}/usuario/${usuarioId}/pdf-data`);
+    const response = await client.get(`/documentos/tipo/${tipoDocumentoId}/keycloak/${encodeURIComponent(keycloakId)}/pdf-data`);
     return response.data;
   },
 };

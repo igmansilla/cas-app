@@ -1,9 +1,15 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { Backpack, Building2, ChevronRight, FileText, ShieldAlert, Users } from "lucide-react";
+import { toast } from "sonner";
 import { FamiliaWidget } from "../components/familia/FamiliaWidget";
 import { usePlanificacionAnual } from "../hooks/useCalendario";
+import { useDocumentosUsuario } from "../hooks/useDocumentos";
+import { useUsuarioActual } from "../hooks/useUsuarioActual";
 import { Badge } from "../components/ui/badge";
+
+const DOCUMENTOS_ISSUE_TOAST_KEY = "cas.documentos.issue.toast.v1";
 
 export const Route = createFileRoute("/_auth/dashboard")({
   component: DashboardComponent,
@@ -11,6 +17,8 @@ export const Route = createFileRoute("/_auth/dashboard")({
 
 function DashboardComponent() {
   const { hasRole, hasGroup } = useAuth();
+  const { data: usuario } = useUsuarioActual();
+  const { documentos } = useDocumentosUsuario(usuario?.id || 0);
   
   // Check if user can access user management (DIRIGENTE or CONSEJO)
   const canAccessUsuarios = hasRole('dirigente') || hasGroup('CONSEJO') || hasRole('admin');
@@ -20,6 +28,45 @@ function DashboardComponent() {
   const alertasCriticas = plantillas.filter(
     (plantilla) => plantilla.naturaleza === 'evento' && plantilla.critico && !plantilla.programado
   ).length;
+  const documentosConIssue = useMemo(
+    () => documentos.filter((doc) => doc.estado === 'OBSERVADO'),
+    [documentos],
+  );
+  const cantidadIssuesDocumentos = documentosConIssue.length;
+  const firmaIssuesDocumentos = useMemo(
+    () =>
+      documentosConIssue
+        .map((doc) => `${doc.id ?? 'sin-id'}:${doc.tipoDocumentoId}:${doc.fechaObservacion ?? ''}:${doc.observacionRevision ?? ''}`)
+        .join('|'),
+    [documentosConIssue],
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (!firmaIssuesDocumentos) {
+      window.sessionStorage.removeItem(DOCUMENTOS_ISSUE_TOAST_KEY);
+      return;
+    }
+
+    const ultimaFirmaMostrada = window.sessionStorage.getItem(DOCUMENTOS_ISSUE_TOAST_KEY);
+    if (ultimaFirmaMostrada === firmaIssuesDocumentos) {
+      return;
+    }
+
+    const primerIssue = documentosConIssue[0];
+    toast.error(
+      `Tenes ${cantidadIssuesDocumentos} issue${cantidadIssuesDocumentos === 1 ? '' : 's'} en Documentacion`,
+      {
+        description:
+          primerIssue?.observacionRevision ||
+          'Revisa la seccion Documentos y volve a subir lo solicitado por dirigente/secretario.',
+      },
+    );
+    window.sessionStorage.setItem(DOCUMENTOS_ISSUE_TOAST_KEY, firmaIssuesDocumentos);
+  }, [cantidadIssuesDocumentos, documentosConIssue, firmaIssuesDocumentos]);
 
   return (
     <div className="p-6 space-y-6">
@@ -61,6 +108,16 @@ function DashboardComponent() {
       {/* Documentación - visible para todos */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-muted-foreground">Documentación</h2>
+        {cantidadIssuesDocumentos > 0 && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <p className="font-semibold">
+              Tenes {cantidadIssuesDocumentos} issue{cantidadIssuesDocumentos === 1 ? '' : 's'} pendiente{cantidadIssuesDocumentos === 1 ? '' : 's'} en documentos
+            </p>
+            <p className="mt-1 text-red-700">
+              {documentosConIssue[0]?.observacionRevision || 'Entrá a Documentos para ver la aclaracion y volver a subir la informacion.'}
+            </p>
+          </div>
+        )}
         <Link 
           to="/documentos"
           className="flex items-center justify-between p-4 border rounded-xl bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/30 border-rose-200 dark:border-rose-800 hover:shadow-md transition-all group"
@@ -70,9 +127,16 @@ function DashboardComponent() {
               <FileText className="w-6 h-6 text-rose-600 dark:text-rose-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-rose-900 dark:text-rose-100">
-                Mis Documentos
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-rose-900 dark:text-rose-100">
+                  Mis Documentos
+                </h3>
+                {cantidadIssuesDocumentos > 0 && (
+                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                    {cantidadIssuesDocumentos} issue{cantidadIssuesDocumentos === 1 ? '' : 's'}
+                  </Badge>
+                )}
+              </div>
               <p className="text-sm text-rose-700 dark:text-rose-300">
                 Formularios y autorizaciones del campamento
               </p>
