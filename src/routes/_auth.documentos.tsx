@@ -31,25 +31,25 @@ function DocumentosPage() {
   // Estado para el formulario de documento
   const [documentoSeleccionado, setDocumentoSeleccionado] = useState<{
     tipoDocumentoId: number;
-    usuarioId: number;
+    keycloakId: string;
   } | null>(null);
 
   // Estado para ver detalle de usuario (desde reportes)
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<{
-    usuarioId: number;
+    keycloakId: string;
     usuarioNombre?: string;
   } | null>(null);
 
-  const handleSelectDocumento = (tipoDocumentoId: number, usuarioId: number) => {
-    setDocumentoSeleccionado({ tipoDocumentoId, usuarioId });
+  const handleSelectDocumento = (tipoDocumentoId: number, keycloakId: string) => {
+    setDocumentoSeleccionado({ tipoDocumentoId, keycloakId });
   };
 
   const handleCloseFormulario = () => {
     setDocumentoSeleccionado(null);
   };
 
-  const handleSelectUsuario = (usuarioId: number, usuarioNombre?: string) => {
-    setUsuarioSeleccionado({ usuarioId, usuarioNombre });
+  const handleSelectUsuario = (keycloakId: string, usuarioNombre?: string) => {
+    setUsuarioSeleccionado({ keycloakId, usuarioNombre });
   };
 
   const handleCloseDetalleUsuario = () => {
@@ -127,7 +127,8 @@ function DocumentosPage() {
       {documentoSeleccionado && usuario && (
         <FormularioDocumento
           tipoDocumentoId={documentoSeleccionado.tipoDocumentoId}
-          usuarioId={documentoSeleccionado.usuarioId}
+          keycloakId={documentoSeleccionado.keycloakId}
+          usuarioId={usuario.id}
           onClose={handleCloseFormulario}
         />
       )}
@@ -135,7 +136,7 @@ function DocumentosPage() {
       {/* Modal de detalle de documentos de usuario (para reportes) */}
       {usuarioSeleccionado && (
         <DetalleDocumentosUsuario
-          usuarioId={usuarioSeleccionado.usuarioId}
+          keycloakId={usuarioSeleccionado.keycloakId}
           usuarioNombre={usuarioSeleccionado.usuarioNombre}
           onClose={handleCloseDetalleUsuario}
         />
