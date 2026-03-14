@@ -23,13 +23,13 @@ export const documentosKeys = {
   tipoById: (id: number) => [...documentosKeys.tipos(), id] as const,
   tipoByCodigo: (codigo: string) => [...documentosKeys.tipos(), 'codigo', codigo] as const,
   resumenFamilia: (familiaId: number) => [...documentosKeys.all, 'familia', familiaId] as const,
-  documentosUsuario: (usuarioId: number) => [...documentosKeys.all, 'usuario', usuarioId] as const,
-  documento: (tipoId: number, usuarioId: number) => [...documentosKeys.all, 'tipo', tipoId, 'usuario', usuarioId] as const,
-  tiposImprimiblesUsuario: (usuarioId: number) => [...documentosKeys.all, 'reportes', 'usuario', usuarioId, 'tipos-imprimibles'] as const,
+  documentosUsuario: (keycloakId: string) => [...documentosKeys.all, 'usuario', keycloakId] as const,
+  documento: (tipoId: number, keycloakId: string) => [...documentosKeys.all, 'tipo', tipoId, 'usuario', keycloakId] as const,
+  tiposImprimiblesUsuario: (keycloakId: string) => [...documentosKeys.all, 'reportes', 'usuario', keycloakId, 'tipos-imprimibles'] as const,
   reportes: () => [...documentosKeys.all, 'reportes'] as const,
   reporteGrupo: (grupoId: string) => [...documentosKeys.reportes(), 'grupo', grupoId] as const,
   reporteGeneral: () => [...documentosKeys.reportes(), 'general'] as const,
-  detalleUsuario: (usuarioId: number) => [...documentosKeys.reportes(), 'usuario', usuarioId] as const,
+  detalleUsuario: (keycloakId: string) => [...documentosKeys.reportes(), 'usuario', keycloakId] as const,
 };
 
 // ============================================
@@ -95,11 +95,11 @@ export function useResumenFamilia(familiaId: number) {
 /**
  * Hook para obtener los documentos de un usuario
  */
-export function useDocumentosUsuario(usuarioId: number) {
+export function useDocumentosUsuario(keycloakId: string) {
   const query = useQuery({
-    queryKey: documentosKeys.documentosUsuario(usuarioId),
-    queryFn: () => documentosService.getDocumentosUsuario(usuarioId),
-    enabled: usuarioId > 0,
+    queryKey: documentosKeys.documentosUsuario(keycloakId),
+    queryFn: () => documentosService.getDocumentosUsuario(keycloakId),
+    enabled: !!keycloakId,
   });
 
   return {
@@ -113,11 +113,11 @@ export function useDocumentosUsuario(usuarioId: number) {
 /**
  * Hook para obtener un documento específico
  */
-export function useDocumento(tipoDocumentoId: number, usuarioId: number) {
+export function useDocumento(tipoDocumentoId: number, keycloakId: string) {
   const query = useQuery({
-    queryKey: documentosKeys.documento(tipoDocumentoId, usuarioId),
-    queryFn: () => documentosService.getDocumento(tipoDocumentoId, usuarioId),
-    enabled: tipoDocumentoId > 0 && usuarioId > 0,
+    queryKey: documentosKeys.documento(tipoDocumentoId, keycloakId),
+    queryFn: () => documentosService.getDocumento(tipoDocumentoId, keycloakId),
+    enabled: tipoDocumentoId > 0 && !!keycloakId,
   });
 
   return {
@@ -170,11 +170,11 @@ export function useReporteDocumentosGeneral() {
 /**
  * Hook para obtener el detalle de documentos de un usuario (dirigentes/secretario)
  */
-export function useDetalleDocumentosUsuario(usuarioId: number) {
+export function useDetalleDocumentosUsuario(keycloakId: string) {
   const query = useQuery({
-    queryKey: documentosKeys.detalleUsuario(usuarioId),
-    queryFn: () => documentosService.getDetalleDocumentosUsuario(usuarioId),
-    enabled: usuarioId > 0,
+    queryKey: documentosKeys.detalleUsuario(keycloakId),
+    queryFn: () => documentosService.getDetalleDocumentosUsuario(keycloakId),
+    enabled: !!keycloakId,
   });
 
   return {
@@ -187,11 +187,11 @@ export function useDetalleDocumentosUsuario(usuarioId: number) {
 /**
  * Hook para obtener los tipos de documento imprimibles de un usuario.
  */
-export function useTiposImprimiblesUsuario(usuarioId: number) {
+export function useTiposImprimiblesUsuario(keycloakId: string) {
   const query = useQuery({
-    queryKey: documentosKeys.tiposImprimiblesUsuario(usuarioId),
-    queryFn: () => documentosService.getTiposImprimiblesUsuario(usuarioId),
-    enabled: usuarioId > 0,
+    queryKey: documentosKeys.tiposImprimiblesUsuario(keycloakId),
+    queryFn: () => documentosService.getTiposImprimiblesUsuario(keycloakId),
+    enabled: !!keycloakId,
     retry: (failureCount, error) => {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         return false;
@@ -219,14 +219,19 @@ export function useTiposImprimiblesUsuario(usuarioId: number) {
 export function useGuardarDocumento() {
   const queryClient = useQueryClient();
 
+  type GuardarDocumentoMutation = GuardarDocumentoRequest & {
+    usuarioKeycloakId: string;
+  };
+
   const mutation = useMutation({
-    mutationFn: (request: GuardarDocumentoRequest) => documentosService.guardarDocumento(request),
+    mutationFn: ({ usuarioKeycloakId: _usuarioKeycloakId, ...request }: GuardarDocumentoMutation) =>
+      documentosService.guardarDocumento(request),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: documentosKeys.documentosUsuario(variables.usuarioId),
+        queryKey: documentosKeys.documentosUsuario(variables.usuarioKeycloakId),
       });
       queryClient.invalidateQueries({
-        queryKey: documentosKeys.documento(variables.tipoDocumentoId, variables.usuarioId),
+        queryKey: documentosKeys.documento(variables.tipoDocumentoId, variables.usuarioKeycloakId),
       });
     },
   });
@@ -253,11 +258,11 @@ export function useSubirAdjunto() {
       documentoId: number;
       adjuntoRequeridoId: number;
       file: File;
-      usuarioId: number; // Used for cache invalidation only
+      usuarioKeycloakId: string;
     }) => documentosService.subirAdjunto(documentoId, adjuntoRequeridoId, file),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: documentosKeys.documentosUsuario(variables.usuarioId),
+        queryKey: documentosKeys.documentosUsuario(variables.usuarioKeycloakId),
       });
     },
   });
