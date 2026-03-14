@@ -224,8 +224,8 @@ export const equipoService = {
   /**
    * Obtiene el detalle del progreso de un usuario
    */
-  getDetalleProgresoUsuario: async (usuarioId: number): Promise<DetalleProgresoUsuario> => {
-    const response = await client.get(`/equipo/reportes/usuarios/${usuarioId}`);
+  getDetalleProgresoUsuario: async (keycloakId: string): Promise<DetalleProgresoUsuario> => {
+    const response = await client.get(`/equipo/reportes/keycloak/${encodeURIComponent(keycloakId)}`);
     return response.data;
   },
 
@@ -276,7 +276,7 @@ export const equipoService = {
     return `${import.meta.env.VITE_API_URL}/equipo/requisitos-foto/${requisitoId}/foto`;
   },
 
-  getAdminRequisitoFotoUrl: (usuarioId: number, requisitoId: number): string => {
-    return `${import.meta.env.VITE_API_URL}/equipo/admin/usuarios/${usuarioId}/requisitos-foto/${requisitoId}/foto`;
+  getAdminRequisitoFotoUrl: (keycloakId: string, requisitoId: number): string => {
+    return `${import.meta.env.VITE_API_URL}/equipo/admin/keycloak/${encodeURIComponent(keycloakId)}/requisitos-foto/${requisitoId}/foto`;
   },
 };

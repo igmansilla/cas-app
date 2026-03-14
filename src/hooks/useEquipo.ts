@@ -23,7 +23,7 @@ export const equipoKeys = {
   miProgreso: () => [...equipoKeys.all, 'mi-progreso'] as const,
   reportes: () => [...equipoKeys.all, 'reportes'] as const,
   reporteProgreso: (grupoId?: string) => [...equipoKeys.reportes(), 'progreso', grupoId] as const,
-  detalleUsuario: (usuarioId: number) => [...equipoKeys.reportes(), 'usuario', usuarioId] as const,
+  detalleUsuario: (keycloakId: string) => [...equipoKeys.reportes(), 'usuario', keycloakId] as const,
   misFotos: () => [...equipoKeys.all, 'mis-fotos'] as const,
 };
 
@@ -102,11 +102,11 @@ export function useReporteProgreso(grupoId?: string) {
 /**
  * Hook para obtener el detalle del progreso de un usuario (solo dirigentes/admin)
  */
-export function useDetalleProgresoUsuario(usuarioId: number) {
+export function useDetalleProgresoUsuario(keycloakId: string) {
   const query = useQuery({
-    queryKey: equipoKeys.detalleUsuario(usuarioId),
-    queryFn: () => equipoService.getDetalleProgresoUsuario(usuarioId),
-    enabled: usuarioId > 0,
+    queryKey: equipoKeys.detalleUsuario(keycloakId),
+    queryFn: () => equipoService.getDetalleProgresoUsuario(keycloakId),
+    enabled: !!keycloakId,
   });
 
   return {

@@ -174,7 +174,7 @@ function TemplateEditorPage() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-[200px] mobile-screen-title">
           <h1 className="text-base sm:text-lg font-semibold truncate">
             {viewMode === 'list' ? 'Templates PDF' : templateEditar ? `Editando: ${templateEditar.nombre}` : 'Nuevo Template'}
           </h1>

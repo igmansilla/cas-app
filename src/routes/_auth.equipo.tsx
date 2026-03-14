@@ -29,7 +29,7 @@ function EquipoPage() {
     <div className="min-h-full bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 pb-20 md:pb-8">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
-        <header className="mb-8">
+        <header className="mb-8 mobile-screen-title">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-orange-100 rounded-xl">
               <Backpack className="w-6 h-6 text-orange-600" />

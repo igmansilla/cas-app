@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_auth/dashboard")({
 function DashboardComponent() {
   const { hasRole, hasGroup } = useAuth();
   const { data: usuario } = useUsuarioActual();
-  const { documentos } = useDocumentosUsuario(usuario?.id || 0);
+  const { documentos } = useDocumentosUsuario(usuario?.keycloakId || '');
   
   // Check if user can access user management (DIRIGENTE or CONSEJO)
   const canAccessUsuarios = hasRole('dirigente') || hasGroup('CONSEJO') || hasRole('admin');
@@ -70,11 +70,6 @@ function DashboardComponent() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Bienvenido al campamento</p>
-      </div>
-
       {/* Mi Grupo Familiar - visible para todos */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-muted-foreground">Mi Familia</h2>

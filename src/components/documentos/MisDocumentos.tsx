@@ -171,7 +171,7 @@ export function MisDocumentos({ onSelectDocumento }: MisDocumentosProps) {
                     )}
                   </div>
                   <button
-                    onClick={() => onSelectDocumento?.(doc.tipoDocumentoId, usuario.id)}
+                    onClick={() => onSelectDocumento?.(doc.tipoDocumentoId, usuario.keycloakId)}
                     className="text-xs font-medium text-red-700 hover:text-red-800 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-colors"
                   >
                     Corregir

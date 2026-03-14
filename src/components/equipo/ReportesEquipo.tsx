@@ -32,7 +32,7 @@ import { ProtectedEquipoImage } from './ProtectedEquipoImage';
 export function ReportesEquipo() {
   const [grupoId, setGrupoId] = useState<string>('');
   const { usuarios, cargando } = useReporteProgreso(grupoId || undefined);
-  const [usuarioDetalle, setUsuarioDetalle] = useState<number | null>(null);
+  const [usuarioDetalle, setUsuarioDetalle] = useState<string | null>(null);
 
   // Calcular estadísticas
   const totalUsuarios = usuarios.length;
@@ -102,7 +102,7 @@ export function ReportesEquipo() {
         <div className="divide-y divide-gray-100">
           {usuarios.map((usuario) => (
             <div
-              key={usuario.usuarioId}
+              key={usuario.keycloakId}
               className="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-gray-50 sm:grid-cols-12"
             >
               {/* Mobile: Todo junto */}
@@ -115,7 +115,7 @@ export function ReportesEquipo() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setUsuarioDetalle(usuario.usuarioId)}
+                    onClick={() => setUsuarioDetalle(usuario.keycloakId)}
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
@@ -168,7 +168,7 @@ export function ReportesEquipo() {
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0"
-                  onClick={() => setUsuarioDetalle(usuario.usuarioId)}
+                  onClick={() => setUsuarioDetalle(usuario.keycloakId)}
                 >
                   <Eye className="w-4 h-4 text-gray-500" />
                 </Button>
@@ -188,7 +188,7 @@ export function ReportesEquipo() {
       {/* Modal de detalle */}
       {usuarioDetalle && (
         <DetalleUsuarioModal
-          usuarioId={usuarioDetalle}
+          keycloakId={usuarioDetalle}
           onClose={() => setUsuarioDetalle(null)}
         />
       )}
@@ -250,13 +250,13 @@ function ProgressBar({ progress }: { progress: number }) {
  * Modal con detalle del progreso de un usuario
  */
 function DetalleUsuarioModal({
-  usuarioId,
+  keycloakId,
   onClose,
 }: {
-  usuarioId: number;
+  keycloakId: string;
   onClose: () => void;
 }) {
-  const { detalle, cargando } = useDetalleProgresoUsuario(usuarioId);
+  const { detalle, cargando } = useDetalleProgresoUsuario(keycloakId);
 
   return (
     <Dialog open onOpenChange={() => onClose()}>
@@ -356,7 +356,7 @@ function DetalleUsuarioModal({
 
                           {item.totalFotosSugeridas > 0 && (
                             <FotosItemViewer
-                              usuarioId={usuarioId}
+                              keycloakId={keycloakId}
                               itemName={item.nombre}
                               requisitosFoto={item.requisitosFoto}
                             />
@@ -383,11 +383,11 @@ function DetalleUsuarioModal({
  * Componente para revisar las fotos guiadas de un item con token
  */
 function FotosItemViewer({
-  usuarioId,
+  keycloakId,
   itemName,
   requisitosFoto,
 }: {
-  usuarioId: number;
+  keycloakId: string;
   itemName: string;
   requisitosFoto: Array<{
     requisitoId: number;
@@ -447,7 +447,7 @@ function FotosItemViewer({
                     {requisito.hasFoto ? (
                       <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl bg-gray-100">
                         <ProtectedEquipoImage
-                          url={equipoService.getAdminRequisitoFotoUrl(usuarioId, requisito.requisitoId)}
+                          url={equipoService.getAdminRequisitoFotoUrl(keycloakId, requisito.requisitoId)}
                           alt={`${itemName} - ${requisito.titulo}`}
                           className="h-full w-full object-contain"
                           loadingFallback={<div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />}

@@ -101,7 +101,7 @@ function RouteComponent() {
   if (inscripciones.length === 0) {
     return (
       <div className="p-6 space-y-6">
-        <div className="space-y-2">
+        <div className="space-y-2 mobile-screen-title">
           <h1 className="text-3xl font-bold tracking-tight">Planes Vigentes</h1>
           <p className="text-muted-foreground">Elige un plan de pago para el campamento.</p>
         </div>
@@ -134,7 +134,7 @@ function RouteComponent() {
   // 3. Enrolled -> Show MiPlanPago component for each inscription
   return (
     <div className="p-6 space-y-8">
-      <div className="space-y-2">
+      <div className="space-y-2 mobile-screen-title">
         <h1 className="text-3xl font-bold tracking-tight">Mis Pagos</h1>
         <p className="text-muted-foreground">Gestiona tu plan de pago y cuotas.</p>
       </div>

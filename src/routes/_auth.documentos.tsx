@@ -62,7 +62,7 @@ function DocumentosPage() {
         {/* Header */}
         <header className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-2">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mobile-screen-title">
               <div className="p-2 bg-orange-100 rounded-xl shrink-0">
                 <FileText className="w-6 h-6 text-orange-600" />
               </div>
@@ -78,7 +78,7 @@ function DocumentosPage() {
               </Link>
             )}
           </div>
-          <p className="text-gray-600 text-sm md:text-base">
+          <p className="mobile-screen-title text-gray-600 text-sm md:text-base">
             Completa los documentos requeridos para el campamento
           </p>
         </header>

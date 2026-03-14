@@ -77,7 +77,7 @@ function AcampantesPage() {
     return (
         <div className="mx-auto max-w-7xl space-y-5 p-4 sm:space-y-6 sm:p-6">
             {/* Header */}
-            <div className="space-y-2">
+            <div className="space-y-2 mobile-screen-title">
                 <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Acampantes y grupos</h1>
                 <p className="text-sm text-muted-foreground sm:text-base">
                     Gestión de acampantes, jerarquía de grupos, asignaciones y planificación de reuniones.

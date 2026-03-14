@@ -370,7 +370,28 @@ function WizardEventoContent({
   const grupoSeleccionado = form.getFieldValue("grupoId");
   const grupoSeleccionadoInfo = todosLosGrupos.find((grupo) => grupo.id === grupoSeleccionado);
   const esReunionDepartamental = naturaleza === "REUNION" && contextoPlanificacion === "DEPARTAMENTO";
+  const ocultarEncabezadoReunionGrupo = naturaleza === "REUNION" && contextoPlanificacion === "GRUPO" && !modoEdicion;
   const departamentoEsObligatorio = naturaleza === "EVENTO" || esReunionDepartamental || !grupoSeleccionado;
+  const tituloDialogo = modoEdicion
+    ? naturaleza === "REUNION"
+      ? esReunionDepartamental
+        ? "Editar reunión del departamento"
+        : "Editar reunión"
+      : "Editar evento"
+    : naturaleza === "REUNION"
+      ? esReunionDepartamental
+        ? "Nueva reunión del departamento"
+        : "Nueva reunión"
+      : esEventoPlantillado
+        ? "Programar evento anual"
+        : "Crear evento del departamento";
+  const descripcionDialogo = naturaleza === "REUNION"
+    ? esReunionDepartamental
+      ? "Programá una reunión interna del área. Queda asociada al departamento y no habilita toma de asistencia."
+      : "Programá un encuentro periódico para un grupo."
+    : esEventoPlantillado
+      ? "Partís de una plantilla anual y completás la programación concreta del evento."
+      : "Creá un evento puntual nuevo para un departamento.";
 
   const esUltimoStep = useStepper.isLast;
 
@@ -435,33 +456,15 @@ function WizardEventoContent({
         {/* ── Encabezado ─────────────────────────────────────────────────── */}
         <div className="px-6 pt-5 pb-4 border-b">
           <DialogHeader>
-            <DialogTitle className="text-lg">
-              {modoEdicion
-                ? naturaleza === "REUNION"
-                  ? esReunionDepartamental
-                    ? "Editar reunión del departamento"
-                    : "Editar reunión"
-                  : "Editar evento"
-                : naturaleza === "REUNION"
-                  ? esReunionDepartamental
-                    ? "Nueva reunión del departamento"
-                    : "Nueva reunión"
-                  : esEventoPlantillado
-                    ? "Programar evento anual"
-                    : "Crear evento del departamento"}
+            <DialogTitle className={ocultarEncabezadoReunionGrupo ? "sr-only" : "text-lg"}>
+              {tituloDialogo}
             </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {naturaleza === "REUNION"
-                ? esReunionDepartamental
-                  ? "Programá una reunión interna del área. Queda asociada al departamento y no habilita toma de asistencia."
-                  : "Programá un encuentro periódico para un grupo."
-                : esEventoPlantillado
-                  ? "Partís de una plantilla anual y completás la programación concreta del evento."
-                  : "Creá un evento puntual nuevo para un departamento."}
+            <DialogDescription className={ocultarEncabezadoReunionGrupo ? "sr-only" : "text-sm text-muted-foreground"}>
+              {descripcionDialogo}
             </DialogDescription>
           </DialogHeader>
 
-          {naturaleza === "REUNION" && mostrarGrupoEnReunion && (
+          {naturaleza === "REUNION" && mostrarGrupoEnReunion && !ocultarEncabezadoReunionGrupo && (
             <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Grupo</p>
               <p className="mt-1 text-sm font-medium text-emerald-950">

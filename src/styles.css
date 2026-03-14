@@ -136,3 +136,9 @@ code {
     @apply bg-background text-foreground;
   }
 }
+
+@media (max-width: 767px) {
+  .mobile-screen-title {
+    display: none;
+  }
+}

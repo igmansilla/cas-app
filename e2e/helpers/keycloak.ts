@@ -91,6 +91,88 @@ async function getAdminToken(): Promise<string> {
   return data.access_token;
 }
 
+async function getUserByUsername(adminToken: string, username: string): Promise<{ id: string; username: string } | null> {
+  const response = await fetch(
+    `${KEYCLOAK_URL}/admin/realms/${REALM}/users?username=${encodeURIComponent(username)}&exact=true`,
+    {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to find user ${username}: ${response.status} ${await response.text()}`);
+  }
+
+  const users = await response.json();
+  if (!Array.isArray(users) || users.length === 0) {
+    return null;
+  }
+
+  return {
+    id: users[0].id,
+    username: users[0].username,
+  };
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function getRealmRoleRepresentation(adminToken: string, roleName: string): Promise<any> {
+  const response = await fetch(
+    `${KEYCLOAK_URL}/admin/realms/${REALM}/roles/${encodeURIComponent(roleName)}`,
+    {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to get role ${roleName}: ${response.status} ${await response.text()}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Ensure a user has the given realm roles in Keycloak.
+ */
+export async function ensureUserRealmRoles(username: string, roleNames: string[]): Promise<void> {
+  const adminToken = await getAdminToken();
+  let user = await getUserByUsername(adminToken, username);
+  for (let i = 0; !user && i < 10; i++) {
+    await sleep(500);
+    user = await getUserByUsername(adminToken, username);
+  }
+
+  if (!user) {
+    throw new Error(`User not found in realm ${REALM}: ${username}`);
+  }
+
+  const roleRepresentations: any[] = [];
+  for (const roleName of roleNames) {
+    try {
+      roleRepresentations.push(await getRealmRoleRepresentation(adminToken, roleName));
+    } catch {
+      // Retry with lowercase role name for environments using lowercase conventions.
+      roleRepresentations.push(await getRealmRoleRepresentation(adminToken, roleName.toLowerCase()));
+    }
+  }
+
+  const mapResponse = await fetch(
+    `${KEYCLOAK_URL}/admin/realms/${REALM}/users/${user.id}/role-mappings/realm`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(roleRepresentations),
+    }
+  );
+
+  if (!mapResponse.ok && mapResponse.status !== 204) {
+    throw new Error(`Failed to assign roles to ${username}: ${mapResponse.status} ${await mapResponse.text()}`);
+  }
+}
+
 /**
  * Check if a user exists in Keycloak
  */

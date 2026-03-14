@@ -277,7 +277,7 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
           <UsuarioMobileCard
             key={usuario.keycloakId || String(usuario.usuarioId)}
             usuario={usuario}
-            onClick={onSelectUsuario && usuario.keycloakId ? () => onSelectUsuario(usuario.keycloakId, usuario.usuarioNombre ?? undefined) : undefined}
+            onClick={onSelectUsuario && usuario.keycloakId ? () => onSelectUsuario(usuario.keycloakId!, usuario.usuarioNombre ?? undefined) : undefined}
             onGenerarPdf={() => {
               if (!usuario.keycloakId) return;
               setUsuarioParaPdf({
@@ -327,7 +327,7 @@ export function ReportesDocumentos({ onSelectUsuario }: ReportesDocumentosProps)
               <UsuarioRow
                 key={usuario.keycloakId || String(usuario.usuarioId)}
                 usuario={usuario}
-                onClick={usuario.keycloakId ? () => onSelectUsuario?.(usuario.keycloakId, usuario.usuarioNombre ?? undefined) : undefined}
+                onClick={usuario.keycloakId ? () => onSelectUsuario?.(usuario.keycloakId!, usuario.usuarioNombre ?? undefined) : undefined}
                 onGenerarPdf={() => {
                   if (!usuario.keycloakId) return;
                   setUsuarioParaPdf({
