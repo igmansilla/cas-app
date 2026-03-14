@@ -6,10 +6,15 @@
  */
 
 import { useState } from 'react';
-import { X, FileText, Check, Clock, AlertCircle, Upload, ChevronDown, ChevronUp, Eye, Loader2 } from 'lucide-react';
-import { useDetalleDocumentosUsuario, useTipoDocumento, useMarcarEntregaFisica } from '../../hooks/useDocumentos';
+import { X, FileText, Check, Clock, AlertCircle, AlertTriangle, Upload, ChevronDown, ChevronUp, Eye, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuth } from '../../hooks/useAuth';
+import { useDetalleDocumentosUsuario, useTipoDocumento, useMarcarEntregaFisica, useObservarDocumento } from '../../hooks/useDocumentos';
 import { documentosService } from '../../api/services/documentos';
 import { ESTADO_CONFIG, type DocumentoCompletado, type ArchivoAdjunto } from '../../api/schemas/documentos';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Textarea } from '../ui/textarea';
+import { Button } from '../ui/button';
 
 interface DetalleDocumentosUsuarioProps {
   usuarioId: number;
@@ -23,6 +28,12 @@ export function DetalleDocumentosUsuario({
   onClose,
 }: DetalleDocumentosUsuarioProps) {
   const { documentos, cargando, error } = useDetalleDocumentosUsuario(usuarioId);
+  const { hasRole } = useAuth();
+  const puedeObservar = hasRole('SECRETARIO') || hasRole('DIRIGENTE') || hasRole('ADMIN');
+  const { observarDocumento, cargando: observandoDocumento } = useObservarDocumento();
+
+  const [documentoParaObservar, setDocumentoParaObservar] = useState<DocumentoCompletado | null>(null);
+  const [textoObservacion, setTextoObservacion] = useState('');
 
   if (cargando) {
     return (
@@ -48,15 +59,87 @@ export function DetalleDocumentosUsuario({
   const stats = {
     total: documentos.length,
     completos: documentos.filter(d => d.estado === 'COMPLETO' || d.estado === 'PENDIENTE_FISICO').length,
-    pendientes: documentos.filter(d => d.estado === 'BORRADOR' || d.estado === 'PENDIENTE_ADJUNTOS').length,
+    pendientes: documentos.filter(d => d.estado === 'BORRADOR' || d.estado === 'PENDIENTE_ADJUNTOS' || d.estado === 'OBSERVADO').length,
     sinIniciar: documentos.filter(d => d.estado === null).length,
   };
 
   const porcentaje = stats.total > 0 ? Math.round((stats.completos / stats.total) * 100) : 0;
 
+  const abrirModalObservacion = (documento: DocumentoCompletado) => {
+    setDocumentoParaObservar(documento);
+    setTextoObservacion(documento.observacionRevision ?? '');
+  };
+
+  const cerrarModalObservacion = () => {
+    setDocumentoParaObservar(null);
+    setTextoObservacion('');
+  };
+
+  const confirmarObservacion = async () => {
+    const observacion = textoObservacion.trim();
+    if (!documentoParaObservar?.id) {
+      toast.error('No se puede observar un documento sin iniciar');
+      return;
+    }
+
+    if (!observacion) {
+      toast.error('La aclaración es obligatoria');
+      return;
+    }
+
+    try {
+      await observarDocumento({
+        documentoId: documentoParaObservar.id,
+        request: { observacion },
+      });
+
+      toast.success('Observación registrada', {
+        description: 'El usuario verá este issue al ingresar al inicio y en Documentos.',
+      });
+      cerrarModalObservacion();
+    } catch (e) {
+      console.error('Error observando documento', e);
+      toast.error('No se pudo registrar la observación');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <Dialog open={!!documentoParaObservar} onOpenChange={(open) => !open && cerrarModalObservacion()}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Marcar documento con issue</DialogTitle>
+              <DialogDescription>
+                Esta aclaración se mostrará al usuario para que vuelva a subir/corregir el documento.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700">
+                Documento: {documentoParaObservar?.tipoDocumentoNombre}
+              </p>
+              <Textarea
+                value={textoObservacion}
+                onChange={(e) => setTextoObservacion(e.target.value)}
+                placeholder="Ej: La imagen del DNI está borrosa. Volvé a subirla completa, legible y con ambos lados."
+                rows={5}
+                maxLength={1200}
+              />
+              <p className="text-xs text-gray-500 text-right">{textoObservacion.length}/1200</p>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={cerrarModalObservacion} disabled={observandoDocumento}>
+                Cancelar
+              </Button>
+              <Button type="button" onClick={confirmarObservacion} disabled={observandoDocumento}>
+                {observandoDocumento ? 'Guardando...' : 'Guardar observación'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div>
@@ -91,7 +174,12 @@ export function DetalleDocumentosUsuario({
         {/* Lista de documentos */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {documentos.map((doc) => (
-            <DocumentoCard key={doc.tipoDocumentoId} documento={doc} />
+            <DocumentoCard
+              key={doc.tipoDocumentoId}
+              documento={doc}
+              puedeObservar={puedeObservar}
+              onSolicitarObservacion={abrirModalObservacion}
+            />
           ))}
 
           {documentos.length === 0 && (
@@ -121,9 +209,11 @@ export function DetalleDocumentosUsuario({
 
 interface DocumentoCardProps {
   documento: DocumentoCompletado;
+  puedeObservar: boolean;
+  onSolicitarObservacion: (documento: DocumentoCompletado) => void;
 }
 
-function DocumentoCard({ documento }: DocumentoCardProps) {
+function DocumentoCard({ documento, puedeObservar, onSolicitarObservacion }: DocumentoCardProps) {
   const [expandido, setExpandido] = useState(false);
   const estado = documento.estado;
   const config = estado ? ESTADO_CONFIG[estado] : null;
@@ -139,6 +229,8 @@ function DocumentoCard({ documento }: DocumentoCardProps) {
         return <Upload className="w-5 h-5 text-yellow-500" />;
       case 'BORRADOR':
         return <AlertCircle className="w-5 h-5 text-gray-400" />;
+      case 'OBSERVADO':
+        return <AlertTriangle className="w-5 h-5 text-red-500" />;
       default:
         return <FileText className="w-5 h-5 text-gray-400" />;
     }
@@ -185,6 +277,18 @@ function DocumentoCard({ documento }: DocumentoCardProps) {
         </div>
 
         <div className="flex items-center gap-3">
+          {puedeObservar && documento.id !== null && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSolicitarObservacion(documento);
+              }}
+              className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+              title="Solicitar nueva carga con aclaración"
+            >
+              {documento.estado === 'OBSERVADO' ? 'Editar issue' : 'Marcar issue'}
+            </button>
+          )}
           {getStatusBadge()}
           {tieneContenido && (
             expandido ? (
@@ -199,6 +303,19 @@ function DocumentoCard({ documento }: DocumentoCardProps) {
       {/* Contenido expandido */}
       {expandido && tieneContenido && (
         <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-4">
+          {documento.estado === 'OBSERVADO' && documento.observacionRevision && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-sm font-semibold text-red-800">Issue de revisión</p>
+              <p className="mt-1 text-sm text-red-700">{documento.observacionRevision}</p>
+              {(documento.observadoPorNombre || documento.fechaObservacion) && (
+                <p className="mt-2 text-xs text-red-600">
+                  {documento.observadoPorNombre ? `Marcado por ${documento.observadoPorNombre}` : 'Marcado por dirigente/secretario'}
+                  {documento.fechaObservacion ? ` · ${new Date(documento.fechaObservacion).toLocaleString('es-AR')}` : ''}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Respuestas */}
           {Object.keys(documento.respuestas || {}).length > 0 && (
             <RespuestasSection documento={documento} />

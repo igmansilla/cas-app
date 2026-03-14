@@ -124,6 +124,7 @@ export const DocumentoCompletadoSchema = object({
   tipoDocumentoCodigo: string(),
   tipoDocumentoNombre: string(),
   usuarioId: number(),
+  keycloakId: optional(nullable(string())),
   usuarioNombre: nullable(string()),
   familiaId: nullable(number()),
   completadoPorId: nullable(number()),
@@ -152,6 +153,7 @@ export type DocumentoCompletado = InferOutput<typeof DocumentoCompletadoSchema>;
 
 export const ResumenDocumentosMiembroSchema = object({
   usuarioId: number(),
+  keycloakId: optional(nullable(string())),
   usuarioNombre: nullable(string()),
   usuarioEmail: nullable(string()),
   totalDocumentos: number(),

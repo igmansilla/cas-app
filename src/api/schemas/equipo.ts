@@ -106,6 +106,7 @@ export type ProgresoUsuario = InferOutput<typeof ProgresoUsuarioSchema>;
  */
 export const ReporteProgresoUsuarioSchema = object({
   usuarioId: number(),
+  keycloakId: string(),
   nombreMostrar: nullable(string()),
   email: string(),
   itemsCompletados: number(),
@@ -175,6 +176,7 @@ export type ResumenProgreso = InferOutput<typeof ResumenProgresoSchema>;
  */
 export const DetalleProgresoUsuarioSchema = object({
   usuarioId: number(),
+  keycloakId: string(),
   nombreMostrar: nullable(string()),
   email: string(),
   categorias: array(CategoriaProgresoSchema),

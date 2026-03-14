@@ -2,6 +2,7 @@ import { array, boolean, number, object, optional, string, nullable, type InferO
 
 export const UsuarioSchema = object({
     id: number(), 
+    keycloakId: string(),
     email: string(),
     nombreMostrar: string(), 
     roles: array(string()), 

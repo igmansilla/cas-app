@@ -49,9 +49,10 @@ export function MisDocumentos({ onSelectDocumento }: MisDocumentosProps) {
   const stats = {
     total: documentos.length,
     completos: documentos.filter(d => d.estado === 'COMPLETO' || d.estado === 'PENDIENTE_FISICO').length,
-    pendientes: documentos.filter(d => d.estado === 'BORRADOR' || d.estado === 'PENDIENTE_ADJUNTOS').length,
+    pendientes: documentos.filter(d => d.estado === 'BORRADOR' || d.estado === 'PENDIENTE_ADJUNTOS' || d.estado === 'OBSERVADO').length,
     sinIniciar: documentos.filter(d => d.estado === null).length,
   };
+  const documentosObservados = documentos.filter(d => d.estado === 'OBSERVADO');
 
   const porcentaje = stats.total > 0 ? Math.round((stats.completos / stats.total) * 100) : 0;
 
@@ -148,6 +149,40 @@ export function MisDocumentos({ onSelectDocumento }: MisDocumentosProps) {
         </div>
       )}
 
+      {/* Documentos observados por dirigente/secretario */}
+      {documentosObservados.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 bg-red-100 border-b border-red-200 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-700" />
+            <h3 className="font-semibold text-red-900">Issues en Documentación</h3>
+          </div>
+          <div className="p-2 space-y-1">
+            {documentosObservados.map((doc) => (
+              <div key={doc.tipoDocumentoId} className="p-3 bg-white rounded-lg border border-red-100">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">{doc.tipoDocumentoNombre}</div>
+                    <div className="text-xs text-red-700 mt-1">{doc.observacionRevision || 'Tenés una observación pendiente para corregir este documento.'}</div>
+                    {(doc.observadoPorNombre || doc.fechaObservacion) && (
+                      <div className="text-[11px] text-red-600 mt-1">
+                        {doc.observadoPorNombre ? `Marcado por ${doc.observadoPorNombre}` : 'Marcado por dirigente/secretario'}
+                        {doc.fechaObservacion ? ` · ${new Date(doc.fechaObservacion).toLocaleString('es-AR')}` : ''}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => onSelectDocumento?.(doc.tipoDocumentoId, usuario.id)}
+                    className="text-xs font-medium text-red-700 hover:text-red-800 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Corregir
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Lista de documentos */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="divide-y divide-gray-100">
@@ -186,6 +221,8 @@ function DocumentoItem({ documento, onClick, onDownload }: DocumentoItemProps) {
         return <Upload className="w-5 h-5 text-yellow-500" />;
       case 'BORRADOR':
         return <AlertCircle className="w-5 h-5 text-gray-400" />;
+      case 'OBSERVADO':
+        return <AlertTriangle className="w-5 h-5 text-red-500" />;
       default:
         return <FileText className="w-5 h-5 text-gray-400" />;
     }
