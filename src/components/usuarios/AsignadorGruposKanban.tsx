@@ -43,7 +43,7 @@ function UsuarioArrastrable({ usuario }: { usuario: UsuarioAdmin }) {
         transition,
         isDragging,
     } = useSortable({ 
-        id: `usuario-${usuario.id}`,
+        id: `usuario-${usuario.keycloakId}`,
         data: { type: 'usuario', usuario }
     });
 
@@ -142,7 +142,7 @@ function ColumnaGrupo({ grupo, usuarios, color, cargando }: ColumnaGrupoProps) {
                     </div>
                 ) : (
                     <SortableContext
-                        items={usuarios.map(u => `usuario-${u.id}`)}
+                        items={usuarios.map(u => `usuario-${u.keycloakId}`)}
                         strategy={verticalListSortingStrategy}
                     >
                         {usuarios.length === 0 ? (
@@ -151,7 +151,7 @@ function ColumnaGrupo({ grupo, usuarios, color, cargando }: ColumnaGrupoProps) {
                             </p>
                         ) : (
                             usuarios.map(usuario => (
-                                <UsuarioArrastrable key={usuario.id} usuario={usuario} />
+                                <UsuarioArrastrable key={usuario.keycloakId} usuario={usuario} />
                             ))
                         )}
                     </SortableContext>
@@ -213,7 +213,7 @@ export function AsignadorGruposKanban({ tipo }: AsignadorGruposKanbanProps) {
 
     const [activeUser, setActiveUser] = useState<UsuarioAdmin | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [asignacionesLocales, setAsignacionesLocales] = useState<Record<string, number[]>>({});
+    const [asignacionesLocales, setAsignacionesLocales] = useState<Record<string, string[]>>({});
     const [initialized, setInitialized] = useState(false);
 
     const cargando = cargandoAcampantes || cargandoDirigentes || cargandoUsuarios;
@@ -226,14 +226,14 @@ export function AsignadorGruposKanban({ tipo }: AsignadorGruposKanbanProps) {
     // Sincronizar miembros
     useEffect(() => {
         if (Object.keys(emailsPorGrupo).length > 0 && usuariosFiltrados.length > 0 && !initialized) {
-            const nuevasAsignaciones: Record<string, number[]> = {};
+            const nuevasAsignaciones: Record<string, string[]> = {};
             
             for (const [grupoId, emails] of Object.entries(emailsPorGrupo)) {
                 nuevasAsignaciones[grupoId] = [];
                 for (const email of emails) {
                     const usuario = usuariosFiltrados.find(u => u.email.toLowerCase() === email);
                     if (usuario) {
-                        nuevasAsignaciones[grupoId].push(usuario.id);
+                        nuevasAsignaciones[grupoId].push(usuario.keycloakId);
                     }
                 }
             }
@@ -255,7 +255,7 @@ export function AsignadorGruposKanban({ tipo }: AsignadorGruposKanbanProps) {
 
     const getGrupoDeUsuario = useCallback((usuario: UsuarioAdmin): string => {
         for (const grupoId in asignacionesLocales) {
-            if (asignacionesLocales[grupoId].includes(usuario.id)) {
+            if (asignacionesLocales[grupoId].includes(usuario.keycloakId)) {
                 return grupoId;
             }
         }
@@ -293,21 +293,21 @@ export function AsignadorGruposKanban({ tipo }: AsignadorGruposKanbanProps) {
         setAsignacionesLocales(prev => {
             const newState = { ...prev };
             if (grupoActualId !== 'sin-asignar' && newState[grupoActualId]) {
-                newState[grupoActualId] = newState[grupoActualId].filter(id => id !== usuario.id);
+                newState[grupoActualId] = newState[grupoActualId].filter(id => id !== usuario.keycloakId);
             }
             if (nuevoGrupoId !== 'sin-asignar') {
                 if (!newState[nuevoGrupoId]) newState[nuevoGrupoId] = [];
-                newState[nuevoGrupoId] = [...newState[nuevoGrupoId], usuario.id];
+                newState[nuevoGrupoId] = [...newState[nuevoGrupoId], usuario.keycloakId];
             }
             return newState;
         });
 
         try {
             if (grupoActualId !== 'sin-asignar') {
-                await removerMutation.mutateAsync({ usuarioId: usuario.id, grupoId: grupoActualId });
+                await removerMutation.mutateAsync({ keycloakId: usuario.keycloakId, grupoId: grupoActualId });
             }
             if (nuevoGrupoId !== 'sin-asignar') {
-                await agregarMutation.mutateAsync({ usuarioId: usuario.id, grupoId: nuevoGrupoId });
+                await agregarMutation.mutateAsync({ keycloakId: usuario.keycloakId, grupoId: nuevoGrupoId });
             }
             queryClient.invalidateQueries({ queryKey: ['grupos', 'kanban'] });
         } catch (err) {

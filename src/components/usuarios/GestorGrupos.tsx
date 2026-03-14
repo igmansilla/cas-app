@@ -17,12 +17,12 @@ import {
 import type { Grupo } from '../../api/services/grupos';
 
 interface GestorGruposProps {
-    usuarioId: number;
+    keycloakId: string;
     gruposActuales: Grupo[];
     rolesUsuario?: string[]; // Para determinar si es dirigente/acampante
 }
 
-export function GestorGrupos({ usuarioId, gruposActuales, rolesUsuario = [] }: GestorGruposProps) {
+export function GestorGrupos({ keycloakId, gruposActuales, rolesUsuario = [] }: GestorGruposProps) {
     const { grupos: gruposAcampantes, cargando: cargandoAcampantes } = useGruposAcampantes();
     const { grupos: gruposDirigentes, cargando: cargandoDirigentes } = useGruposDirigentes();
     const agregarMutation = useAgregarAGrupo();
@@ -40,34 +40,34 @@ export function GestorGrupos({ usuarioId, gruposActuales, rolesUsuario = [] }: G
     const handleCambiarPatrulla = async (nuevoGrupoId: string) => {
         // Si ya tiene una patrulla, primero remover
         if (patrullaActual && patrullaActual.id !== nuevoGrupoId) {
-            await removerMutation.mutateAsync({ usuarioId, grupoId: patrullaActual.id });
+            await removerMutation.mutateAsync({ keycloakId, grupoId: patrullaActual.id });
         }
         // Agregar la nueva
         if (nuevoGrupoId && nuevoGrupoId !== 'none') {
-            await agregarMutation.mutateAsync({ usuarioId, grupoId: nuevoGrupoId });
+            await agregarMutation.mutateAsync({ keycloakId, grupoId: nuevoGrupoId });
         }
     };
 
     const handleCambiarGrupoDirigente = async (nuevoGrupoId: string) => {
         // Si ya tiene un grupo dirigente, primero remover
         if (grupoDirigenteActual && grupoDirigenteActual.id !== nuevoGrupoId) {
-            await removerMutation.mutateAsync({ usuarioId, grupoId: grupoDirigenteActual.id });
+            await removerMutation.mutateAsync({ keycloakId, grupoId: grupoDirigenteActual.id });
         }
         // Agregar el nuevo
         if (nuevoGrupoId && nuevoGrupoId !== 'none') {
-            await agregarMutation.mutateAsync({ usuarioId, grupoId: nuevoGrupoId });
+            await agregarMutation.mutateAsync({ keycloakId, grupoId: nuevoGrupoId });
         }
     };
 
     const handleRemoverPatrulla = async () => {
         if (patrullaActual) {
-            await removerMutation.mutateAsync({ usuarioId, grupoId: patrullaActual.id });
+            await removerMutation.mutateAsync({ keycloakId, grupoId: patrullaActual.id });
         }
     };
 
     const handleRemoverGrupoDirigente = async () => {
         if (grupoDirigenteActual) {
-            await removerMutation.mutateAsync({ usuarioId, grupoId: grupoDirigenteActual.id });
+            await removerMutation.mutateAsync({ keycloakId, grupoId: grupoDirigenteActual.id });
         }
     };
 

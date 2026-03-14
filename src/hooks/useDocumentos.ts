@@ -7,7 +7,11 @@
 import axios from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { documentosService } from '../api/services/documentos';
-import type { GuardarDocumentoRequest, CrearTipoDocumentoRequest } from '../api/schemas/documentos';
+import type {
+  GuardarDocumentoRequest,
+  CrearTipoDocumentoRequest,
+  ObservarDocumentoRequest,
+} from '../api/schemas/documentos';
 
 // ============================================
 // Query Keys
@@ -280,6 +284,32 @@ export function useMarcarEntregaFisica() {
 
   return {
     marcarEntregaFisica: mutation.mutateAsync,
+    cargando: mutation.isPending,
+    error: mutation.error,
+  };
+}
+
+/**
+ * Hook para marcar un documento como observado (secretario/dirigente/admin)
+ */
+export function useObservarDocumento() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({
+      documentoId,
+      request,
+    }: {
+      documentoId: number;
+      request: ObservarDocumentoRequest;
+    }) => documentosService.observarDocumento(documentoId, request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentosKeys.all });
+    },
+  });
+
+  return {
+    observarDocumento: mutation.mutateAsync,
     cargando: mutation.isPending,
     error: mutation.error,
   };

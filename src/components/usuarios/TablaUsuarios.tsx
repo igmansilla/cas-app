@@ -116,7 +116,7 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
                 ) : (
                     usuariosFiltrados.map(usuario => (
                         <Card
-                            key={usuario.id}
+                            key={usuario.keycloakId}
                             className="gap-0 py-0 transition-colors hover:border-primary/40 hover:bg-muted/20"
                             role={onVerDetalle ? 'button' : undefined}
                             tabIndex={onVerDetalle ? 0 : undefined}
@@ -156,7 +156,7 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
                                     Roles
                                 </div>
                                 <GestorRoles
-                                    usuarioId={usuario.id}
+                                    keycloakId={usuario.keycloakId}
                                     rolesActuales={usuario.roles}
                                 />
                             </CardContent>
@@ -187,7 +187,7 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
                         ) : (
                             usuariosFiltrados.map(usuario => (
                                 <TableRow 
-                                    key={usuario.id}
+                                    key={usuario.keycloakId}
                                     className="cursor-pointer hover:bg-muted/50"
                                     onClick={() => onVerDetalle?.(usuario)}
                                 >
@@ -212,7 +212,7 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
                                     </TableCell>
                                     <TableCell onClick={(e) => e.stopPropagation()}>
                                         <GestorRoles 
-                                            usuarioId={usuario.id} 
+                                            keycloakId={usuario.keycloakId} 
                                             rolesActuales={usuario.roles}
                                         />
                                     </TableCell>

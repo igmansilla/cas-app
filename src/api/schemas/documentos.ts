@@ -22,7 +22,7 @@ import {
 export const AudienciaDocumentoSchema = picklist(['ACAMPANTE', 'DIRIGENTE', 'PADRE', 'TODOS']);
 export type AudienciaDocumento = InferOutput<typeof AudienciaDocumentoSchema>;
 
-export const EstadoDocumentoSchema = picklist(['BORRADOR', 'PENDIENTE_ADJUNTOS', 'PENDIENTE_FISICO', 'COMPLETO']);
+export const EstadoDocumentoSchema = picklist(['BORRADOR', 'PENDIENTE_ADJUNTOS', 'PENDIENTE_FISICO', 'COMPLETO', 'OBSERVADO']);
 export type EstadoDocumento = InferOutput<typeof EstadoDocumentoSchema>;
 
 export const TipoCampoSchema = picklist(['TEXTO', 'TEXTAREA', 'SELECCION', 'RADIO', 'BOOLEAN', 'FECHA', 'EMAIL', 'TELEFONO', 'NUMERO']);
@@ -131,6 +131,10 @@ export const DocumentoCompletadoSchema = object({
   estado: nullable(EstadoDocumentoSchema),
   fechaCompletado: nullable(string()),
   fechaActualizacion: nullable(string()),
+  observacionRevision: optional(nullable(string())),
+  observadoPorId: optional(nullable(number())),
+  observadoPorNombre: optional(nullable(string())),
+  fechaObservacion: optional(nullable(string())),
   respuestas: record(string(), string()),
   archivosAdjuntos: array(ArchivoAdjuntoSchema),
   camposCompletados: number(),
@@ -196,6 +200,12 @@ export const GuardarDocumentoRequestSchema = object({
 });
 
 export type GuardarDocumentoRequest = InferOutput<typeof GuardarDocumentoRequestSchema>;
+
+export const ObservarDocumentoRequestSchema = object({
+  observacion: string(),
+});
+
+export type ObservarDocumentoRequest = InferOutput<typeof ObservarDocumentoRequestSchema>;
 
 // Schema para campo en request de creación/actualización
 export const CampoRequestSchema = object({
@@ -279,5 +289,11 @@ export const ESTADO_CONFIG: Record<EstadoDocumento, {
     color: 'text-green-600',
     bgColor: 'bg-green-100',
     icon: 'check-circle',
+  },
+  OBSERVADO: {
+    label: 'Con observaciones',
+    color: 'text-red-700',
+    bgColor: 'bg-red-100',
+    icon: 'alert-triangle',
   },
 };

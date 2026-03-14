@@ -11,7 +11,7 @@ import { useAsignarRol, useRemoverRol, useRolesDisponibles } from '../../hooks/u
 import { Plus, X, Loader2 } from 'lucide-react';
 
 interface GestorRolesProps {
-    usuarioId: number;
+    keycloakId: string;
     rolesActuales: string[];
     readonly?: boolean;
 }
@@ -30,7 +30,7 @@ const ROLE_LABELS: Record<string, string> = {
     ACAMPANTE: 'Acampante',
 };
 
-export function GestorRoles({ usuarioId, rolesActuales, readonly = false }: GestorRolesProps) {
+export function GestorRoles({ keycloakId, rolesActuales, readonly = false }: GestorRolesProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     
     const { data: rolesDisponibles } = useRolesDisponibles();
@@ -43,11 +43,11 @@ export function GestorRoles({ usuarioId, rolesActuales, readonly = false }: Gest
 
     const handleAsignar = async (rol: string) => {
         setIsMenuOpen(false);
-        await asignarRol.mutateAsync({ usuarioId, rol });
+        await asignarRol.mutateAsync({ keycloakId, rol });
     };
 
     const handleRemover = async (rol: string) => {
-        await removerRol.mutateAsync({ usuarioId, rol });
+        await removerRol.mutateAsync({ keycloakId, rol });
     };
 
     const isLoading = asignarRol.isPending || removerRol.isPending;

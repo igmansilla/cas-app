@@ -4,6 +4,7 @@ import { client } from "../client";
 // Schema para usuario en el dashboard admin
 export const UsuarioAdminSchema = object({
     id: number(),
+    keycloakId: string(),
     email: string(),
     nombreMostrar: string(),
     urlFoto: optional(nullable(string())),
@@ -54,15 +55,15 @@ export const usuariosAdminService = {
     /**
      * Asigna un rol a un usuario.
      */
-    asignarRol: async (usuarioId: number, rol: string): Promise<void> => {
-        await client.post(`/usuarios/${usuarioId}/roles/${rol.toUpperCase()}`);
+    asignarRol: async (keycloakId: string, rol: string): Promise<void> => {
+        await client.post(`/usuarios/keycloak/${encodeURIComponent(keycloakId)}/roles/${rol.toUpperCase()}`);
     },
 
     /**
      * Remueve un rol de un usuario.
      */
-    removerRol: async (usuarioId: number, rol: string): Promise<void> => {
-        await client.delete(`/usuarios/${usuarioId}/roles/${rol.toUpperCase()}`);
+    removerRol: async (keycloakId: string, rol: string): Promise<void> => {
+        await client.delete(`/usuarios/keycloak/${encodeURIComponent(keycloakId)}/roles/${rol.toUpperCase()}`);
     },
 
     /**

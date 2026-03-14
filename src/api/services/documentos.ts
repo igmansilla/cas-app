@@ -11,6 +11,7 @@ import type {
   ResumenDocumentosMiembro,
   ReporteDocumentos,
   GuardarDocumentoRequest,
+  ObservarDocumentoRequest,
   CrearTipoDocumentoRequest,
 } from '../schemas/documentos';
 
@@ -105,6 +106,14 @@ export const documentosService = {
    */
   guardarDocumento: async (request: GuardarDocumentoRequest): Promise<DocumentoCompletado> => {
     const response = await client.post('/documentos', request);
+    return response.data;
+  },
+
+  /**
+   * Marca un documento con observaciones y solicita corrección.
+   */
+  observarDocumento: async (documentoId: number, request: ObservarDocumentoRequest): Promise<DocumentoCompletado> => {
+    const response = await client.post(`/documentos/${documentoId}/observaciones`, request);
     return response.data;
   },
 

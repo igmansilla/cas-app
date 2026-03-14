@@ -37,8 +37,8 @@ export function useAsignarRol() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ usuarioId, rol }: { usuarioId: number; rol: string }) =>
-            usuariosAdminService.asignarRol(usuarioId, rol),
+        mutationFn: ({ keycloakId, rol }: { keycloakId: string; rol: string }) =>
+            usuariosAdminService.asignarRol(keycloakId, rol),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['usuarios-admin'] });
         },
@@ -52,8 +52,8 @@ export function useRemoverRol() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ usuarioId, rol }: { usuarioId: number; rol: string }) =>
-            usuariosAdminService.removerRol(usuarioId, rol),
+        mutationFn: ({ keycloakId, rol }: { keycloakId: string; rol: string }) =>
+            usuariosAdminService.removerRol(keycloakId, rol),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['usuarios-admin'] });
         },

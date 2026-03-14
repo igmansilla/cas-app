@@ -29,7 +29,7 @@ interface DetalleUsuarioProps {
 }
 
 export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) {
-    const { grupos } = useGruposUsuario(usuario?.id ?? 0, !!usuario);
+    const { grupos } = useGruposUsuario(usuario?.keycloakId ?? '', !!usuario);
     
     if (!usuario) return null;
 
@@ -100,7 +100,7 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
                         </div>
                         <div className="rounded-xl border bg-card p-3 sm:p-4">
                             <GestorRoles 
-                                usuarioId={usuario.id}
+                                keycloakId={usuario.keycloakId}
                                 rolesActuales={usuario.roles}
                             />
                         </div>
@@ -122,7 +122,7 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
                         </div>
                         <div className="rounded-xl border bg-card p-3 sm:p-4">
                             <GestorGrupos 
-                                usuarioId={usuario.id}
+                                keycloakId={usuario.keycloakId}
                                 gruposActuales={grupos}
                                 rolesUsuario={usuario.roles}
                             />
@@ -145,8 +145,8 @@ export function DetalleUsuario({ usuario, open, onClose }: DetalleUsuarioProps) 
                         
                         <div className="grid gap-3 rounded-xl border bg-card p-3 sm:p-4">
                             <InfoRow 
-                                label="ID interno" 
-                                value={<code className="break-all rounded bg-muted px-2 py-1 text-xs font-mono">{usuario.id}</code>}
+                                label="Keycloak ID" 
+                                value={<code className="break-all rounded bg-muted px-2 py-1 text-xs font-mono">{usuario.keycloakId}</code>}
                             />
                             <InfoRow 
                                 label="Email verificado" 

@@ -114,23 +114,23 @@ export const gruposService = {
     /**
      * Obtiene los grupos de un usuario.
      */
-    obtenerGruposUsuario: async (usuarioId: number): Promise<Grupo[]> => {
-        const response = await client.get(`/usuarios/${usuarioId}/grupos`);
+    obtenerGruposUsuario: async (keycloakId: string): Promise<Grupo[]> => {
+        const response = await client.get(`/usuarios/keycloak/${encodeURIComponent(keycloakId)}/grupos`);
         return response.data;
     },
 
     /**
      * Agrega un usuario a un grupo.
      */
-    agregarUsuarioAGrupo: async (usuarioId: number, grupoId: string): Promise<void> => {
-        await client.post(`/usuarios/${usuarioId}/grupos/${grupoId}`);
+    agregarUsuarioAGrupo: async (keycloakId: string, grupoId: string): Promise<void> => {
+        await client.post(`/usuarios/keycloak/${encodeURIComponent(keycloakId)}/grupos/${grupoId}`);
     },
 
     /**
      * Remueve un usuario de un grupo.
      */
-    removerUsuarioDeGrupo: async (usuarioId: number, grupoId: string): Promise<void> => {
-        await client.delete(`/usuarios/${usuarioId}/grupos/${grupoId}`);
+    removerUsuarioDeGrupo: async (keycloakId: string, grupoId: string): Promise<void> => {
+        await client.delete(`/usuarios/keycloak/${encodeURIComponent(keycloakId)}/grupos/${grupoId}`);
     },
 
     /**

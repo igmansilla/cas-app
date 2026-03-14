@@ -42,11 +42,11 @@ export function useGruposDirigentes() {
 /**
  * Hook para obtener los grupos de un usuario específico.
  */
-export function useGruposUsuario(usuarioId: number, enabled = true) {
+export function useGruposUsuario(keycloakId: string, enabled = true) {
     const query = useQuery({
-        queryKey: ['usuarios', usuarioId, 'grupos'],
-        queryFn: () => gruposService.obtenerGruposUsuario(usuarioId),
-        enabled,
+        queryKey: ['usuarios', keycloakId, 'grupos'],
+        queryFn: () => gruposService.obtenerGruposUsuario(keycloakId),
+        enabled: enabled && !!keycloakId,
     });
 
     return {
@@ -116,10 +116,10 @@ export function useAgregarAGrupo() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ usuarioId, grupoId }: { usuarioId: number; grupoId: string }) =>
-            gruposService.agregarUsuarioAGrupo(usuarioId, grupoId),
-        onSuccess: (_, { usuarioId, grupoId }) => {
-            queryClient.invalidateQueries({ queryKey: ['usuarios', usuarioId, 'grupos'] });
+        mutationFn: ({ keycloakId, grupoId }: { keycloakId: string; grupoId: string }) =>
+            gruposService.agregarUsuarioAGrupo(keycloakId, grupoId),
+        onSuccess: (_, { keycloakId, grupoId }) => {
+            queryClient.invalidateQueries({ queryKey: ['usuarios', keycloakId, 'grupos'] });
             queryClient.invalidateQueries({ queryKey: ['grupos', grupoId, 'miembros'] });
             queryClient.invalidateQueries({ queryKey: ['grupos', 'kanban'] });
         },
@@ -133,10 +133,10 @@ export function useRemoverDeGrupo() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ usuarioId, grupoId }: { usuarioId: number; grupoId: string }) =>
-            gruposService.removerUsuarioDeGrupo(usuarioId, grupoId),
-        onSuccess: (_, { usuarioId, grupoId }) => {
-            queryClient.invalidateQueries({ queryKey: ['usuarios', usuarioId, 'grupos'] });
+        mutationFn: ({ keycloakId, grupoId }: { keycloakId: string; grupoId: string }) =>
+            gruposService.removerUsuarioDeGrupo(keycloakId, grupoId),
+        onSuccess: (_, { keycloakId, grupoId }) => {
+            queryClient.invalidateQueries({ queryKey: ['usuarios', keycloakId, 'grupos'] });
             queryClient.invalidateQueries({ queryKey: ['grupos', grupoId, 'miembros'] });
             queryClient.invalidateQueries({ queryKey: ['grupos', 'kanban'] });
         },
