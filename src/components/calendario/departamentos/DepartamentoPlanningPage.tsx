@@ -7,7 +7,6 @@ import type { Evento, EventoRequest, PlantillaEventoAnual } from "../../../api/s
 import { useActualizarEvento, useCrearEvento, useEliminarEvento, useEventos, usePlanificacionAnual, useSeriesReunion, useTiposEvento } from "../../../hooks/useCalendario";
 import { useAuth } from "../../../hooks/useAuth";
 import { useDepartamentos } from "../../../hooks/useDepartamentos";
-import { cn } from "../../../lib/utils";
 import { obtenerIdSerieReunion } from "../../../lib/calendario/reuniones";
 import { ReunionSerieCard } from "../reuniones/ReunionSerieCard";
 import { EventosPlanningPanel } from "../eventos/EventosPlanningPanel";
@@ -190,8 +189,6 @@ export function DepartamentoPlanningPage({
     setWizardAbierto(true);
   };
 
-  const Icon = screen.icon;
-
   const content = cargandoPagina ? (
     <div className="flex justify-center py-20">
       <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-orange-500" />
@@ -225,9 +222,17 @@ export function DepartamentoPlanningPage({
               Se usan para la coordinación del área. No toman asistencia y quedan separadas de las reuniones con grupos.
             </p>
           </div>
-          <Badge variant="outline" className="w-fit border-gray-300 text-gray-700">
-            {reunionesDepartamento.length} series activas
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="w-fit border-gray-300 text-gray-700">
+              {reunionesDepartamento.length} series activas
+            </Badge>
+            {puedeEditar && (
+              <Button onClick={abrirCreacionReunion} className="bg-slate-900 text-white hover:bg-slate-800">
+                <MessageSquarePlus className="mr-2 h-4 w-4" />
+                Nueva reunión interna
+              </Button>
+            )}
+          </div>
         </div>
 
         {reunionesDepartamento.length === 0 ? (
@@ -297,32 +302,6 @@ export function DepartamentoPlanningPage({
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-        </div>
-
-        <div className="mb-8 rounded-3xl border border-white/70 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-3">
-              <Badge variant="outline" className={cn("w-fit border", screen.accentClass)}>
-                Departamento operativo
-              </Badge>
-              <div className="space-y-2">
-                <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
-                  <Icon className={cn("h-8 w-8", screen.iconClass)} />
-                  {screen.nombre}
-                </h1>
-                <p className="max-w-3xl text-sm text-gray-600">
-                  {departamento?.descripcion || screen.resumen}
-                </p>
-              </div>
-            </div>
-
-            {puedeEditar && (
-              <Button onClick={abrirCreacionReunion} className="bg-slate-900 text-white hover:bg-slate-800">
-                <MessageSquarePlus className="mr-2 h-4 w-4" />
-                Nueva reunión interna
-              </Button>
-            )}
-          </div>
         </div>
 
         {content}

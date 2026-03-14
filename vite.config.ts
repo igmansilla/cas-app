@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
   const appEnv = (env.VITE_APP_ENV || env.VITE_ENVIRONMENT || env.RAILWAY_ENVIRONMENT_NAME || '').trim().toLowerCase()
   const isLocal = appEnv === 'local' || mode === 'development'
   const isDev = appEnv === 'development' || appEnv === 'dev'
+  const enablePwaInDev = env.VITE_PWA_DEV === 'true'
   
   let prefix = ''
   if (isDev) prefix = '[DEV] '
@@ -50,7 +51,7 @@ export default defineConfig(({ mode }) => {
         filename: 'firebase-messaging-sw.ts',
         registerType: 'autoUpdate',
         devOptions: {
-          enabled: true,
+          enabled: enablePwaInDev,
           type: 'module',
         },
         manifest: {
@@ -85,6 +86,16 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
+    optimizeDeps: {
+      include: [
+        'date-fns',
+        'date-fns/addDays',
+        'date-fns/format',
+        'date-fns/locale/es',
+        '@tanstack/react-form',
+        '@stepperize/react',
+      ],
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

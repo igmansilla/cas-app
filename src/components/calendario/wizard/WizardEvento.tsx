@@ -63,6 +63,7 @@ const SATURDAY_DAY_INDEX = 6;
 const LOCATION_OPTION_BULIN = "BULIN" as const;
 const LOCATION_OPTION_OTRO = "OTRO" as const;
 const BULIN_COORDINATE_TOLERANCE = 0.00001;
+const DEFAULT_EVENT_DURATION_MINUTES = 60;
 
 type LocationOption = typeof LOCATION_OPTION_BULIN | typeof LOCATION_OPTION_OTRO;
 
@@ -72,6 +73,29 @@ function formatDateInputValue(date: Date) {
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function formatDateTimeInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function getDefaultEventDateTimeRange(now = new Date()) {
+  const inicio = new Date(now);
+  inicio.setSeconds(0, 0);
+
+  const fin = new Date(inicio);
+  fin.setMinutes(fin.getMinutes() + DEFAULT_EVENT_DURATION_MINUTES);
+
+  return {
+    fechaInicio: formatDateTimeInputValue(inicio),
+    fechaFin: formatDateTimeInputValue(fin),
+  };
 }
 
 function getFirstSaturdayOfApril(year: number) {
@@ -263,10 +287,9 @@ function WizardEventoContent({
   ], [gruposAcampantes, gruposDirigentes]);
   const defaultMeetingLocation = getDefaultMeetingLocation();
   const defaultMeetingSchedule = getDefaultMeetingScheduleValues();
+  const defaultEventDateTimeRange = useMemo(() => getDefaultEventDateTimeRange(), []);
   const bloquearUbicacionEnBulin = naturaleza === "REUNION" && forzarUbicacionBulin;
-  const [locationOption, setLocationOption] = useState<LocationOption>(() =>
-    naturaleza === "REUNION" ? LOCATION_OPTION_BULIN : LOCATION_OPTION_OTRO,
-  );
+  const [locationOption, setLocationOption] = useState<LocationOption>(LOCATION_OPTION_BULIN);
 
   const useStepper = stepper.useStepper();
 
@@ -275,12 +298,12 @@ function WizardEventoContent({
       titulo: "",
       descripcion: "",
       tipo: naturaleza === "REUNION" ? "REUNION" : "",
-      fechaInicio: naturaleza === "REUNION" ? defaultMeetingSchedule.fechaInicio : "",
-      fechaFin: naturaleza === "REUNION" ? defaultMeetingSchedule.fechaFin : "",
-      ubicacion: naturaleza === "REUNION" ? defaultMeetingLocation.direccion : "",
-      latitud: naturaleza === "REUNION" ? defaultMeetingLocation.lat : undefined as number | undefined,
-      longitud: naturaleza === "REUNION" ? defaultMeetingLocation.lng : undefined as number | undefined,
-      urlMapa: naturaleza === "REUNION" ? defaultMeetingLocation.url : "",
+      fechaInicio: naturaleza === "REUNION" ? defaultMeetingSchedule.fechaInicio : defaultEventDateTimeRange.fechaInicio,
+      fechaFin: naturaleza === "REUNION" ? defaultMeetingSchedule.fechaFin : defaultEventDateTimeRange.fechaFin,
+      ubicacion: defaultMeetingLocation.direccion,
+      latitud: defaultMeetingLocation.lat,
+      longitud: defaultMeetingLocation.lng,
+      urlMapa: defaultMeetingLocation.url,
       naturaleza,
       periodicidad: naturaleza === "REUNION" ? "SEMANAL" : "PUNTUAL",
       diaSemana: naturaleza === "REUNION" ? defaultMeetingSchedule.diaSemana : "",
@@ -332,23 +355,33 @@ function WizardEventoContent({
 
   useEffect(() => {
     if (abierto) {
-      const ubicacionInicial = bloquearUbicacionEnBulin
+      const defaultEventDates = getDefaultEventDateTimeRange();
+      const hasInitialLocationData = Boolean(
+        valoresIniciales.ubicacion?.trim()
+        || typeof valoresIniciales.latitud === "number"
+        || typeof valoresIniciales.longitud === "number"
+        || valoresIniciales.urlMapa?.trim(),
+      );
+      const shouldUseDefaultBulinLocation = bloquearUbicacionEnBulin || !hasInitialLocationData;
+      const ubicacionInicial = shouldUseDefaultBulinLocation
         ? defaultMeetingLocation.direccion
-        : valoresIniciales.ubicacion || (naturaleza === "REUNION" ? defaultMeetingLocation.direccion : "");
-      const latitudInicial = bloquearUbicacionEnBulin
+        : (valoresIniciales.ubicacion || "");
+      const latitudInicial = shouldUseDefaultBulinLocation
         ? defaultMeetingLocation.lat
-        : valoresIniciales.latitud ?? (naturaleza === "REUNION" ? defaultMeetingLocation.lat : undefined);
-      const longitudInicial = bloquearUbicacionEnBulin
+        : valoresIniciales.latitud;
+      const longitudInicial = shouldUseDefaultBulinLocation
         ? defaultMeetingLocation.lng
-        : valoresIniciales.longitud ?? (naturaleza === "REUNION" ? defaultMeetingLocation.lng : undefined);
+        : valoresIniciales.longitud;
       const fechaInicioInicial = valoresIniciales.fechaInicio
         ? formatFechaFieldValue(valoresIniciales.fechaInicio, naturaleza)
-        : (naturaleza === "REUNION" ? defaultMeetingSchedule.fechaInicio : "");
+        : (naturaleza === "REUNION" ? defaultMeetingSchedule.fechaInicio : defaultEventDates.fechaInicio);
       const fechaFinInicial = valoresIniciales.fechaFin
         ? formatFechaFieldValue(valoresIniciales.fechaFin, naturaleza)
-        : (naturaleza === "REUNION" ? defaultMeetingSchedule.fechaFin : "");
+        : (naturaleza === "REUNION" ? defaultMeetingSchedule.fechaFin : defaultEventDates.fechaFin);
       const urlMapaInicial = valoresIniciales.urlMapa
-        || buildGoogleMapsSearchUrl(ubicacionInicial, { lat: latitudInicial, lng: longitudInicial });
+        || (shouldUseDefaultBulinLocation
+          ? defaultMeetingLocation.url
+          : buildGoogleMapsSearchUrl(ubicacionInicial, { lat: latitudInicial, lng: longitudInicial }));
       const ubicacionInicialEsBulin = isBulinLocationSelection(
         ubicacionInicial,
         latitudInicial,
@@ -1146,29 +1179,66 @@ function WizardEventoContent({
   );
 }
 
-function toErrorMessage(error: unknown): string {
+function collectErrorMessages(error: unknown, visited = new WeakSet<object>()): string[] {
   if (typeof error === "string") {
-    return error;
+    return [error];
   }
 
-  if (error instanceof Error && error.message) {
-    return error.message;
+  if (error instanceof Error) {
+    const directMessage = error.message?.trim();
+    const causeMessages = collectErrorMessages((error as { cause?: unknown }).cause, visited);
+
+    return directMessage ? [directMessage, ...causeMessages] : causeMessages;
+  }
+
+  if (Array.isArray(error)) {
+    return error.flatMap((issue) => collectErrorMessages(issue, visited));
   }
 
   if (error && typeof error === "object") {
-    const maybeMessage = (error as { message?: unknown }).message;
-    if (typeof maybeMessage === "string" && maybeMessage.trim()) {
-      return maybeMessage;
+    if (visited.has(error)) {
+      return [];
     }
 
-    try {
-      return JSON.stringify(error);
-    } catch {
-      return String(error);
+    visited.add(error);
+
+    const maybeMessage = (error as { message?: unknown }).message;
+    const maybeIssues = (error as { issues?: unknown }).issues;
+    const maybeCause = (error as { cause?: unknown }).cause;
+    const messages: string[] = [];
+
+    if (typeof maybeMessage === "string" && maybeMessage.trim()) {
+      messages.push(maybeMessage);
     }
+
+    if (Array.isArray(maybeIssues)) {
+      messages.push(...maybeIssues.flatMap((issue) => collectErrorMessages(issue, visited)));
+    }
+
+    if (maybeCause !== undefined) {
+      messages.push(...collectErrorMessages(maybeCause, visited));
+    }
+
+    return messages;
   }
 
-  return String(error);
+  return [];
+}
+
+function toErrorMessage(error: unknown): string {
+  const messages = collectErrorMessages(error)
+    .map((message) => message.trim())
+    .filter((message) => message.length > 0);
+
+  if (messages.length) {
+    return [...new Set(messages)].join(", ");
+  }
+
+  if (typeof error === "number" || typeof error === "boolean") {
+    return String(error);
+  }
+
+  return "Revisa este campo.";
 }
 
 function FieldError({ field }: { field: any }) {

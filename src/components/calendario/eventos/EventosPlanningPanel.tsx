@@ -360,7 +360,7 @@ function PlantillaCard({
                 </p>
               </div>
               {eventoProgramado.ubicacion && (
-                <span className="text-sm text-gray-500">{eventoProgramado.ubicacion}</span>
+                <span className="hidden text-sm text-gray-500 md:inline">{eventoProgramado.ubicacion}</span>
               )}
             </div>
 
@@ -438,7 +438,7 @@ function EventoAdicionalCard({
           <p className="text-sm text-gray-600">{evento.descripcion || "Sin descripción"}</p>
           <div className="flex flex-wrap gap-3 text-sm text-gray-500">
             <span>{format(new Date(evento.fechaInicio), "d 'de' MMMM, HH:mm", { locale: es })}</span>
-            {evento.ubicacion && <span>{evento.ubicacion}</span>}
+            {evento.ubicacion && <span className="hidden md:inline">{evento.ubicacion}</span>}
           </div>
         </div>
 
