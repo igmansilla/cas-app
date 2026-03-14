@@ -17,6 +17,7 @@ function getMobileHeaderTitle(pathname: string): string | undefined {
     if (pathname.startsWith("/documentos")) return "Documentos";
     if (pathname.startsWith("/equipo")) return "Equipo";
     if (pathname.startsWith("/usuarios")) return "Acampantes";
+    if (pathname.startsWith("/sistema")) return "Sistema";
     if (pathname.startsWith("/perfil")) return "Perfil";
     if (pathname.startsWith("/configuracion")) return "Configuracion";
     if (pathname.startsWith("/departamentos/economia/planificacion")) return "Economia - Planificacion";

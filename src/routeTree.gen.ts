@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthUsuariosRouteImport } from './routes/_auth.usuarios'
 import { Route as AuthTemplateEditorRouteImport } from './routes/_auth.template-editor'
+import { Route as AuthSistemaRouteImport } from './routes/_auth.sistema'
 import { Route as AuthReunionesRouteImport } from './routes/_auth.reuniones'
 import { Route as AuthPlanesRouteImport } from './routes/_auth.planes'
 import { Route as AuthPerfilRouteImport } from './routes/_auth.perfil'
@@ -58,6 +59,11 @@ const AuthUsuariosRoute = AuthUsuariosRouteImport.update({
 const AuthTemplateEditorRoute = AuthTemplateEditorRouteImport.update({
   id: '/template-editor',
   path: '/template-editor',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSistemaRoute = AuthSistemaRouteImport.update({
+  id: '/sistema',
+  path: '/sistema',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthReunionesRoute = AuthReunionesRouteImport.update({
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof AuthPerfilRoute
   '/planes': typeof AuthPlanesRoute
   '/reuniones': typeof AuthReunionesRoute
+  '/sistema': typeof AuthSistemaRoute
   '/template-editor': typeof AuthTemplateEditorRoute
   '/usuarios': typeof AuthUsuariosRoute
   '/departamentos/comunicaciones': typeof AuthDepartamentosComunicacionesRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/perfil': typeof AuthPerfilRoute
   '/planes': typeof AuthPlanesRoute
   '/reuniones': typeof AuthReunionesRoute
+  '/sistema': typeof AuthSistemaRoute
   '/template-editor': typeof AuthTemplateEditorRoute
   '/usuarios': typeof AuthUsuariosRoute
   '/departamentos/comunicaciones': typeof AuthDepartamentosComunicacionesRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/_auth/perfil': typeof AuthPerfilRoute
   '/_auth/planes': typeof AuthPlanesRoute
   '/_auth/reuniones': typeof AuthReunionesRoute
+  '/_auth/sistema': typeof AuthSistemaRoute
   '/_auth/template-editor': typeof AuthTemplateEditorRoute
   '/_auth/usuarios': typeof AuthUsuariosRoute
   '/_auth/departamentos/comunicaciones': typeof AuthDepartamentosComunicacionesRoute
@@ -272,6 +281,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/planes'
     | '/reuniones'
+    | '/sistema'
     | '/template-editor'
     | '/usuarios'
     | '/departamentos/comunicaciones'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/planes'
     | '/reuniones'
+    | '/sistema'
     | '/template-editor'
     | '/usuarios'
     | '/departamentos/comunicaciones'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/_auth/perfil'
     | '/_auth/planes'
     | '/_auth/reuniones'
+    | '/_auth/sistema'
     | '/_auth/template-editor'
     | '/_auth/usuarios'
     | '/_auth/departamentos/comunicaciones'
@@ -380,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/template-editor'
       fullPath: '/template-editor'
       preLoaderRoute: typeof AuthTemplateEditorRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/sistema': {
+      id: '/_auth/sistema'
+      path: '/sistema'
+      fullPath: '/sistema'
+      preLoaderRoute: typeof AuthSistemaRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/reuniones': {
@@ -587,6 +606,7 @@ interface AuthRouteChildren {
   AuthPerfilRoute: typeof AuthPerfilRoute
   AuthPlanesRoute: typeof AuthPlanesRoute
   AuthReunionesRoute: typeof AuthReunionesRoute
+  AuthSistemaRoute: typeof AuthSistemaRoute
   AuthTemplateEditorRoute: typeof AuthTemplateEditorRoute
   AuthUsuariosRoute: typeof AuthUsuariosRoute
 }
@@ -603,6 +623,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthPerfilRoute: AuthPerfilRoute,
   AuthPlanesRoute: AuthPlanesRoute,
   AuthReunionesRoute: AuthReunionesRoute,
+  AuthSistemaRoute: AuthSistemaRoute,
   AuthTemplateEditorRoute: AuthTemplateEditorRoute,
   AuthUsuariosRoute: AuthUsuariosRoute,
 }

@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { Backpack, Building2, ChevronRight, FileText, ShieldAlert, Users } from "lucide-react";
+import { Backpack, Building2, ChevronRight, FileText, KeyRound, ShieldAlert, Users } from "lucide-react";
 import { toast } from "sonner";
 import { FamiliaWidget } from "../components/familia/FamiliaWidget";
 import { usePlanificacionAnual } from "../hooks/useCalendario";
@@ -22,6 +22,7 @@ function DashboardComponent() {
   
   // Check if user can access user management (DIRIGENTE or CONSEJO)
   const canAccessUsuarios = hasRole('dirigente') || hasGroup('CONSEJO') || hasRole('admin');
+  const canAccessSistema = hasRole('admin');
   const canAccessPlanificacion = hasRole('dirigente') || hasRole('admin');
   const anioActual = new Date().getFullYear();
   const { plantillas } = usePlanificacionAnual(anioActual, canAccessPlanificacion);
@@ -207,6 +208,26 @@ function DashboardComponent() {
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          )}
+
+          {canAccessSistema && (
+            <Link
+              to="/sistema"
+              className="flex items-center justify-between p-4 border rounded-xl bg-gradient-to-r from-cyan-50 to-sky-50 border-cyan-200 hover:shadow-md transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center">
+                  <KeyRound className="w-6 h-6 text-cyan-700" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-cyan-900">Sistema y secretos</h3>
+                  <p className="text-sm text-cyan-700">
+                    Estado de tokens, secretos y configuraciones externas
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-cyan-500 group-hover:translate-x-1 transition-transform" />
             </Link>
           )}
         </section>

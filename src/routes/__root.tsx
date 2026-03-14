@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { Link, createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import { Toaster } from "../components/ui/sonner";
@@ -89,7 +89,35 @@ function showForegroundSystemNotification(payload: any) {
 
 export const Route = createRootRoute({
   component: RootRouteComponent,
+  notFoundComponent: RootNotFound,
 });
+
+function RootNotFound() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+        <h1 className="text-lg font-semibold text-slate-900">Pagina no encontrada</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          La ruta que abriste no existe o ya no esta disponible.
+        </p>
+        <div className="mt-5 flex justify-center gap-2">
+          <Link
+            to="/dashboard"
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Ir al dashboard
+          </Link>
+          <Link
+            to="/"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Ir al inicio
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function RootRouteComponent() {
   const { isAuthenticated, user } = useAuth();

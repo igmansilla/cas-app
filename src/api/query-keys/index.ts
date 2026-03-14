@@ -3,3 +3,4 @@
  */
 
 export * from './calendario.keys';
+export * from './sistema.keys';
