@@ -120,6 +120,34 @@ export function useActualizarEvento() {
 }
 
 /**
+ * Hook para transicionar el estado de un evento
+ */
+export function useTransicionarEstadoEvento() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ id, estadoDestino }: { id: number; estadoDestino: string }) =>
+      calendarioService.transicionarEstadoEvento(id, estadoDestino),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: calendarioKeys.todos });
+      queryClient.invalidateQueries({ queryKey: calendarioKeys.evento(variables.id) });
+    },
+  });
+
+  const transicionarEstadoEvento = (id: number, estadoDestino: string) => {
+    return mutation.mutateAsync({ id, estadoDestino });
+  };
+
+  return {
+    transicionarEstadoEvento,
+    cargando: mutation.isPending,
+    error: mutation.error,
+    eventoActualizado: mutation.data,
+    reset: mutation.reset,
+  };
+}
+
+/**
  * Hook para eliminar un evento
  */
 export function useEliminarEvento() {

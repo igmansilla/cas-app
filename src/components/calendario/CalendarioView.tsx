@@ -6,7 +6,7 @@
 
 import { useCallback, useMemo } from "react";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import type { View } from "react-big-calendar";
+import type { SlotInfo, View } from "react-big-calendar";
 import { format } from "date-fns/format";
 import { parse } from "date-fns/parse";
 import { startOfWeek } from "date-fns/startOfWeek";
@@ -38,6 +38,7 @@ interface CalendarioViewProps {
   date: Date;
   onView: (view: View) => void;
   onNavigate: (date: Date) => void;
+  onSelectSlot?: (slot: SlotInfo) => void;
 }
 
 export function CalendarioView({ 
@@ -47,7 +48,8 @@ export function CalendarioView({
   view,
   date,
   onView,
-  onNavigate
+  onNavigate,
+  onSelectSlot,
 }: CalendarioViewProps) {
   // Navegación
   const handleNavigate = useCallback((newDate: Date) => {
@@ -211,11 +213,12 @@ export function CalendarioView({
         date={date}
         onNavigate={handleNavigate}
         onSelectEvent={(e) => onSelectEvent(e as EventoCalendarioFormateado)}
+        onSelectSlot={onSelectSlot}
         eventPropGetter={eventStyleGetter as any}
         messages={messages}
         culture="es"
         popup
-        selectable
+        selectable={Boolean(onSelectSlot)}
       />
       {loading && (
         <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-2xl">

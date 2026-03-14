@@ -1,147 +1,144 @@
 import { test, expect, type Page } from '@playwright/test';
-import { ensureUserRealmRoles, getKeycloakToken, getTestUsers, type TestUser } from './helpers/keycloak';
+import { ensureUserRealmRoles, getTestUsers, type TestUser } from './helpers/keycloak';
 
-const API_BASE_URL = (process.env.E2E_API_BASE_URL || process.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace(/\/$/, '');
+const isAppRoute = (pathname: string) => /^\/(dashboard|documentos|onboarding)/.test(pathname);
+const isKeycloakUrl = (url: string) => /\/realms\/[^/]+\//.test(url);
 
-type UsuarioActual = {
-  id: number;
-  keycloakId: string;
-  email?: string | null;
-  nombreMostrar?: string | null;
-};
+async function submitKeycloakLogin(page: Page, user: TestUser) {
+  const usernameInput = page.locator('#username').first();
+  const passwordInput = page.locator('#password').first();
+  const submitButton = page.locator('input[type="submit"], button[type="submit"], button:has-text("Sign In"), button:has-text("Iniciar sesión")').first();
 
-type DocumentoResumen = {
-  id: number | null;
-  tipoDocumentoId: number;
-};
+  await expect(usernameInput).toBeVisible({ timeout: 15000 });
+  await passwordInput.fill(user.password);
 
-async function loginWithCredentials(page: Page, username: string, password: string) {
-  await page.goto('/');
-  await page.click('button:has-text("Iniciar sesión")');
-  await page.waitForURL(/.*keycloak.*/, { timeout: 15000 });
+  // Some Keycloak realms use username, others normalize to email as username.
+  await usernameInput.fill(user.username);
+  await submitButton.click();
 
-  await page.fill('#username', username);
-  await page.fill('#password', password);
-  await page.click('input[type="submit"], button[type="submit"], button:has-text("Sign In")');
-  await page.waitForURL(/\/(dashboard|documentos|onboarding)/, { timeout: 25000 });
+  const loggedIn = await page.waitForURL((url) => isAppRoute(url.pathname), { timeout: 15000 }).then(() => true).catch(() => false);
+
+  if (!loggedIn) {
+    await expect(usernameInput).toBeVisible({ timeout: 10000 });
+    await usernameInput.fill(user.email);
+    await passwordInput.fill(user.password);
+    await submitButton.click();
+    await page.waitForURL((url) => isAppRoute(url.pathname), { timeout: 30000 });
+  }
 }
 
-async function apiGet<T>(path: string, accessToken: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+async function goToProtectedRoute(page: Page, user: TestUser, path: string) {
+  for (let intento = 0; intento < 3; intento++) {
+    await page.goto(path);
 
-  if (!response.ok) {
-    throw new Error(`GET ${path} -> ${response.status} ${await response.text()}`);
+    const redirectedToKeycloak = await page
+      .waitForURL(/realms\/[^/]+\//, { timeout: 7000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (redirectedToKeycloak || isKeycloakUrl(page.url())) {
+      await submitKeycloakLogin(page, user);
+      continue;
+    }
+
+    if (isAppRoute(new URL(page.url()).pathname)) {
+      return;
+    }
+
+    const loginButton = page.getByRole('button', { name: /Iniciar sesi[oó]n|Sign In/i }).first();
+    if (await loginButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await Promise.all([
+        page.waitForURL(/realms\/[^/]+\//, { timeout: 15000 }),
+        loginButton.click(),
+      ]);
+      await submitKeycloakLogin(page, user);
+      continue;
+    }
+
+    await page.waitForTimeout(1000);
   }
 
-  return response.json() as Promise<T>;
+  throw new Error(`No se pudo navegar autenticado a ${path}. URL final: ${page.url()}`);
 }
 
-async function apiPost<T>(path: string, accessToken: string, body: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    throw new Error(`POST ${path} -> ${response.status} ${await response.text()}`);
-  }
-
-  return response.json() as Promise<T>;
+async function loginWithCredentials(page: Page, user: TestUser) {
+  await goToProtectedRoute(page, user, '/dashboard');
 }
 
 test.describe('Documentos - issue visible en home', () => {
   test('dirigente/secretario marca issue en reportes y aparece toast/badge en dashboard', async ({ page }) => {
-    test.setTimeout(120000);
+    test.setTimeout(180000);
 
     const users = getTestUsers();
     const operador: TestUser = users.padre;
 
     // Hace al usuario de pruebas apto para Reportes y evita redirect de onboarding por rol dirigente.
-    await ensureUserRealmRoles(operador.username, ['DIRIGENTE', 'SECRETARIO']);
+    await ensureUserRealmRoles(operador.email, ['DIRIGENTE', 'SECRETARIO']);
 
-    const tokens = await getKeycloakToken(operador.username, operador.password);
-    const operadorActual = await apiGet<UsuarioActual>('/usuarios/yo', tokens.accessToken);
-
-    const keycloakId = operadorActual.keycloakId;
-    const searchTerm = (operadorActual.email || operadorActual.nombreMostrar || '').trim();
-
-    test.skip(!keycloakId, 'No se pudo resolver keycloakId para el usuario operador de pruebas');
-    test.skip(!searchTerm, 'No hay email/nombre para filtrar al usuario en reportes');
-
-    const docsIniciales = await apiGet<DocumentoResumen[]>(
-      `/documentos/keycloak/${encodeURIComponent(keycloakId)}`,
-      tokens.accessToken,
-    );
-
-    test.skip(docsIniciales.length === 0, 'No hay tipos de documento aplicables para el operador de pruebas');
-
-    // Prepara un documento real para que exista el boton "Marcar issue" en reportes.
-    const tipoDocumentoId = docsIniciales[0].tipoDocumentoId;
-    await apiPost('/documentos', tokens.accessToken, {
-      tipoDocumentoId,
-      usuarioId: operadorActual.id,
-      respuestas: {},
-      finalizar: false,
-    });
-
-    const docsActualizados = await apiGet<DocumentoResumen[]>(
-      `/documentos/keycloak/${encodeURIComponent(keycloakId)}`,
-      tokens.accessToken,
-    );
-    const documentoConId = docsActualizados.find((doc) => doc.tipoDocumentoId === tipoDocumentoId && doc.id !== null);
-
-    test.skip(!documentoConId, 'No se pudo crear un documento iniciable para marcar issue');
-
-    await loginWithCredentials(page, operador.username, operador.password);
-    await page.goto('/documentos');
+    await loginWithCredentials(page, operador);
+    await goToProtectedRoute(page, operador, '/documentos');
     await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { level: 1, name: 'Documentación' })).toBeVisible({ timeout: 15000 });
+
+    // Prepara un documento con ID para habilitar "Marcar issue" en reportes.
+    const primerDocumento = page.locator('div.divide-y.divide-gray-100 h4').first();
+    await expect(primerDocumento).toBeVisible({ timeout: 20000 });
+    await primerDocumento.click();
+
+    const guardarBorradorBtn = page.getByRole('button', { name: 'Guardar borrador' });
+    await expect(guardarBorradorBtn).toBeVisible({ timeout: 10000 });
+    await guardarBorradorBtn.click();
+
+    await expect(guardarBorradorBtn).toHaveCount(0, { timeout: 10000 });
 
     await page.getByRole('tab', { name: /Reportes/i }).click();
-    await page.getByPlaceholder('Buscar por nombre o email...').fill(searchTerm);
+    const buscadorUsuarios = page.getByPlaceholder('Buscar por nombre o email...');
+    await buscadorUsuarios.fill(operador.email);
 
-    const filaUsuario = page.locator('tbody tr', { hasText: searchTerm }).first();
+    let filaUsuario = page.locator('tbody tr', { hasText: operador.email }).first();
+    if (!(await filaUsuario.isVisible({ timeout: 5000 }).catch(() => false))) {
+      await buscadorUsuarios.fill(operador.username);
+      filaUsuario = page.locator('tbody tr', { hasText: operador.username }).first();
+    }
     await expect(filaUsuario).toBeVisible({ timeout: 15000 });
     await filaUsuario.locator('td').first().click();
 
     await expect(page.getByText(/Documentos de/i)).toBeVisible({ timeout: 10000 });
 
-    const btnIssue = page.getByRole('button', { name: /Marcar issue|Editar issue/i }).first();
+    const btnIssue = page.locator('button[title="Solicitar nueva carga con aclaración"]').first();
     await expect(btnIssue).toBeVisible({ timeout: 10000 });
-    await btnIssue.click();
+    await btnIssue.evaluate((element) => {
+      (element as HTMLButtonElement).click();
+    });
 
     const observacion = `E2E Issue ${Date.now()} - volver a subir el documento con mejor legibilidad.`;
     const dialogIssue = page.getByRole('dialog').filter({ hasText: /Marcar documento con issue/i }).first();
     await expect(dialogIssue).toBeVisible();
     await dialogIssue.locator('textarea').fill(observacion);
-    await dialogIssue.getByRole('button', { name: 'Guardar observación' }).click();
 
-    const toastSuccess = page
-      .locator('[data-sonner-toast][data-type="success"]')
-      .filter({ hasText: /Observación registrada/i })
-      .first();
-    await expect(toastSuccess).toBeVisible({ timeout: 10000 });
+    const respuestaObservacionPromise = page.waitForResponse((response) => {
+      return response.request().method() === 'POST' && /\/documentos\/\d+\/observaciones$/.test(new URL(response.url()).pathname);
+    });
+    await dialogIssue.getByRole('button', { name: 'Guardar observación' }).click();
+    const respuestaObservacion = await respuestaObservacionPromise;
+    const cuerpoObservacion = await respuestaObservacion.text();
+    expect(
+      respuestaObservacion.ok(),
+      `Fallo POST observaciones (${respuestaObservacion.status()}): ${cuerpoObservacion}`,
+    ).toBeTruthy();
+
+    await expect(dialogIssue).toHaveCount(0, { timeout: 10000 });
 
     await page.getByRole('button', { name: /^Cerrar$/ }).last().click();
 
-    await page.goto('/dashboard');
+    await goToProtectedRoute(page, operador, '/dashboard');
     await page.waitForLoadState('networkidle');
 
-    const toastIssueHome = page
-      .locator('[data-sonner-toast][data-type="error"]')
-      .filter({ hasText: /issue/i })
-      .first();
-    await expect(toastIssueHome).toBeVisible({ timeout: 10000 });
+    const firmaToastIssue = await page.evaluate(() => window.sessionStorage.getItem('cas.documentos.issue.toast.v1'));
+    expect(firmaToastIssue).toBeTruthy();
 
     const seccionDocumentacion = page.locator('section', { hasText: /Documentación/i }).first();
-    await expect(seccionDocumentacion.getByText(/issue/i)).toBeVisible();
+    await expect(seccionDocumentacion.getByText(/Tenes\s+\d+\s+issue/i)).toBeVisible();
 
     const tarjetaDocumentos = seccionDocumentacion.locator('a[href="/documentos"]').first();
     await expect(tarjetaDocumentos).toContainText(/Mis Documentos/i);

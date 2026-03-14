@@ -46,7 +46,12 @@ export function PlanificacionReunionesGruposPanel() {
   const [idEventoEditando, setIdEventoEditando] = useState<number | null>(null);
 
   const reunionesGrupo: Evento[] = useMemo(
-    () => reuniones.filter((reunion) => Boolean(reunion.grupoId)),
+    () =>
+      reuniones.filter(
+        (reunion) =>
+          Boolean(reunion.grupoId)
+          && (reunion.periodicidad || "").toUpperCase() !== "PUNTUAL"
+      ),
     [reuniones]
   );
 
@@ -286,6 +291,7 @@ export function PlanificacionReunionesGruposPanel() {
         valoresIniciales={eventoEditando}
         tiposEvento={tiposEvento || []}
         contextoPlanificacion="GRUPO"
+        forzarUbicacionBulin
         bloquearGrupo={Boolean(eventoEditando.grupoId) && !modoEdicion}
         onCerrar={() => setWizardAbierto(false)}
         onGuardar={modoEdicion ? handleEditar : handleCrear}

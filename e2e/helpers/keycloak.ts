@@ -9,9 +9,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const KEYCLOAK_URL = process.env.E2E_KEYCLOAK_URL || 'https://keycloak-dev-6a14.up.railway.app';
-const REALM = process.env.E2E_KEYCLOAK_REALM || 'cas';
-const CLIENT_ID = process.env.E2E_KEYCLOAK_CLIENT_ID || 'frontend-app';
+// Keep defaults aligned with local app settings so Playwright setup and UI login hit the same Keycloak.
+const KEYCLOAK_URL = process.env.E2E_KEYCLOAK_URL || process.env.VITE_KEYCLOAK_URL || 'http://localhost:8181';
+const REALM = process.env.E2E_KEYCLOAK_REALM || process.env.VITE_KEYCLOAK_REALM || 'cas';
+const CLIENT_ID = process.env.E2E_KEYCLOAK_CLIENT_ID || process.env.VITE_KEYCLOAK_CLIENT_ID || 'frontend-app';
 const ADMIN_CLIENT_ID = process.env.E2E_KEYCLOAK_ADMIN_CLIENT_ID || 'admin-cli';
 const ADMIN_USERNAME = process.env.E2E_KEYCLOAK_ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.E2E_KEYCLOAK_ADMIN_PASSWORD || 'admin';
@@ -114,6 +115,29 @@ async function getUserByUsername(adminToken: string, username: string): Promise<
   };
 }
 
+async function getUserByEmail(adminToken: string, email: string): Promise<{ id: string; username: string } | null> {
+  const response = await fetch(
+    `${KEYCLOAK_URL}/admin/realms/${REALM}/users?email=${encodeURIComponent(email)}&exact=true`,
+    {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to find user by email ${email}: ${response.status} ${await response.text()}`);
+  }
+
+  const users = await response.json();
+  if (!Array.isArray(users) || users.length === 0) {
+    return null;
+  }
+
+  return {
+    id: users[0].id,
+    username: users[0].username,
+  };
+}
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function getRealmRoleRepresentation(adminToken: string, roleName: string): Promise<any> {
@@ -134,16 +158,23 @@ async function getRealmRoleRepresentation(adminToken: string, roleName: string):
 /**
  * Ensure a user has the given realm roles in Keycloak.
  */
-export async function ensureUserRealmRoles(username: string, roleNames: string[]): Promise<void> {
+export async function ensureUserRealmRoles(usernameOrEmail: string, roleNames: string[]): Promise<void> {
   const adminToken = await getAdminToken();
-  let user = await getUserByUsername(adminToken, username);
+  let user = await getUserByUsername(adminToken, usernameOrEmail);
+  if (!user) {
+    user = await getUserByEmail(adminToken, usernameOrEmail);
+  }
+
   for (let i = 0; !user && i < 10; i++) {
     await sleep(500);
-    user = await getUserByUsername(adminToken, username);
+    user = await getUserByUsername(adminToken, usernameOrEmail);
+    if (!user) {
+      user = await getUserByEmail(adminToken, usernameOrEmail);
+    }
   }
 
   if (!user) {
-    throw new Error(`User not found in realm ${REALM}: ${username}`);
+    throw new Error(`User not found in realm ${REALM}: ${usernameOrEmail}`);
   }
 
   const roleRepresentations: any[] = [];
@@ -169,7 +200,7 @@ export async function ensureUserRealmRoles(username: string, roleNames: string[]
   );
 
   if (!mapResponse.ok && mapResponse.status !== 204) {
-    throw new Error(`Failed to assign roles to ${username}: ${mapResponse.status} ${await mapResponse.text()}`);
+    throw new Error(`Failed to assign roles to ${usernameOrEmail}: ${mapResponse.status} ${await mapResponse.text()}`);
   }
 }
 
@@ -186,6 +217,22 @@ async function userExists(adminToken: string, username: string): Promise<boolean
 
   if (!response.ok) {
     throw new Error(`Failed to check user: ${response.status}`);
+  }
+
+  const users = await response.json();
+  return users.length > 0;
+}
+
+async function userExistsByEmail(adminToken: string, email: string): Promise<boolean> {
+  const response = await fetch(
+    `${KEYCLOAK_URL}/admin/realms/${REALM}/users?email=${encodeURIComponent(email)}&exact=true`,
+    {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to check user by email: ${response.status}`);
   }
 
   const users = await response.json();
@@ -264,7 +311,7 @@ export async function ensureTestUsersExist(): Promise<void> {
   const adminToken = await getAdminToken();
 
   for (const [role, user] of Object.entries(users)) {
-    const exists = await userExists(adminToken, user.username);
+    const exists = (await userExists(adminToken, user.username)) || (await userExistsByEmail(adminToken, user.email));
     if (exists) {
       console.log(`  ✓ User ${user.username} (${role}) already exists`);
     } else {

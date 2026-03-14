@@ -211,6 +211,7 @@ interface WizardEventoProps {
   valoresIniciales: Partial<EventoRequest>;
   tiposEvento: TipoEvento[];
   contextoPlanificacion?: "GENERAL" | "DEPARTAMENTO" | "GRUPO";
+  forzarUbicacionBulin?: boolean;
   bloquearDepartamento?: boolean;
   bloquearGrupo?: boolean;
   mostrarGrupoEnReunion?: boolean;
@@ -247,6 +248,7 @@ function WizardEventoContent({
   naturaleza,
   stepper,
   contextoPlanificacion = "GENERAL",
+  forzarUbicacionBulin = false,
   bloquearDepartamento = false,
   bloquearGrupo = false,
   mostrarGrupoEnReunion = true,
@@ -261,6 +263,7 @@ function WizardEventoContent({
   ], [gruposAcampantes, gruposDirigentes]);
   const defaultMeetingLocation = getDefaultMeetingLocation();
   const defaultMeetingSchedule = getDefaultMeetingScheduleValues();
+  const bloquearUbicacionEnBulin = naturaleza === "REUNION" && forzarUbicacionBulin;
   const [locationOption, setLocationOption] = useState<LocationOption>(() =>
     naturaleza === "REUNION" ? LOCATION_OPTION_BULIN : LOCATION_OPTION_OTRO,
   );
@@ -291,10 +294,27 @@ function WizardEventoContent({
     } as EventoFormData,
     validators: { onChange: EventoFormSchema },
     onSubmit: async ({ value }) => {
+      const ubicacionFinal = bloquearUbicacionEnBulin
+        ? defaultMeetingLocation.direccion
+        : value.ubicacion;
+      const latitudFinal = bloquearUbicacionEnBulin
+        ? defaultMeetingLocation.lat
+        : value.latitud;
+      const longitudFinal = bloquearUbicacionEnBulin
+        ? defaultMeetingLocation.lng
+        : value.longitud;
+      const urlMapaFinal = bloquearUbicacionEnBulin
+        ? defaultMeetingLocation.url
+        : value.urlMapa;
+
       const payload: EventoRequest = {
         ...value,
         naturaleza,
         tipo: value.tipo,
+        ubicacion: ubicacionFinal || undefined,
+        latitud: latitudFinal,
+        longitud: longitudFinal,
+        urlMapa: urlMapaFinal || undefined,
         departamentoId: naturaleza === "REUNION" && mostrarGrupoEnReunion
           ? undefined
           : value.departamentoId ? Number(value.departamentoId) : undefined,
@@ -312,9 +332,15 @@ function WizardEventoContent({
 
   useEffect(() => {
     if (abierto) {
-      const ubicacionInicial = valoresIniciales.ubicacion || (naturaleza === "REUNION" ? defaultMeetingLocation.direccion : "");
-      const latitudInicial = valoresIniciales.latitud ?? (naturaleza === "REUNION" ? defaultMeetingLocation.lat : undefined);
-      const longitudInicial = valoresIniciales.longitud ?? (naturaleza === "REUNION" ? defaultMeetingLocation.lng : undefined);
+      const ubicacionInicial = bloquearUbicacionEnBulin
+        ? defaultMeetingLocation.direccion
+        : valoresIniciales.ubicacion || (naturaleza === "REUNION" ? defaultMeetingLocation.direccion : "");
+      const latitudInicial = bloquearUbicacionEnBulin
+        ? defaultMeetingLocation.lat
+        : valoresIniciales.latitud ?? (naturaleza === "REUNION" ? defaultMeetingLocation.lat : undefined);
+      const longitudInicial = bloquearUbicacionEnBulin
+        ? defaultMeetingLocation.lng
+        : valoresIniciales.longitud ?? (naturaleza === "REUNION" ? defaultMeetingLocation.lng : undefined);
       const fechaInicioInicial = valoresIniciales.fechaInicio
         ? formatFechaFieldValue(valoresIniciales.fechaInicio, naturaleza)
         : (naturaleza === "REUNION" ? defaultMeetingSchedule.fechaInicio : "");
@@ -356,9 +382,13 @@ function WizardEventoContent({
           : valoresIniciales.departamentoId ? String(valoresIniciales.departamentoId) : "",
       );
       form.setFieldValue("plantillaAnualId", valoresIniciales.plantillaAnualId);
-      setLocationOption(ubicacionInicialEsBulin ? LOCATION_OPTION_BULIN : LOCATION_OPTION_OTRO);
+      setLocationOption(
+        bloquearUbicacionEnBulin || ubicacionInicialEsBulin
+          ? LOCATION_OPTION_BULIN
+          : LOCATION_OPTION_OTRO
+      );
     }
-  }, [abierto, defaultMeetingLocation.direccion, defaultMeetingLocation.lat, defaultMeetingLocation.lng, defaultMeetingLocation.url, defaultMeetingSchedule.diaSemana, defaultMeetingSchedule.fechaFin, defaultMeetingSchedule.fechaInicio, mostrarGrupoEnReunion, naturaleza, valoresIniciales]);
+  }, [abierto, bloquearUbicacionEnBulin, defaultMeetingLocation.direccion, defaultMeetingLocation.lat, defaultMeetingLocation.lng, defaultMeetingLocation.url, defaultMeetingSchedule.diaSemana, defaultMeetingSchedule.fechaFin, defaultMeetingSchedule.fechaInicio, mostrarGrupoEnReunion, naturaleza, valoresIniciales]);
 
   // ── Stepper header ─────────────────────────────────────────────────────────
   const allSteps = useStepper.all;
@@ -897,40 +927,46 @@ function WizardEventoContent({
                           <MapPin className="w-4 h-4 text-red-500" /> Lugar físico
                         </Label>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            type="button"
-                            variant={usaBulin ? "default" : "outline"}
-                            className={usaBulin ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-                            onClick={() => {
-                              setLocationOption(LOCATION_OPTION_BULIN);
-                              applyBulinLocation();
-                            }}
-                          >
-                            Bulin
-                          </Button>
+                        {!bloquearUbicacionEnBulin && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              type="button"
+                              variant={usaBulin ? "default" : "outline"}
+                              className={usaBulin ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                              onClick={() => {
+                                setLocationOption(LOCATION_OPTION_BULIN);
+                                applyBulinLocation();
+                              }}
+                            >
+                              Bulin
+                            </Button>
 
-                          <Button
-                            type="button"
-                            variant={!usaBulin ? "default" : "outline"}
-                            onClick={() => {
-                              setLocationOption(LOCATION_OPTION_OTRO);
+                            <Button
+                              type="button"
+                              variant={!usaBulin ? "default" : "outline"}
+                              onClick={() => {
+                                setLocationOption(LOCATION_OPTION_OTRO);
 
-                              if (isBulinLocationSelection(
-                                field.state.value,
-                                form.getFieldValue("latitud"),
-                                form.getFieldValue("longitud"),
-                                defaultMeetingLocation,
-                              )) {
-                                clearLocation();
-                              }
-                            }}
-                          >
-                            Otro
-                          </Button>
-                        </div>
+                                if (isBulinLocationSelection(
+                                  field.state.value,
+                                  form.getFieldValue("latitud"),
+                                  form.getFieldValue("longitud"),
+                                  defaultMeetingLocation,
+                                )) {
+                                  clearLocation();
+                                }
+                              }}
+                            >
+                              Otro
+                            </Button>
+                          </div>
+                        )}
 
-                        {usaBulin ? (
+                        {bloquearUbicacionEnBulin ? (
+                          <p className="text-xs text-muted-foreground">
+                            Para la planificación anual de grupos el lugar queda fijo en Bulin.
+                          </p>
+                        ) : usaBulin ? (
                           <p className="text-xs text-muted-foreground">
                             Se usará el lugar de encuentro habitual (Bulin).
                           </p>

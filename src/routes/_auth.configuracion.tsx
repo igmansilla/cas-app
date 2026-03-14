@@ -6,8 +6,13 @@ import { notificacionesService } from '../api/services/notificaciones';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Switch } from '../components/ui/switch';
 import { getNotificationPermission, requestForToken } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
+import {
+  useActualizarNotificacionesPreferencias,
+  useNotificacionesPreferencias,
+} from '../hooks/useNotificacionesPreferencias';
 
 const NOTIFICATIONS_FALLBACK_USER_KEY = 'cas.notifications.fallback-user-id.v1';
 
@@ -39,6 +44,8 @@ function ConfiguracionPage() {
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermissionState>(() =>
     getNotificationPermission(),
   );
+  const { preferencias, cargando: cargandoPreferencias } = useNotificacionesPreferencias(Boolean(user));
+  const { actualizarPreferencias, guardando: guardandoPreferencias } = useActualizarNotificacionesPreferencias();
 
   const backendUserId = useMemo(() => {
     const uid = user?.uid?.trim();
@@ -120,6 +127,27 @@ function ConfiguracionPage() {
     }
   }, [backendUserId]);
 
+  const preferenciaCalendarioActiva = preferencias?.eventosCalendarioHabilitado ?? true;
+
+  const handleToggleCalendario = useCallback(
+    async (enabled: boolean) => {
+      try {
+        await actualizarPreferencias({ eventosCalendarioHabilitado: enabled });
+        toast.success(enabled ? 'Avisos de calendario activados' : 'Avisos de calendario desactivados', {
+          description: enabled
+            ? 'Vas a volver a recibir push cuando se difundan eventos dirigidos a vos.'
+            : 'Dejaste de recibir push de calendario. Tu visibilidad de eventos no cambia.',
+        });
+      } catch (error) {
+        console.error('Error actualizando preferencias de notificacion', error);
+        toast.error('No pudimos guardar tu preferencia', {
+          description: 'Intentá nuevamente en unos segundos.',
+        });
+      }
+    },
+    [actualizarPreferencias],
+  );
+
   const estadoNotificaciones = useMemo(() => {
     if (notificationPermission === 'granted') {
       return {
@@ -188,6 +216,44 @@ function ConfiguracionPage() {
             >
               {actualizandoNotificaciones ? 'Configurando...' : estadoNotificaciones.botonLabel}
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Preferencias de calendario</CardTitle>
+          <CardDescription>
+            Elegí si querés recibir notificaciones push cuando se difundan eventos dirigidos a vos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <p className="font-medium">Difusión de eventos de calendario</p>
+                <Badge variant={preferenciaCalendarioActiva ? 'default' : 'secondary'}>
+                  {preferenciaCalendarioActiva ? 'Activa' : 'Silenciada'}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Esta preferencia solo afecta push de calendario. No modifica qué eventos podés ver.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                {preferenciaCalendarioActiva ? 'Recibir' : 'Silenciar'}
+              </span>
+              <Switch
+                checked={preferenciaCalendarioActiva}
+                onCheckedChange={(checked) => {
+                  void handleToggleCalendario(Boolean(checked));
+                }}
+                disabled={cargandoPreferencias || guardandoPreferencias || !user}
+                aria-label="Activar o desactivar notificaciones de calendario"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

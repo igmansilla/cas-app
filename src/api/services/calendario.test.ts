@@ -13,10 +13,12 @@ vi.mock('../client', () => ({
 }));
 
 const mockedGet = vi.mocked(client.get);
+const mockedPost = vi.mocked(client.post);
 
 describe('calendarioService', () => {
   beforeEach(() => {
     mockedGet.mockReset();
+    mockedPost.mockReset();
   });
 
   it('maps calendario metadata in aEventoCalendario', () => {
@@ -80,5 +82,27 @@ describe('calendarioService', () => {
         politicaNotificacion: 'automatica-al-difundir',
       },
     ]);
+  });
+
+  it('calls transicion endpoint and parses updated event', async () => {
+    mockedPost.mockResolvedValueOnce({
+      data: {
+        id: 44,
+        titulo: 'Reunion de grupo',
+        descripcion: null,
+        tipo: 'reunion',
+        fechaInicio: '2026-03-13T19:00:00Z',
+        fechaFin: '2026-03-13T20:00:00Z',
+        ubicacion: null,
+        estadoEvento: 'establecido',
+      },
+    });
+
+    const result = await calendarioService.transicionarEstadoEvento(44, 'ESTABLECIDO');
+
+    expect(mockedPost).toHaveBeenCalledWith('/calendario/eventos/44/transicion', {
+      estadoDestino: 'ESTABLECIDO',
+    });
+    expect(result.estadoEvento).toBe('establecido');
   });
 });

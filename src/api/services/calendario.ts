@@ -171,6 +171,14 @@ export const calendarioService = {
   },
 
   /**
+   * Transiciona el estado de un evento (PLANIFICADO <-> ESTABLECIDO <-> DIFUNDIDO)
+   */
+  transicionarEstadoEvento: async (id: number, estadoDestino: string): Promise<Evento> => {
+    const response = await client.post(`/calendario/eventos/${id}/transicion`, { estadoDestino });
+    return parse(EventoSchema, response.data);
+  },
+
+  /**
    * Elimina un evento (solo admin/dirigente)
    */
   eliminarEvento: async (id: number): Promise<void> => {

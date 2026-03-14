@@ -3,16 +3,19 @@ import { addDays } from "date-fns/addDays";
 import { format } from "date-fns/format";
 import { es } from "date-fns/locale/es";
 import {
+  ArrowLeftRight,
   CalendarDays,
   CheckCircle2,
+  Megaphone,
   Pencil,
   RepeatIcon,
   Trash2,
   Video,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import type { Evento, ReunionInstancia } from "../../../api/schemas/calendario";
-import { useInstanciasReunion } from "../../../hooks/useCalendario";
+import { useInstanciasReunion, useTransicionarEstadoEvento } from "../../../hooks/useCalendario";
 import { obtenerIdSerieReunion } from "../../../lib/calendario/reuniones";
 import {
   getEstadoEventoBadge,
@@ -58,10 +61,12 @@ export function ReunionSerieCard({ reunion, puedeEditar, onEditar, onEliminar }:
   const estadoBadge = getEstadoEventoBadge(reunion.estadoEvento);
   const publicoBadge = getPublicoObjetivoBadge(reunion.publicoObjetivo);
   const politicaBadge = getPoliticaNotificacionBadge(reunion.politicaNotificacion);
+  const { transicionarEstadoEvento, cargando: cargandoTransicion } = useTransicionarEstadoEvento();
 
   const hoy = useMemo(() => new Date(), []);
   const hasta = useMemo(() => addDays(hoy, 60), [hoy]);
   const cargandoInstancias = seccionAbierta === "proximas";
+  const estadoNormalizado = (reunion.estadoEvento || "difundido").toLowerCase();
 
   const { instancias, cargando, error } = useInstanciasReunion(
     reunionId ?? 0,
@@ -71,6 +76,42 @@ export function ReunionSerieCard({ reunion, puedeEditar, onEditar, onEliminar }:
 
   const proximasInstancias = instancias.slice(0, 8);
   const vigenciaFin = reunion.fechaFin ? new Date(reunion.fechaFin) : null;
+
+  const accionesTransicion = useMemo(() => {
+    if (!reunionId) {
+      return [] as Array<{ destino: string; label: string }>;
+    }
+
+    if (estadoNormalizado === "planificado") {
+      return [{ destino: "ESTABLECIDO", label: "Pasar a establecido" }];
+    }
+
+    if (estadoNormalizado === "establecido") {
+      return [
+        { destino: "PLANIFICADO", label: "Revertir a planificado" },
+        { destino: "DIFUNDIDO", label: "Difundir" },
+      ];
+    }
+
+    if (estadoNormalizado === "difundido") {
+      return [{ destino: "ESTABLECIDO", label: "Revertir a establecido" }];
+    }
+
+    return [] as Array<{ destino: string; label: string }>;
+  }, [estadoNormalizado, reunionId]);
+
+  const handleTransicion = async (estadoDestino: string) => {
+    if (!reunionId || cargandoTransicion) {
+      return;
+    }
+
+    try {
+      await transicionarEstadoEvento(reunionId, estadoDestino);
+      toast.success("Estado de la reunión actualizado");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo transicionar el estado");
+    }
+  };
 
   return (
     <>
@@ -99,6 +140,28 @@ export function ReunionSerieCard({ reunion, puedeEditar, onEditar, onEliminar }:
                 <Badge className={publicoBadge.className}>{publicoBadge.label}</Badge>
                 <Badge className={politicaBadge.className}>{politicaBadge.label}</Badge>
               </div>
+
+              {puedeEditar && accionesTransicion.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {accionesTransicion.map((accion) => (
+                    <Button
+                      key={accion.destino}
+                      type="button"
+                      variant={accion.destino === "DIFUNDIDO" ? "default" : "outline"}
+                      className={accion.destino === "DIFUNDIDO" ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                      disabled={cargandoTransicion}
+                      onClick={() => handleTransicion(accion.destino)}
+                    >
+                      {accion.destino === "DIFUNDIDO" ? (
+                        <Megaphone className="mr-2 h-4 w-4" />
+                      ) : (
+                        <ArrowLeftRight className="mr-2 h-4 w-4" />
+                      )}
+                      {accion.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {puedeEditar && (
