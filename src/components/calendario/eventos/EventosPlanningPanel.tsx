@@ -2,10 +2,12 @@ import { useMemo } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
 import {
+  ArrowLeftRight,
   Building2,
   CalendarCheck2,
   CalendarClock,
   CalendarPlus,
+  Megaphone,
   Pencil,
   Plus,
   ShieldAlert,
@@ -38,9 +40,39 @@ interface EventosPlanningPanelProps {
   onCrearAdHoc: () => void;
   onEditarEvento: (evento: Evento) => void;
   onEliminarEvento: (evento: Evento) => void;
+  onTransicionarEvento: (evento: Evento, estadoDestino: EstadoDestinoEvento) => void | Promise<void>;
+  transicionando?: boolean;
 }
 
 const FILTRO_TODOS = "TODOS";
+type EstadoDestinoEvento = "PLANIFICADO" | "ESTABLECIDO" | "DIFUNDIDO";
+
+type AccionTransicionEstado = {
+  destino: EstadoDestinoEvento;
+  label: string;
+  principal?: boolean;
+};
+
+function obtenerAccionesTransicion(estadoEvento?: string | null): AccionTransicionEstado[] {
+  const estadoNormalizado = (estadoEvento || "difundido").toLowerCase();
+
+  if (estadoNormalizado === "planificado") {
+    return [{ destino: "ESTABLECIDO", label: "Marcar como listo" }];
+  }
+
+  if (estadoNormalizado === "establecido") {
+    return [
+      { destino: "PLANIFICADO", label: "Volver a programado" },
+      { destino: "DIFUNDIDO", label: "Difundir", principal: true },
+    ];
+  }
+
+  if (estadoNormalizado === "difundido") {
+    return [{ destino: "ESTABLECIDO", label: "Volver a listo" }];
+  }
+
+  return [];
+}
 
 export function EventosPlanningPanel({
   departamentos,
@@ -54,6 +86,8 @@ export function EventosPlanningPanel({
   onCrearAdHoc,
   onEditarEvento,
   onEliminarEvento,
+  onTransicionarEvento,
+  transicionando = false,
 }: EventosPlanningPanelProps) {
   const plantillasEvento = useMemo(
     () => plantillas.filter((plantilla) => plantilla.naturaleza === "evento"),
@@ -240,6 +274,10 @@ export function EventosPlanningPanel({
                 onProgramar={() => onProgramarPlantilla(plantilla)}
                 onEditar={() => eventoProgramado && onEditarEvento(eventoProgramado)}
                 onEliminar={() => eventoProgramado && onEliminarEvento(eventoProgramado)}
+                onTransicionar={(estadoDestino) =>
+                  eventoProgramado && onTransicionarEvento(eventoProgramado, estadoDestino)
+                }
+                transicionando={transicionando}
               />
             ))}
           </div>
@@ -266,6 +304,8 @@ export function EventosPlanningPanel({
                 puedeEditar={puedeEditar}
                 onEditar={() => onEditarEvento(evento)}
                 onEliminar={() => onEliminarEvento(evento)}
+                onTransicionar={(estadoDestino) => onTransicionarEvento(evento, estadoDestino)}
+                transicionando={transicionando}
               />
             ))}
           </div>
@@ -284,6 +324,8 @@ function PlantillaCard({
   onProgramar,
   onEditar,
   onEliminar,
+  onTransicionar,
+  transicionando,
 }: {
   plantilla: PlantillaEventoAnual;
   eventoProgramado?: Evento;
@@ -293,6 +335,8 @@ function PlantillaCard({
   onProgramar: () => void;
   onEditar: () => void;
   onEliminar: () => void;
+  onTransicionar: (estadoDestino: EstadoDestinoEvento) => void;
+  transicionando: boolean;
 }) {
   const color = obtenerColorEvento(plantilla.codigo);
   const icono = obtenerIconoEvento(plantilla.codigo);
@@ -302,6 +346,8 @@ function PlantillaCard({
   const politicaBadge = getPoliticaNotificacionBadge(
     eventoProgramado?.politicaNotificacion ?? plantilla.politicaNotificacion
   );
+  const accionesTransicion = obtenerAccionesTransicion(eventoProgramado?.estadoEvento);
+  const eventoSinId = eventoProgramado?.id == null;
 
   return (
     <article
@@ -371,16 +417,40 @@ function PlantillaCard({
             </div>
 
             {puedeEditar && (
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={onEditar}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Editar programación
-                </Button>
-                <Button variant="ghost" className="text-red-600 hover:text-red-700" onClick={onEliminar}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Eliminar
-                </Button>
-              </div>
+              <>
+                {accionesTransicion.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {accionesTransicion.map((accion) => (
+                      <Button
+                        key={accion.destino}
+                        type="button"
+                        variant={accion.principal ? "default" : "outline"}
+                        className={accion.principal ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                        disabled={transicionando || eventoSinId}
+                        onClick={() => onTransicionar(accion.destino)}
+                      >
+                        {accion.destino === "DIFUNDIDO" ? (
+                          <Megaphone className="mr-2 h-4 w-4" />
+                        ) : (
+                          <ArrowLeftRight className="mr-2 h-4 w-4" />
+                        )}
+                        {accion.label}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={onEditar}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar programación
+                  </Button>
+                  <Button variant="ghost" className="text-red-600 hover:text-red-700" onClick={onEliminar}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         ) : (
@@ -406,23 +476,30 @@ function EventoAdicionalCard({
   puedeEditar,
   onEditar,
   onEliminar,
+  onTransicionar,
+  transicionando,
 }: {
   evento: Evento;
   puedeEditar: boolean;
   onEditar: () => void;
   onEliminar: () => void;
+  onTransicionar: (estadoDestino: EstadoDestinoEvento) => void;
+  transicionando: boolean;
 }) {
-  const color = obtenerColorEvento(evento.tipo);
+  const tipoEvento = evento.tipo ?? "EVENTO";
+  const color = obtenerColorEvento(tipoEvento);
   const estadoBadge = getEstadoEventoBadge(evento.estadoEvento);
   const publicoBadge = getPublicoObjetivoBadge(evento.publicoObjetivo);
   const politicaBadge = getPoliticaNotificacionBadge(evento.politicaNotificacion);
+  const accionesTransicion = obtenerAccionesTransicion(evento.estadoEvento);
+  const eventoSinId = evento.id == null;
 
   return (
     <article className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xl">{obtenerIconoEvento(evento.tipo)}</span>
+            <span className="text-xl">{obtenerIconoEvento(tipoEvento)}</span>
             <h3 className="font-semibold text-gray-900">{evento.titulo}</h3>
             {evento.departamentoNombre && (
               <Badge variant="outline" className="border-gray-300 text-gray-700">
@@ -445,7 +522,25 @@ function EventoAdicionalCard({
         <div className="flex items-center gap-2">
           <span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
           {puedeEditar && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
+              {accionesTransicion.map((accion) => (
+                <Button
+                  key={accion.destino}
+                  type="button"
+                  variant={accion.principal ? "default" : "outline"}
+                  size="sm"
+                  className={accion.principal ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                  disabled={transicionando || eventoSinId}
+                  onClick={() => onTransicionar(accion.destino)}
+                >
+                  {accion.destino === "DIFUNDIDO" ? (
+                    <Megaphone className="mr-2 h-4 w-4" />
+                  ) : (
+                    <ArrowLeftRight className="mr-2 h-4 w-4" />
+                  )}
+                  {accion.label}
+                </Button>
+              ))}
               <Button variant="outline" size="sm" onClick={onEditar}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Editar

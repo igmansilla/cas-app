@@ -5,6 +5,22 @@ export type PreferenciasNotificacionUsuario = {
   eventosCalendarioHabilitado: boolean;
 };
 
+export type NotificacionEventoLog = {
+  id: string;
+  creadoEn: string;
+  provider: string;
+  dominio: string;
+  accion: string;
+  entidadId: number | null;
+  workflowId: string | null;
+  publicoObjetivo: string | null;
+  destinatariosTotales: number;
+  exitos: number;
+  fallos: number;
+  estado: string;
+  detalle: string | null;
+};
+
 export const notificacionesService = {
   registrarTokenDispositivo: async (
     token: string,
@@ -34,5 +50,12 @@ export const notificacionesService = {
   ): Promise<PreferenciasNotificacionUsuario> => {
     const response = await client.put("/notificaciones/preferencias", payload);
     return response.data as PreferenciasNotificacionUsuario;
+  },
+
+  obtenerEventos: async (limit = 50): Promise<NotificacionEventoLog[]> => {
+    const response = await client.get("/notificaciones/eventos", {
+      params: { limit },
+    });
+    return response.data as NotificacionEventoLog[];
   },
 };

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { Bell, Settings2 } from 'lucide-react';
+import { Bell, RefreshCw, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { notificacionesService } from '../api/services/notificaciones';
 import { Badge } from '../components/ui/badge';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Switch } from '../components/ui/switch';
 import { getNotificationPermission, requestForToken } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
+import { useNotificacionesEventos } from '../hooks/useNotificacionesEventos';
 import {
   useActualizarNotificacionesPreferencias,
   useNotificacionesPreferencias,
@@ -46,6 +47,12 @@ function ConfiguracionPage() {
   );
   const { preferencias, cargando: cargandoPreferencias } = useNotificacionesPreferencias(Boolean(user));
   const { actualizarPreferencias, guardando: guardandoPreferencias } = useActualizarNotificacionesPreferencias();
+  const {
+    eventos,
+    cargando: cargandoEventos,
+    error: errorEventos,
+    refetch: refetchEventos,
+  } = useNotificacionesEventos(30, Boolean(user));
 
   const backendUserId = useMemo(() => {
     const uid = user?.uid?.trim();
@@ -188,6 +195,32 @@ function ConfiguracionPage() {
     };
   }, [notificationPermission]);
 
+  const formatearFechaEvento = useCallback((rawDate: string) => {
+    const parsed = new Date(rawDate);
+    if (Number.isNaN(parsed.getTime())) {
+      return rawDate;
+    }
+
+    return new Intl.DateTimeFormat('es-AR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(parsed);
+  }, []);
+
+  const resolverBadgeEstado = useCallback((estado: string) => {
+    const normalized = estado?.trim().toUpperCase();
+    if (normalized === 'OK') {
+      return 'default' as const;
+    }
+    if (normalized === 'PARTIAL') {
+      return 'secondary' as const;
+    }
+    if (normalized === 'ERROR') {
+      return 'destructive' as const;
+    }
+    return 'outline' as const;
+  }, []);
+
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-6">
       <Card>
@@ -255,6 +288,64 @@ function ConfiguracionPage() {
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <CardTitle className="text-lg">Eventos enviados</CardTitle>
+              <CardDescription>Ultimos eventos de notificaciones registrados en backend.</CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void refetchEventos();
+              }}
+              disabled={cargandoEventos}
+            >
+              <RefreshCw className={`h-4 w-4 ${cargandoEventos ? 'animate-spin' : ''}`} />
+              Actualizar
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {cargandoEventos && <p className="text-sm text-muted-foreground">Cargando eventos...</p>}
+
+          {!cargandoEventos && errorEventos && (
+            <p className="text-sm text-destructive">No pudimos cargar el historial de eventos.</p>
+          )}
+
+          {!cargandoEventos && !errorEventos && eventos.length === 0 && (
+            <p className="text-sm text-muted-foreground">Todavia no hay eventos registrados.</p>
+          )}
+
+          {!cargandoEventos && !errorEventos && eventos.length > 0 && (
+            <div className="space-y-3">
+              {eventos.map((evento) => (
+                <div key={evento.id} className="rounded-lg border p-3 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">{evento.provider}</Badge>
+                    <Badge variant={resolverBadgeEstado(evento.estado)}>{evento.estado}</Badge>
+                    <span className="text-xs text-muted-foreground">{formatearFechaEvento(evento.creadoEn)}</span>
+                  </div>
+
+                  <p className="text-sm font-medium">
+                    {evento.accion} · {evento.dominio}
+                  </p>
+
+                  <p className="text-xs text-muted-foreground">
+                    Totales: {evento.destinatariosTotales} · Exitos: {evento.exitos} · Fallos: {evento.fallos}
+                  </p>
+
+                  {evento.detalle && <p className="text-xs text-muted-foreground">{evento.detalle}</p>}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

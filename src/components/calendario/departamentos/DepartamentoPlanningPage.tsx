@@ -4,7 +4,16 @@ import { MessageSquarePlus } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Evento, EventoRequest, PlantillaEventoAnual } from "../../../api/schemas/calendario";
-import { useActualizarEvento, useCrearEvento, useEliminarEvento, useEventos, usePlanificacionAnual, useSeriesReunion, useTiposEvento } from "../../../hooks/useCalendario";
+import {
+  useActualizarEvento,
+  useCrearEvento,
+  useEliminarEvento,
+  useEventos,
+  usePlanificacionAnual,
+  useSeriesReunion,
+  useTiposEvento,
+  useTransicionarEstadoEvento,
+} from "../../../hooks/useCalendario";
 import { useAuth } from "../../../hooks/useAuth";
 import { useDepartamentos } from "../../../hooks/useDepartamentos";
 import { obtenerIdSerieReunion } from "../../../lib/calendario/reuniones";
@@ -22,6 +31,8 @@ import {
   BreadcrumbSeparator,
 } from "../../ui/breadcrumb";
 import { departmentScreenByCode, type DepartamentoOperativoCodigo } from "./departamentoScreens";
+
+type EstadoDestinoEvento = "PLANIFICADO" | "ESTABLECIDO" | "DIFUNDIDO";
 
 interface DepartamentoPlanningPageProps {
   departamentoCodigo: DepartamentoOperativoCodigo;
@@ -48,6 +59,7 @@ export function DepartamentoPlanningPage({
   const { crearEvento, cargando: creando } = useCrearEvento();
   const { actualizarEvento, cargando: actualizando } = useActualizarEvento();
   const { eliminarEvento } = useEliminarEvento();
+  const { transicionarEstadoEvento, cargando: cargandoTransicionEstado } = useTransicionarEstadoEvento();
 
   const [wizardAbierto, setWizardAbierto] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -118,6 +130,28 @@ export function DepartamentoPlanningPage({
     }
   };
 
+  const handleTransicionEvento = async (evento: Evento, estadoDestino: EstadoDestinoEvento) => {
+    if (evento.id == null) {
+      toast.error("No se pudo identificar el evento para cambiar su estado");
+      return;
+    }
+
+    try {
+      await transicionarEstadoEvento(evento.id, estadoDestino);
+
+      const mensaje =
+        estadoDestino === "ESTABLECIDO"
+          ? "Evento marcado como listo"
+          : estadoDestino === "DIFUNDIDO"
+            ? "Evento difundido"
+            : "Evento vuelto a programado";
+
+      toast.success(mensaje);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo cambiar el estado del evento");
+    }
+  };
+
   const abrirEdicion = (evento: Evento) => {
     const esReunion = evento.naturaleza === "REUNION" || evento.tipo === "REUNION";
     const eventoId = esReunion ? obtenerIdSerieReunion(evento) : evento.id ?? null;
@@ -126,7 +160,7 @@ export function DepartamentoPlanningPage({
       titulo: evento.titulo,
       descripcion: evento.descripcion ?? "",
       naturaleza: esReunion ? "REUNION" : "EVENTO",
-      tipo: esReunion ? "REUNION" : evento.tipo,
+      tipo: esReunion ? "REUNION" : evento.tipo ?? "EVENTO",
       fechaInicio: evento.fechaInicio?.slice(0, esReunion ? 10 : 16) ?? "",
       fechaFin: evento.fechaFin?.slice(0, esReunion ? 10 : 16) ?? "",
       ubicacion: evento.ubicacion ?? "",
@@ -212,6 +246,8 @@ export function DepartamentoPlanningPage({
         onCrearAdHoc={abrirCreacionEvento}
         onEditarEvento={abrirEdicion}
         onEliminarEvento={handleEliminar}
+        onTransicionarEvento={handleTransicionEvento}
+        transicionando={cargandoTransicionEstado}
       />
 
       <section className="space-y-4">

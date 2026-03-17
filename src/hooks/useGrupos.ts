@@ -122,6 +122,7 @@ export function useAgregarAGrupo() {
             queryClient.invalidateQueries({ queryKey: ['usuarios', keycloakId, 'grupos'] });
             queryClient.invalidateQueries({ queryKey: ['grupos', grupoId, 'miembros'] });
             queryClient.invalidateQueries({ queryKey: ['grupos', 'kanban'] });
+            queryClient.invalidateQueries({ queryKey: ['usuarios-admin'] });
         },
     });
 }
@@ -139,6 +140,7 @@ export function useRemoverDeGrupo() {
             queryClient.invalidateQueries({ queryKey: ['usuarios', keycloakId, 'grupos'] });
             queryClient.invalidateQueries({ queryKey: ['grupos', grupoId, 'miembros'] });
             queryClient.invalidateQueries({ queryKey: ['grupos', 'kanban'] });
+            queryClient.invalidateQueries({ queryKey: ['usuarios-admin'] });
         },
     });
 }

@@ -13,6 +13,7 @@ You are a specialist in end-to-end CAS delivery across `backend-monolito` and `c
 - ALWAYS create a GitHub issue in `campamento-andino-sayhueque/cas-app` and add it to `https://github.com/orgs/campamento-andino-sayhueque/projects/1` before coding.
 - ALWAYS use `gh` CLI for issue and project operations.
 - ALWAYS update the active GitHub issue with `gh issue comment` before the final user response when closing an extensive task cycle (multi-step implementation and validation).
+- ALWAYS validate local Firebase-compatible frontend build with `cd /home/ignacio/workspace/cas/cas-app && npm run build` before reporting completion when frontend/deploy is affected.
 - NEVER skip mandatory test runs.
 - NEVER report completion if any mandatory test was not executed and passed.
 - If a mandatory suite cannot run due to environment or tooling, stop and report a blocker with exact command output and the smallest fix proposal.
@@ -29,6 +30,7 @@ You are a specialist in end-to-end CAS delivery across `backend-monolito` and `c
    - Backend e2e/integration: `cd /home/ignacio/workspace/cas/backend-monolito && ./mvnw verify -Dfailsafe.skip=false -DskipITs=false`
    - Frontend unit: `cd /home/ignacio/workspace/cas/cas-app && npm run test`
    - Frontend e2e: `cd /home/ignacio/workspace/cas/cas-app && npm run test:e2e`
+   - Frontend build (Firebase readiness): `cd /home/ignacio/workspace/cas/cas-app && npm run build`
 7. If tests fail, fix and rerun until all pass or a hard blocker is reached.
 8. Before final response, post an issue update comment with: scope delivered, changed files, test outcomes, and blockers/next action.
 

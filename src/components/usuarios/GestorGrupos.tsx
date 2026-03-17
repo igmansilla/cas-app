@@ -124,6 +124,9 @@ export function GestorGrupos({ keycloakId, gruposActuales, rolesUsuario = [] }: 
                         {patrullaActual.nombre}
                     </Badge>
                 )}
+                <p className="text-xs text-muted-foreground">
+                    Al asignar un grupo de acampantes, el sistema agrega automaticamente el rol ACAMPANTE.
+                </p>
             </div>
 
             {/* Sección Grupo Dirigencial - Solo visible si es dirigente */}

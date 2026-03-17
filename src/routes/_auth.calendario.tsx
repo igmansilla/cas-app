@@ -22,6 +22,7 @@ import {
   useCrearEvento,
   useEliminarEvento,
   useEventos, 
+  useTransicionarEstadoEvento,
   useTiposEvento,
 } from "../hooks/useCalendario";
 import { useAuth } from "../hooks/useAuth";
@@ -35,6 +36,8 @@ import {
   EventoDetalleModal,
 } from "../components/calendario";
 import { WizardEvento } from "../components/calendario/wizard/WizardEvento";
+
+type EstadoDestinoEvento = "PLANIFICADO" | "ESTABLECIDO" | "DIFUNDIDO";
 
 export const Route = createFileRoute("/_auth/calendario")({
   component: CalendarioPage,
@@ -88,6 +91,7 @@ function CalendarioPage() {
   const { crearEvento, cargando: creando } = useCrearEvento();
   const { actualizarEvento, cargando: actualizando } = useActualizarEvento();
   const { eliminarEvento, cargando: eliminando } = useEliminarEvento();
+  const { transicionarEstadoEvento, cargando: cargandoTransicionEstado } = useTransicionarEstadoEvento();
   const anioActual = new Date().getFullYear();
   const { data: feriados } = useFeriados(anioActual);
 
@@ -269,6 +273,39 @@ function CalendarioPage() {
     }
   };
 
+  const handleTransicionDesdeDetalle = async (estadoDestino: EstadoDestinoEvento) => {
+    if (!eventoSeleccionado) {
+      return;
+    }
+
+    if (eventoSeleccionado.esVirtual) {
+      toast.info("Las instancias virtuales se gestionan desde su serie");
+      return;
+    }
+
+    const eventoId = extractEventoId();
+    if (!eventoId) {
+      toast.error("No se pudo identificar el evento para cambiar su estado");
+      return;
+    }
+
+    try {
+      await transicionarEstadoEvento(eventoId, estadoDestino);
+
+      const mensaje =
+        estadoDestino === "ESTABLECIDO"
+          ? "Evento marcado como listo"
+          : estadoDestino === "DIFUNDIDO"
+            ? "Evento difundido"
+            : "Evento vuelto a programado";
+
+      toast.success(mensaje);
+      calendarioAcciones.cerrarModalDetalle();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo cambiar el estado del evento");
+    }
+  };
+
   return (
     <div className="min-h-full bg-gradient-to-br from-orange-50 via-orange-50 to-red-50 pb-6 md:pb-8">
       <div className="container mx-auto px-3 py-3 md:px-4 md:py-8">
@@ -298,7 +335,9 @@ function CalendarioPage() {
         onCerrar={calendarioAcciones.cerrarModalDetalle}
         onEditar={handleEditarDesdeDetalle}
         onEliminar={handleEliminarDesdeDetalle}
+        onTransicionarEstado={handleTransicionDesdeDetalle}
         eliminando={eliminando}
+        transicionandoEstado={cargandoTransicionEstado}
         puedeEditar={puedeGestionarCalendario}
       />
 

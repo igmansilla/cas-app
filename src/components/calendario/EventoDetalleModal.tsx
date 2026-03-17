@@ -6,6 +6,7 @@
 
 import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
+import { ArrowLeftRight, Megaphone } from "lucide-react";
 import { obtenerColorEvento, obtenerIconoEvento } from "./helpers";
 import { Button } from "../ui/button";
 import {
@@ -25,13 +26,44 @@ import {
   getPublicoObjetivoBadge,
 } from "../../lib/calendario/eventoMeta";
 
+type EstadoDestinoEvento = "PLANIFICADO" | "ESTABLECIDO" | "DIFUNDIDO";
+
+type AccionTransicionEstado = {
+  destino: EstadoDestinoEvento;
+  label: string;
+  principal?: boolean;
+};
+
+function obtenerAccionesTransicion(estadoEvento?: string | null): AccionTransicionEstado[] {
+  const estadoNormalizado = (estadoEvento || "difundido").toLowerCase();
+
+  if (estadoNormalizado === "planificado") {
+    return [{ destino: "ESTABLECIDO", label: "Marcar como listo" }];
+  }
+
+  if (estadoNormalizado === "establecido") {
+    return [
+      { destino: "PLANIFICADO", label: "Volver a programado" },
+      { destino: "DIFUNDIDO", label: "Difundir", principal: true },
+    ];
+  }
+
+  if (estadoNormalizado === "difundido") {
+    return [{ destino: "ESTABLECIDO", label: "Volver a listo" }];
+  }
+
+  return [];
+}
+
 interface EventoDetalleModalProps {
   eventoSeleccionado: EventoCalendarioFormateado | null;
   abierto: boolean;
   onCerrar: () => void;
   onEditar: () => void;
   onEliminar: () => void;
+  onTransicionarEstado?: (estadoDestino: EstadoDestinoEvento) => void;
   eliminando: boolean;
+  transicionandoEstado?: boolean;
   puedeEditar?: boolean;
 }
 
@@ -41,7 +73,9 @@ export function EventoDetalleModal({
   onCerrar, 
   onEditar, 
   onEliminar, 
+  onTransicionarEstado,
   eliminando,
+  transicionandoEstado = false,
   puedeEditar = false
 }: EventoDetalleModalProps) {
   const urlMapa = eventoSeleccionado?.urlMapa || (eventoSeleccionado?.ubicacion ? buildGoogleMapsSearchUrl(eventoSeleccionado.ubicacion) : "");
@@ -49,6 +83,9 @@ export function EventoDetalleModal({
   const estadoBadge = getEstadoEventoBadge(eventoSeleccionado?.estadoEvento);
   const publicoBadge = getPublicoObjetivoBadge(eventoSeleccionado?.publicoObjetivo);
   const politicaBadge = getPoliticaNotificacionBadge(eventoSeleccionado?.politicaNotificacion);
+  const accionesTransicion = eventoSeleccionado?.esVirtual
+    ? []
+    : obtenerAccionesTransicion(eventoSeleccionado?.estadoEvento);
 
   const diaLabel = (dia?: string) => {
     const map: Record<string, string> = {
@@ -186,12 +223,29 @@ export function EventoDetalleModal({
           </div>
         )}
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="flex-wrap gap-2">
           <Button variant="outline" onClick={onCerrar}>
             Cerrar
           </Button>
           {puedeEditar && (
             <>
+              {onTransicionarEstado && accionesTransicion.map((accion) => (
+                <Button
+                  key={accion.destino}
+                  type="button"
+                  variant={accion.principal ? "default" : "outline"}
+                  className={accion.principal ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                  disabled={transicionandoEstado}
+                  onClick={() => onTransicionarEstado(accion.destino)}
+                >
+                  {accion.destino === "DIFUNDIDO" ? (
+                    <Megaphone className="mr-2 h-4 w-4" />
+                  ) : (
+                    <ArrowLeftRight className="mr-2 h-4 w-4" />
+                  )}
+                  {accion.label}
+                </Button>
+              ))}
               <Button variant="default" onClick={onEditar}>
                 ✏️ Editar
               </Button>
