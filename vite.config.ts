@@ -104,6 +104,26 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true, // Expone el servidor a la red local
       allowedHosts: true, // Permite acceso desde cualquier host (ngrok, cloudflare tunnel, etc.)
+      // Cuando Cloudflare expone local-app -> localhost:5173, reenviar
+      // endpoints de Keycloak al servicio local en 8181.
+      proxy: {
+        '/realms': {
+          target: 'http://localhost:8181',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/resources': {
+          target: 'http://localhost:8181',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/auth': {
+          target: 'http://localhost:8181',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/auth/, ''),
+        },
+      },
     },
   }
 })
