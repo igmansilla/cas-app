@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { ChevronDown, LogOut, Settings, User as UserIcon } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import NotificationInbox from './NotificationInbox'
 
 type AvatarStyle =
   | 'adventurer'
@@ -118,7 +119,8 @@ export default function UserAvatar({
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative flex items-center gap-1.5" ref={dropdownRef}>
+      {showDropdown && <NotificationInbox />}
       <button
         onClick={() => showDropdown && setIsOpen((v) => !v)}
         className={`flex items-center space-x-2 rounded-full transition-all ${
