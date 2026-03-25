@@ -1,10 +1,9 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { Backpack, Building2, ChevronRight, FileText, KeyRound, ShieldAlert, Users } from "lucide-react";
+import { Backpack, Building2, ChevronRight, FileText, KeyRound, Users } from "lucide-react";
 import { toast } from "sonner";
 import { FamiliaWidget } from "../components/familia/FamiliaWidget";
-import { usePlanificacionAnual } from "../hooks/useCalendario";
 import { useDocumentosUsuario } from "../hooks/useDocumentos";
 import { useUsuarioActual } from "../hooks/useUsuarioActual";
 import { Badge } from "../components/ui/badge";
@@ -24,11 +23,6 @@ function DashboardComponent() {
   const canAccessUsuarios = hasRole('dirigente') || hasGroup('CONSEJO') || hasRole('admin');
   const canAccessSistema = hasRole('admin');
   const canAccessPlanificacion = hasRole('dirigente') || hasRole('admin');
-  const anioActual = new Date().getFullYear();
-  const { plantillas } = usePlanificacionAnual(anioActual, canAccessPlanificacion);
-  const alertasCriticas = plantillas.filter(
-    (plantilla) => plantilla.naturaleza === 'evento' && plantilla.critico && !plantilla.programado
-  ).length;
   const documentosConIssue = useMemo(
     () => documentos.filter((doc) => doc.estado === 'OBSERVADO'),
     [documentos],
@@ -165,12 +159,6 @@ function DashboardComponent() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-semibold text-orange-900">Departamentos</h3>
-                    {alertasCriticas > 0 && (
-                      <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-                        <ShieldAlert className="mr-1 h-3.5 w-3.5" />
-                        {alertasCriticas} crítica{alertasCriticas === 1 ? '' : 's'}
-                      </Badge>
-                    )}
                   </div>
                   <p className="text-sm text-orange-700">
                     Entrá al hub operativo y navegá cada área desde un solo lugar. Economía concentra Tesorería y Planes.

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Building2, CalendarCheck2, ShieldAlert } from "lucide-react";
+import { ArrowRight, Building2, CalendarCheck2 } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 
 import { usePlanificacionAnual } from "../../../hooks/useCalendario";
@@ -20,13 +20,17 @@ export function DepartamentosHubPage() {
   const anioActual = new Date().getFullYear();
   const { departamentos, cargando: cargandoDepartamentos } = useDepartamentos();
   const { plantillas, cargando: cargandoPlanificacion } = usePlanificacionAnual(anioActual);
+  const plantillasEvento = useMemo(
+    () => plantillas.filter((plantilla) => plantilla.naturaleza === "evento"),
+    [plantillas]
+  );
 
   const resumenPorCodigo = useMemo(() => {
-    return departmentScreens.reduce<Record<string, { criticos: number; pendientes: number; programados: number }>>(
+    return departmentScreens.reduce<Record<string, { pendientes: number; programados: number }>>(
       (accumulator, screen) => {
         const departamento = departamentos.find((item) => item.codigo === screen.codigo);
         const plantillasDepartamento = departamento
-          ? plantillas.filter(
+          ? plantillasEvento.filter(
               (plantilla) =>
                 plantilla.departamentoId === departamento.id &&
                 plantilla.naturaleza === "evento"
@@ -34,12 +38,8 @@ export function DepartamentosHubPage() {
           : [];
 
         const pendientes = plantillasDepartamento.filter((plantilla) => !plantilla.programado).length;
-        const criticos = plantillasDepartamento.filter(
-          (plantilla) => plantilla.critico && !plantilla.programado
-        ).length;
 
         accumulator[screen.codigo] = {
-          criticos,
           pendientes,
           programados: plantillasDepartamento.length - pendientes,
         };
@@ -48,17 +48,14 @@ export function DepartamentosHubPage() {
       },
       {}
     );
-  }, [departamentos, plantillas]);
-
-  const alertasCriticasTotales = useMemo(
-    () => plantillas.filter((plantilla) => plantilla.naturaleza === "evento" && plantilla.critico && !plantilla.programado).length,
-    [plantillas]
-  );
+  }, [departamentos, plantillasEvento]);
 
   const pendientesTotales = useMemo(
-    () => plantillas.filter((plantilla) => plantilla.naturaleza === "evento" && !plantilla.programado).length,
-    [plantillas]
+    () => plantillasEvento.filter((plantilla) => !plantilla.programado).length,
+    [plantillasEvento]
   );
+
+  const programadosTotales = plantillasEvento.length - pendientesTotales;
 
   const cargando = cargandoDepartamentos || cargandoPlanificacion;
 
@@ -100,31 +97,22 @@ export function DepartamentosHubPage() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <SummaryCard
-                icon={<ShieldAlert className="h-4 w-4 text-red-600" />}
-                label="Alertas críticas"
-                value={alertasCriticasTotales}
-                accent={alertasCriticasTotales > 0 ? "red" : "emerald"}
-              />
-              <SummaryCard
                 icon={<CalendarCheck2 className="h-4 w-4 text-orange-600" />}
                 label="Pendientes totales"
                 value={pendientesTotales}
                 accent="orange"
               />
+              <SummaryCard
+                icon={<CalendarCheck2 className="h-4 w-4 text-emerald-600" />}
+                label="Programados"
+                value={programadosTotales}
+                accent="emerald"
+              />
             </div>
           </div>
 
-          <div
-            className={cn(
-              "mt-5 rounded-2xl border px-4 py-3 text-sm",
-              alertasCriticasTotales > 0
-                ? "border-red-200 bg-red-50 text-red-900"
-                : "border-emerald-200 bg-emerald-50 text-emerald-900"
-            )}
-          >
-            {alertasCriticasTotales > 0
-              ? `Hay ${alertasCriticasTotales} alerta${alertasCriticasTotales === 1 ? "" : "s"} crítica${alertasCriticasTotales === 1 ? "" : "s"} sin programar en los canónicos del año.`
-              : "No hay alertas críticas abiertas. Los canónicos críticos están cubiertos."}
+          <div className="mt-5 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-900">
+            Hay {pendientesTotales} canónico{pendientesTotales === 1 ? "" : "s"} pendiente{pendientesTotales === 1 ? "" : "s"} de programación en el año.
           </div>
         </section>
 
@@ -136,7 +124,6 @@ export function DepartamentosHubPage() {
           <section className="mt-8 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
             {departmentScreens.map((screen) => {
               const resumen = resumenPorCodigo[screen.codigo] ?? {
-                criticos: 0,
                 pendientes: 0,
                 programados: 0,
               };
@@ -159,9 +146,9 @@ export function DepartamentosHubPage() {
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <h2 className="text-lg font-semibold text-gray-900">{screen.nombre}</h2>
-                          {resumen.criticos > 0 ? (
-                            <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-                              {resumen.criticos} crítica{resumen.criticos === 1 ? "" : "s"}
+                          {resumen.pendientes > 0 ? (
+                            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+                              {resumen.pendientes} pendiente{resumen.pendientes === 1 ? "" : "s"}
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">

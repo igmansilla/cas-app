@@ -10,7 +10,6 @@ import {
   Megaphone,
   Pencil,
   Plus,
-  ShieldAlert,
   Trash2,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -142,9 +141,8 @@ export function EventosPlanningPanel({
       })
       .sort((a, b) => {
         const prioridad = (plantilla: PlantillaEventoAnual) => {
-          if (plantilla.critico && !plantilla.programado) return 0;
-          if (!plantilla.programado) return 1;
-          return 2;
+          if (!plantilla.programado) return 0;
+          return 1;
         };
 
         const diferenciaPrioridad = prioridad(a.plantilla) - prioridad(b.plantilla);
@@ -165,9 +163,6 @@ export function EventosPlanningPanel({
 
   const pendientes = tarjetasPlanificacion.filter((tarjeta) => !tarjeta.plantilla.programado).length;
   const programados = tarjetasPlanificacion.length - pendientes;
-  const criticosPendientes = tarjetasPlanificacion.filter(
-    (tarjeta) => tarjeta.plantilla.critico && !tarjeta.plantilla.programado
-  ).length;
 
   return (
     <section className="space-y-6">
@@ -199,12 +194,6 @@ export function EventosPlanningPanel({
             accent="amber"
           />
           <StatsCard
-            icon={<ShieldAlert className="h-4 w-4 text-red-600" />}
-            label="Críticos sin fecha"
-            value={criticosPendientes}
-            accent="red"
-          />
-          <StatsCard
             icon={<CalendarCheck2 className="h-4 w-4 text-emerald-600" />}
             label="Programados"
             value={programados}
@@ -217,12 +206,6 @@ export function EventosPlanningPanel({
             accent="slate"
           />
         </div>
-
-        {criticosPendientes > 0 && (
-          <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-            Hay {criticosPendientes} canónico{criticosPendientes === 1 ? "" : "s"} crítico{criticosPendientes === 1 ? "" : "s"} sin programar en este panel.
-          </div>
-        )}
       </div>
 
       {mostrarSelectorDepartamento && (
@@ -340,7 +323,6 @@ function PlantillaCard({
 }) {
   const color = obtenerColorEvento(plantilla.codigo);
   const icono = obtenerIconoEvento(plantilla.codigo);
-  const criticaPendiente = plantilla.critico && !plantilla.programado;
   const estadoBadge = getEstadoEventoBadge(eventoProgramado?.estadoEvento);
   const publicoBadge = getPublicoObjetivoBadge(eventoProgramado?.publicoObjetivo ?? plantilla.publicoObjetivo);
   const politicaBadge = getPoliticaNotificacionBadge(
@@ -350,13 +332,7 @@ function PlantillaCard({
   const eventoSinId = eventoProgramado?.id == null;
 
   return (
-    <article
-      className={
-        criticaPendiente
-          ? "rounded-3xl border border-red-200 bg-red-50/30 p-5 shadow-sm"
-          : "rounded-3xl border border-gray-200 bg-white p-5 shadow-sm"
-      }
-    >
+    <article className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 gap-3">
           <div
@@ -372,9 +348,6 @@ function PlantillaCard({
               <Badge variant="outline" className="border-gray-300 text-gray-700">
                 {plantilla.departamento}
               </Badge>
-              {criticaPendiente && (
-                <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Crítico</Badge>
-              )}
               {plannerCustom && (
                 <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
                   Listo para planner custom

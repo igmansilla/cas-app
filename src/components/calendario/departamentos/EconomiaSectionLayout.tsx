@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, BookMarked, Building2, Receipt, ShieldAlert } from "lucide-react";
+import { ArrowRight, BookMarked, Building2, Receipt } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 
@@ -38,20 +38,6 @@ export function EconomiaSectionLayout({ currentTab, children }: EconomiaSectionL
     [departamentos]
   );
 
-  const criticosPendientes = useMemo(() => {
-    if (!departamentoEconomia) {
-      return 0;
-    }
-
-    return plantillas.filter(
-      (plantilla) =>
-        plantilla.departamentoId === departamentoEconomia.id &&
-        plantilla.naturaleza === "evento" &&
-        plantilla.critico &&
-        !plantilla.programado
-    ).length;
-  }, [departamentoEconomia, plantillas]);
-
   const pendientesTotales = useMemo(() => {
     if (!departamentoEconomia) {
       return 0;
@@ -64,6 +50,20 @@ export function EconomiaSectionLayout({ currentTab, children }: EconomiaSectionL
         !plantilla.programado
     ).length;
   }, [departamentoEconomia, plantillas]);
+
+  const programadosTotales = useMemo(() => {
+    if (!departamentoEconomia) {
+      return 0;
+    }
+
+    const plantillasEventoEconomia = plantillas.filter(
+      (plantilla) =>
+        plantilla.departamentoId === departamentoEconomia.id &&
+        plantilla.naturaleza === "evento"
+    );
+
+    return plantillasEventoEconomia.length - pendientesTotales;
+  }, [departamentoEconomia, pendientesTotales, plantillas]);
 
   const tabLabel = {
     hub: "Economía",
@@ -135,31 +135,14 @@ export function EconomiaSectionLayout({ currentTab, children }: EconomiaSectionL
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {criticosPendientes > 0 ? (
-                <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-                  {criticosPendientes} alerta{criticosPendientes === 1 ? "" : "s"} crítica{criticosPendientes === 1 ? "" : "s"}
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-                  Sin alertas críticas
-                </Badge>
-              )}
               <Badge variant="outline" className="border-gray-200 bg-gray-50 text-gray-700">
                 {pendientesTotales} pendiente{pendientesTotales === 1 ? "" : "s"}
               </Badge>
+              <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                {programadosTotales} programado{programadosTotales === 1 ? "" : "s"}
+              </Badge>
             </div>
           </div>
-
-          {criticosPendientes > 0 && (
-            <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-              Hay {criticosPendientes} canónico{criticosPendientes === 1 ? "" : "s"} crítico{criticosPendientes === 1 ? "" : "s"} de Economía sin programar.
-              {currentTab !== "planificacion" && (
-                <Link to="/departamentos/economia/planificacion" className="ml-2 font-semibold underline underline-offset-2">
-                  Revisar planificación
-                </Link>
-              )}
-            </div>
-          )}
         </section>
 
         <nav className="mt-6 rounded-3xl border border-emerald-100 bg-white/85 p-3 shadow-sm backdrop-blur-sm">
@@ -185,15 +168,14 @@ export function EconomiaSectionLayout({ currentTab, children }: EconomiaSectionL
           <section className="mt-6 grid gap-4 lg:grid-cols-3">
             <OverviewCard
               title="Planificación"
-              description="Canónicos del área y alertas críticas de eventos pendientes dentro de Economía."
+              description="Canónicos del área para mantener al día la programación de eventos de Economía."
               to="/departamentos/economia/planificacion"
-              icon={<ShieldAlert className="h-5 w-5 text-emerald-600" />}
+              icon={<Building2 className="h-5 w-5 text-emerald-600" />}
               badge={
-                criticosPendientes > 0
-                  ? `${criticosPendientes} crítica${criticosPendientes === 1 ? "" : "s"}`
+                pendientesTotales > 0
+                  ? `${pendientesTotales} pendiente${pendientesTotales === 1 ? "" : "s"}`
                   : "Al día"
               }
-              critical={criticosPendientes > 0}
             />
 
             {canAccessTesoreria && (
@@ -228,17 +210,13 @@ interface OverviewCardProps {
   to: string;
   icon: ReactNode;
   badge?: string;
-  critical?: boolean;
 }
 
-function OverviewCard({ title, description, to, icon, badge, critical = false }: OverviewCardProps) {
+function OverviewCard({ title, description, to, icon, badge }: OverviewCardProps) {
   return (
     <Link
       to={to as never}
-      className={cn(
-        "group rounded-3xl border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
-        critical ? "border-red-200 bg-red-50/30" : "border-emerald-200"
-      )}
+      className="group rounded-3xl border border-emerald-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-3">
@@ -249,13 +227,7 @@ function OverviewCard({ title, description, to, icon, badge, critical = false }:
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
               {badge && (
-                <Badge
-                  className={cn(
-                    critical
-                      ? "bg-red-100 text-red-700 hover:bg-red-100"
-                      : "bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
-                  )}
-                >
+                <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
                   {badge}
                 </Badge>
               )}

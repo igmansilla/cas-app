@@ -299,7 +299,6 @@ export const PlantillaEventoAnualSchema = object({
   departamento: string(),
   descripcion: string(),
   naturaleza: string(),
-  critico: boolean(),
   programado: boolean(),
   eventoId: nullable(number()),
   publicoObjetivo: optional(nullable(string())),
@@ -318,7 +317,6 @@ export interface PlantillaEventoAnual {
   descripcion: string;
   /** "evento" (puntual departamental) o "reunion" (periódica) */
   naturaleza: 'evento' | 'reunion';
-  critico: boolean;
   programado: boolean;
   eventoId: number | null;
   publicoObjetivo?: string | null;

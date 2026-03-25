@@ -262,7 +262,6 @@ export const calendarioService = {
       departamento: String(item.departamento ?? ''),
       descripcion: String(item.descripcion ?? ''),
       naturaleza: String(item.naturaleza ?? 'evento') as 'evento' | 'reunion',
-      critico: Boolean(item.critico),
       programado: Boolean(item.programado),
       eventoId: item.eventoId != null ? Number(item.eventoId) : null,
       publicoObjetivo: item.publicoObjetivo ? String(item.publicoObjetivo) : null,
