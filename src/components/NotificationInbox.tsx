@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Inbox } from '@novu/react'
 import { useAuth } from '../hooks/useAuth'
 import { novuInboxLocalizationEsAr } from '../lib/novuLocalization'
@@ -7,27 +8,35 @@ type NovuEnv = ImportMetaEnv & {
   REACT_APP_NOVU_APPLICATION_IDENTIFIER?: string
   VITE_NOVU_BACKEND_URL?: string
   VITE_NOVU_SOCKET_URL?: string
-  VITE_NOVU_ENABLE_LOCAL?: string
+  VITE_NOVU_MOCK_LOCAL?: string
 }
 
 export default function NotificationInbox() {
   const { user } = useAuth()
-  const env = import.meta.env as NovuEnv
-  const isLocalhost =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  const enableLocalNovu = env.VITE_NOVU_ENABLE_LOCAL === 'true'
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false,
+  )
 
-  if (isLocalhost && !enableLocalNovu) {
-    return null
-  }
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const media = window.matchMedia('(max-width: 767px)')
+    const onChange = () => setIsMobile(media.matches)
+
+    onChange()
+    media.addEventListener('change', onChange)
+    return () => media.removeEventListener('change', onChange)
+  }, [])
+
+  const env = import.meta.env as NovuEnv
+  const mockLocalInbox = Boolean(import.meta.env.DEV) && env.VITE_NOVU_MOCK_LOCAL === 'true'
 
   const applicationIdentifier =
     env.VITE_NOVU_APPLICATION_IDENTIFIER?.trim() ||
     env.REACT_APP_NOVU_APPLICATION_IDENTIFIER?.trim() ||
     ''
 
-  if (!applicationIdentifier) {
+  if (!applicationIdentifier && !mockLocalInbox) {
     return null
   }
 
@@ -45,11 +54,17 @@ export default function NotificationInbox() {
       ? { backendUrl, socketUrl }
       : {}
 
+  const authProps = applicationIdentifier
+    ? {
+        applicationIdentifier,
+        subscriberId,
+      }
+    : {}
+
   return (
     <Inbox
-      applicationIdentifier={applicationIdentifier}
-      subscriberId={subscriberId}
-      placement="bottom-end"
+      {...authProps}
+      placement={isMobile ? 'bottom' : 'bottom-end'}
       placementOffset={{ mainAxis: 8, crossAxis: 0 }}
       localization={novuInboxLocalizationEsAr}
       {...endpointProps}
@@ -77,6 +92,34 @@ export default function NotificationInbox() {
           bellIcon: {
             color: '#FF6B35',
           },
+          popoverContent: isMobile
+            ? {
+                width: 'min(92vw, 24rem)',
+                maxWidth: '24rem',
+                maxHeight: '70vh',
+                overflow: 'hidden',
+              }
+            : undefined,
+          inbox__popoverContent: isMobile
+            ? {
+                width: 'min(92vw, 24rem)',
+                maxWidth: '24rem',
+                maxHeight: '70vh',
+                overflow: 'hidden',
+              }
+            : undefined,
+          inboxContent: isMobile
+            ? {
+                maxHeight: '70vh',
+                overflow: 'hidden',
+              }
+            : undefined,
+          notificationListContainer: isMobile
+            ? {
+                maxHeight: 'calc(70vh - 3rem)',
+                overflowY: 'auto',
+              }
+            : undefined,
         },
       }}
     />
