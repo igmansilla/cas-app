@@ -92,34 +92,10 @@ export default function NotificationInbox() {
           bellIcon: {
             color: '#FF6B35',
           },
-          popoverContent: isMobile
-            ? {
-                width: 'min(92vw, 24rem)',
-                maxWidth: '24rem',
-                maxHeight: '70vh',
-                overflow: 'hidden',
-              }
-            : undefined,
-          inbox__popoverContent: isMobile
-            ? {
-                width: 'min(92vw, 24rem)',
-                maxWidth: '24rem',
-                maxHeight: '70vh',
-                overflow: 'hidden',
-              }
-            : undefined,
-          inboxContent: isMobile
-            ? {
-                maxHeight: '70vh',
-                overflow: 'hidden',
-              }
-            : undefined,
-          notificationListContainer: isMobile
-            ? {
-                maxHeight: 'calc(70vh - 3rem)',
-                overflowY: 'auto',
-              }
-            : undefined,
+          popoverContent: 'novu-popover-content',
+          inbox__popoverContent: 'novu-popover-content',
+          inboxContent: 'novu-inbox-content',
+          notificationListContainer: 'novu-notification-list-container',
         },
       }}
     />
