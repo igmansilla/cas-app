@@ -45,6 +45,7 @@ function AuthLayout() {
 
     // Ocultar navegación durante onboarding
     const isOnboarding = location.pathname === "/onboarding";
+    const isCalendario = location.pathname.startsWith("/calendario");
     const mobileHeaderTitle = isOnboarding ? undefined : getMobileHeaderTitle(location.pathname);
 
     // Redirect to login if not authenticated
@@ -116,7 +117,7 @@ function AuthLayout() {
     return (
         <div className="min-h-dvh bg-white">
             <div className={`h-full ${isOnboarding ? 'grid grid-rows-[1fr]' : 'grid grid-rows-[auto_auto_1fr] md:grid-rows-[auto_1fr]'}`}>
-                {!isOnboarding && <MobileHeader title={mobileHeaderTitle} />}
+                {!isOnboarding && !isCalendario && <MobileHeader title={mobileHeaderTitle} />}
                 {!isOnboarding && <MobileFooter />}
                 <main className={`overflow-auto ${isOnboarding ? '' : 'pb-24 md:pb-6'}`}>
                     <Outlet />

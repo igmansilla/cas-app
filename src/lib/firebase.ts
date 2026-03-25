@@ -79,9 +79,14 @@ export const requestForToken = async () => {
     }
 
     const serviceWorkerRegistration = await ensureAppServiceWorker();
+    if (!serviceWorkerRegistration) {
+      console.log('Service worker no disponible en este entorno. Se omite token FCM.');
+      return null;
+    }
+
     const currentToken = await getToken(messaging, {
       vapidKey,
-      ...(serviceWorkerRegistration ? { serviceWorkerRegistration } : {}),
+      serviceWorkerRegistration,
     });
     if (currentToken) {
       console.log('FCM Token:', currentToken);

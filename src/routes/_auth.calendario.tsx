@@ -15,6 +15,11 @@ import { endOfWeek } from "date-fns/endOfWeek";
 import { startOfDay } from "date-fns/startOfDay";
 import { endOfDay } from "date-fns/endOfDay";
 import { addDays } from "date-fns/addDays";
+import { addMonths } from "date-fns/addMonths";
+import { subMonths } from "date-fns/subMonths";
+import { addWeeks } from "date-fns/addWeeks";
+import { subWeeks } from "date-fns/subWeeks";
+import { subDays } from "date-fns/subDays";
 import { toast } from "sonner";
 
 import { 
@@ -32,6 +37,7 @@ import type { EventoRequest } from "../api/schemas/calendario";
 
 import {
   CalendarioHeader,
+  CalendarioQuickActionsFab,
   CalendarioView,
   EventoDetalleModal,
 } from "../components/calendario";
@@ -58,6 +64,7 @@ function CalendarioPage() {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [eventoEditando, setEventoEditando] = useState<Partial<EventoRequest>>({});
   const [idEventoEditando, setIdEventoEditando] = useState<number | null>(null);
+  const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null);
 
   // Calcular rango de fechas para fetching
   const { desde, hasta } = useMemo(() => {
@@ -124,6 +131,15 @@ function CalendarioPage() {
     return days[value.getDay()] ?? "SATURDAY";
   };
 
+  const toDateTimeInput = (value: Date) => {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    const hour = String(value.getHours()).padStart(2, "0");
+    const minute = String(value.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hour}:${minute}`;
+  };
+
   const extractEventoId = () => {
     if (!eventoSeleccionado) {
       return null;
@@ -142,10 +158,47 @@ function CalendarioPage() {
     setIdEventoEditando(null);
   };
 
-  const abrirOasisDesdeCalendario = (start: Date, end: Date) => {
+  const normalizarRangoEventoRapido = (start: Date, end: Date) => {
+    if (view === "month") {
+      const inicio = new Date(start);
+      inicio.setHours(10, 0, 0, 0);
+
+      const fin = new Date(inicio);
+      fin.setHours(11, 0, 0, 0);
+
+      return { inicio, fin };
+    }
+
+    const inicio = new Date(start);
+    const fin = end > start ? end : new Date(start.getTime() + 60 * 60 * 1000);
+    return { inicio, fin };
+  };
+
+  const abrirEventoRapidoDesdeCalendario = (start: Date, end: Date) => {
+    const { inicio, fin } = normalizarRangoEventoRapido(start, end);
+    setFechaSeleccionada(inicio);
+
+    setEventoEditando({
+      naturaleza: "EVENTO",
+      tipo: "ACTIVIDAD",
+      titulo: "",
+      descripcion: "",
+      fechaInicio: toDateTimeInput(inicio),
+      fechaFin: toDateTimeInput(fin),
+      ubicacion: "",
+      publicoObjetivo: "comunidad",
+      politicaNotificacion: "automatica-al-difundir",
+    });
+    setIdEventoEditando(null);
+    setModoEdicion(false);
+    setWizardAbierto(true);
+  };
+
+  const abrirReunionRapidaDesdeCalendario = (start: Date, end: Date) => {
     const fin = end > start ? end : new Date(start.getTime() + 60 * 60 * 1000);
     const fechaFin = new Date(start);
     fechaFin.setDate(fechaFin.getDate() + 1);
+    setFechaSeleccionada(start);
 
     setEventoEditando({
       naturaleza: "REUNION",
@@ -171,8 +224,68 @@ function CalendarioPage() {
       return;
     }
 
-    abrirOasisDesdeCalendario(start, end);
+    abrirEventoRapidoDesdeCalendario(start, end);
+    toast.info("Completá los datos para crear el evento");
+  };
+
+  const handleSwipeNavigate = (direction: "left" | "right") => {
+    const nextDate = direction === "left"
+      ? view === "month"
+        ? addMonths(date, 1)
+        : view === "week"
+          ? addWeeks(date, 1)
+          : view === "day"
+            ? addDays(date, 1)
+            : addDays(date, 30)
+      : view === "month"
+        ? subMonths(date, 1)
+        : view === "week"
+          ? subWeeks(date, 1)
+          : view === "day"
+            ? subDays(date, 1)
+            : addDays(date, -30);
+
+    setDate(nextDate);
+  };
+
+  const getQuickRangeFromCurrentDate = () => {
+    const now = new Date();
+    const base = new Date(date);
+
+    if (view === "month") {
+      base.setHours(10, 0, 0, 0);
+    } else {
+      base.setHours(now.getHours(), 0, 0, 0);
+    }
+
+    const end = new Date(base.getTime() + 60 * 60 * 1000);
+    return { start: base, end };
+  };
+
+  const handleQuickCreateEvent = () => {
+    if (!puedeGestionarCalendario) {
+      return;
+    }
+
+    const { start, end } = getQuickRangeFromCurrentDate();
+    abrirEventoRapidoDesdeCalendario(start, end);
+  };
+
+  const handleQuickCreateMeeting = () => {
+    if (!puedeGestionarCalendario) {
+      return;
+    }
+
+    const { start, end } = getQuickRangeFromCurrentDate();
+    abrirReunionRapidaDesdeCalendario(start, end);
     toast.info("Completá grupo y lugar para crear un oasis particular");
+  };
+
+  const handleGoToday = () => {
+    const hoy = new Date();
+    setDate(hoy);
+    setFechaSeleccionada(hoy);
+    toast.success("Mostrando la fecha de hoy");
   };
 
   const handleGuardar = async (data: EventoRequest) => {
@@ -307,15 +420,26 @@ function CalendarioPage() {
   };
 
   return (
-    <div className="min-h-full bg-gradient-to-br from-orange-50 via-orange-50 to-red-50 pb-6 md:pb-8">
-      <div className="container mx-auto px-3 py-3 md:px-4 md:py-8">
-        
+    <div className="min-h-full bg-gradient-to-br from-orange-50 via-orange-50 to-red-50 md:pb-8">
+      {/* Header: oculto en mobile para ganar espacio */}
+      <div className="hidden md:block container mx-auto px-4 pt-8">
         <CalendarioHeader 
           diasRestantes={diasRestantes} 
           error={error}
         />
+      </div>
 
-        <main className="max-w-7xl mx-auto">
+      {/* Error en mobile: solo si hay error */}
+      {error && (
+        <div className="md:hidden mx-3 mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <p className="font-medium text-sm">Error al cargar eventos</p>
+          <p className="text-xs">{error.message}</p>
+        </div>
+      )}
+
+      {/* Calendario: sin padding en mobile para máximo espacio */}
+      <div className="h-[calc(100svh-6rem)] md:h-auto md:container md:mx-auto md:px-4 md:pb-8">
+        <main className="h-full md:h-auto md:max-w-7xl md:mx-auto">
           <CalendarioView 
             events={eventosConFeriados} 
             loading={cargando} 
@@ -325,9 +449,20 @@ function CalendarioPage() {
             onView={setView}
             onNavigate={setDate}
             onSelectSlot={puedeGestionarCalendario ? handleSelectSlot : undefined}
+            onSwipeLeft={() => handleSwipeNavigate("left")}
+            onSwipeRight={() => handleSwipeNavigate("right")}
+            selectedDate={fechaSeleccionada}
           />
         </main>
       </div>
+
+      {puedeGestionarCalendario && (
+        <CalendarioQuickActionsFab
+          onQuickEvent={handleQuickCreateEvent}
+          onQuickMeeting={handleQuickCreateMeeting}
+          onGoToday={handleGoToday}
+        />
+      )}
 
       <EventoDetalleModal
         eventoSeleccionado={eventoSeleccionado}

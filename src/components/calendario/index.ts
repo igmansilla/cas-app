@@ -3,6 +3,7 @@
  */
 
 export { CalendarioHeader } from './CalendarioHeader';
+export { CalendarioQuickActionsFab } from './CalendarioQuickActionsFab';
 export { CalendarioLegend } from './CalendarioLegend';
 export { CalendarioView } from './CalendarioView';
 export { EventoDetalleModal } from './EventoDetalleModal';

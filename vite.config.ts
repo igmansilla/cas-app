@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
   const isLocal = appEnv === 'local' || mode === 'development'
   const isDev = appEnv === 'development' || appEnv === 'dev'
   const enablePwaInDev = env.VITE_PWA_DEV === 'true'
+  const localApiProxyTarget = (env.VITE_LOCAL_API_PROXY_TARGET || 'http://localhost:8082').trim()
   
   let prefix = ''
   if (isDev) prefix = '[DEV] '
@@ -107,6 +108,12 @@ export default defineConfig(({ mode }) => {
       // Cuando Cloudflare expone local-app -> localhost:5173, reenviar
       // endpoints de Keycloak al servicio local en 8181.
       proxy: {
+        '/api': {
+          // En localhost evitamos depender del tunnel para la API.
+          target: localApiProxyTarget,
+          changeOrigin: true,
+          secure: false,
+        },
         '/realms': {
           target: 'http://localhost:8181',
           changeOrigin: true,

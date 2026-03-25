@@ -1,16 +1,26 @@
 import { Inbox } from '@novu/react'
 import { useAuth } from '../hooks/useAuth'
+import { novuInboxLocalizationEsAr } from '../lib/novuLocalization'
 
 type NovuEnv = ImportMetaEnv & {
   VITE_NOVU_APPLICATION_IDENTIFIER?: string
   REACT_APP_NOVU_APPLICATION_IDENTIFIER?: string
   VITE_NOVU_BACKEND_URL?: string
   VITE_NOVU_SOCKET_URL?: string
+  VITE_NOVU_ENABLE_LOCAL?: string
 }
 
 export default function NotificationInbox() {
   const { user } = useAuth()
   const env = import.meta.env as NovuEnv
+  const isLocalhost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  const enableLocalNovu = env.VITE_NOVU_ENABLE_LOCAL === 'true'
+
+  if (isLocalhost && !enableLocalNovu) {
+    return null
+  }
 
   const applicationIdentifier =
     env.VITE_NOVU_APPLICATION_IDENTIFIER?.trim() ||
@@ -41,6 +51,7 @@ export default function NotificationInbox() {
       subscriberId={subscriberId}
       placement="bottom-end"
       placementOffset={{ mainAxis: 8, crossAxis: 0 }}
+      localization={novuInboxLocalizationEsAr}
       {...endpointProps}
       appearance={{
         variables: {
