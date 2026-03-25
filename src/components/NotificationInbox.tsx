@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Inbox } from '@novu/react'
+import { WorkflowCriticalityEnum } from '@novu/react'
 import { useAuth } from '../hooks/useAuth'
 import { novuInboxLocalizationEsAr } from '../lib/novuLocalization'
 
@@ -67,6 +68,7 @@ export default function NotificationInbox() {
       placement={isMobile ? 'bottom' : 'bottom-end'}
       placementOffset={{ mainAxis: 8, crossAxis: 0 }}
       localization={novuInboxLocalizationEsAr}
+      preferencesFilter={{ criticality: WorkflowCriticalityEnum.ALL }}
       {...endpointProps}
       appearance={{
         variables: {
