@@ -12,6 +12,22 @@ type NovuEnv = ImportMetaEnv & {
   VITE_NOVU_MOCK_LOCAL?: string
 }
 
+function getDefaultNovuEndpoints() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const host = window.location.hostname
+  if (host.endsWith('casayhueque.org')) {
+    return {
+      backendUrl: 'https://novu-api.casayhueque.org',
+      socketUrl: 'wss://novu-ws.casayhueque.org',
+    }
+  }
+
+  return null
+}
+
 export default function NotificationInbox() {
   const { user } = useAuth()
   const [isMobile, setIsMobile] = useState(
@@ -47,8 +63,9 @@ export default function NotificationInbox() {
     return null
   }
 
-  const backendUrl = env.VITE_NOVU_BACKEND_URL?.trim()
-  const socketUrl = env.VITE_NOVU_SOCKET_URL?.trim()
+  const defaultEndpoints = getDefaultNovuEndpoints()
+  const backendUrl = env.VITE_NOVU_BACKEND_URL?.trim() || defaultEndpoints?.backendUrl || ''
+  const socketUrl = env.VITE_NOVU_SOCKET_URL?.trim() || defaultEndpoints?.socketUrl || ''
 
   const endpointProps = backendUrl && socketUrl ? { backendUrl, socketUrl } : {}
 

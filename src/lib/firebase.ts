@@ -17,6 +17,29 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 let messagingPromise: Promise<Messaging | null> | null = null;
 
+async function getTokenWithFallback(
+  messaging: Messaging,
+  vapidKey: string,
+  serviceWorkerRegistration: ServiceWorkerRegistration,
+) {
+  try {
+    return await getToken(messaging, {
+      vapidKey,
+      serviceWorkerRegistration,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError' && 'serviceWorker' in navigator) {
+      const readyRegistration = await navigator.serviceWorker.ready;
+      return getToken(messaging, {
+        vapidKey,
+        serviceWorkerRegistration: readyRegistration,
+      });
+    }
+
+    throw error;
+  }
+}
+
 type NotificationPermissionState = NotificationPermission | 'unsupported';
 
 function notificationsAreSupported() {
@@ -84,10 +107,7 @@ export const requestForToken = async () => {
       return null;
     }
 
-    const currentToken = await getToken(messaging, {
-      vapidKey,
-      serviceWorkerRegistration,
-    });
+    const currentToken = await getTokenWithFallback(messaging, vapidKey, serviceWorkerRegistration);
     if (currentToken) {
       console.log('FCM Token:', currentToken);
       return currentToken;
