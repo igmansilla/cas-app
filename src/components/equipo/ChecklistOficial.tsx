@@ -278,7 +278,7 @@ export function ChecklistOficial() {
           <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 text-left sm:px-6">
             <DialogTitle>Fotos del equipo</DialogTitle>
           </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6 sm:py-5">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
             {itemSeleccionadoParaFoto && (
               <FotoItemUpload
                 item={itemSeleccionadoParaFoto}

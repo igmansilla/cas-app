@@ -86,7 +86,7 @@ export function FotoItemUpload({ item, fotosPorRequisito, onClose, onSuccess }: 
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 sm:gap-5">
+    <div className="flex flex-col gap-4 sm:gap-5">
       <input
         ref={cameraInputRef}
         type="file"
@@ -116,7 +116,7 @@ export function FotoItemUpload({ item, fotosPorRequisito, onClose, onSuccess }: 
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+      <div className="space-y-4">
         {item.requisitosFoto.map((requisito) => {
           const foto = fotosPorRequisito[requisito.id];
           const isUploading = subiendoRequisitoId === requisito.id;
@@ -227,7 +227,7 @@ export function FotoItemUpload({ item, fotosPorRequisito, onClose, onSuccess }: 
         <strong>Tip:</strong> Buscá buena luz y dejá visible justo la parte que pide cada tarjeta. En mochila, bolsa y botas conviene apoyar el equipo sobre una superficie clara para que se lea mejor.
       </div>
 
-      <div className="mt-auto shrink-0 border-t pt-3">
+      <div className="shrink-0 border-t pt-3">
         <div className="flex justify-end">
           <Button variant="outline" onClick={onClose}>Cerrar</Button>
         </div>
