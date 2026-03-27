@@ -41,19 +41,16 @@ export default function NotificationInbox() {
     return null
   }
 
-  const subscriberId =
-    user?.uid?.trim() || user?.email?.trim() || '69bc6371ae00fefaa00934a5'
+  const subscriberId = user?.uid?.trim() || user?.email?.trim() || ''
+
+  if (!subscriberId && !mockLocalInbox) {
+    return null
+  }
 
   const backendUrl = env.VITE_NOVU_BACKEND_URL?.trim()
   const socketUrl = env.VITE_NOVU_SOCKET_URL?.trim()
 
-  const endpointProps =
-    backendUrl &&
-    socketUrl &&
-    backendUrl.includes('eu.api.novu.co') &&
-    socketUrl.includes('eu.ws.novu.co')
-      ? { backendUrl, socketUrl }
-      : {}
+  const endpointProps = backendUrl && socketUrl ? { backendUrl, socketUrl } : {}
 
   const authProps = applicationIdentifier
     ? {
