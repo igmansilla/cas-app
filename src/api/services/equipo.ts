@@ -2,7 +2,7 @@
  * Servicios API para el módulo de Equipo de Montaña
  */
 
-import { client } from '../client';
+import { apiBaseURL, client } from '../client';
 import type {
   CategoriaEquipo,
   ItemEquipo,
@@ -266,17 +266,17 @@ export const equipoService = {
    * Retorna la URL para previsualizar la foto (thumbnail)
    */
   getRequisitoThumbnailUrl: (requisitoId: number): string => {
-    return `${import.meta.env.VITE_API_URL}/equipo/requisitos-foto/${requisitoId}/foto/thumbnail`;
+    return `${apiBaseURL}/equipo/requisitos-foto/${requisitoId}/foto/thumbnail`;
   },
 
   /**
    * Retorna la URL para ver la foto completa
    */
   getRequisitoFotoUrl: (requisitoId: number): string => {
-    return `${import.meta.env.VITE_API_URL}/equipo/requisitos-foto/${requisitoId}/foto`;
+    return `${apiBaseURL}/equipo/requisitos-foto/${requisitoId}/foto`;
   },
 
   getAdminRequisitoFotoUrl: (keycloakId: string, requisitoId: number): string => {
-    return `${import.meta.env.VITE_API_URL}/equipo/admin/keycloak/${encodeURIComponent(keycloakId)}/requisitos-foto/${requisitoId}/foto`;
+    return `${apiBaseURL}/equipo/admin/keycloak/${encodeURIComponent(keycloakId)}/requisitos-foto/${requisitoId}/foto`;
   },
 };
