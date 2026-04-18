@@ -5,6 +5,7 @@ import { useEliminarFotoRevision } from '../../hooks/useCarpas';
 import { carpasService } from '../../api/services/carpas';
 import type { FotoRevision } from '../../api/schemas/carpas';
 import { Button } from '../ui/button';
+import { ProtectedEquipoImage } from '../equipo/ProtectedEquipoImage';
 
 interface GaleriaFotosProps {
   fotos: FotoRevision[];
@@ -36,11 +37,10 @@ export function GaleriaFotos({ fotos, revisionId }: GaleriaFotosProps) {
             className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 cursor-pointer group"
             onClick={() => setFotoAmpliada(foto)}
           >
-            <img
-              src={carpasService.getThumbnailUrl(revisionId, foto.id)}
+            <ProtectedEquipoImage
+              url={carpasService.getThumbnailUrl(revisionId, foto.id)}
               alt={foto.descripcion || 'Foto de revisión'}
               className="w-full h-full object-cover"
-              loading="lazy"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
               <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
@@ -78,8 +78,8 @@ export function GaleriaFotos({ fotos, revisionId }: GaleriaFotosProps) {
             </div>
 
             {/* Imagen */}
-            <img
-              src={carpasService.getFotoUrl(revisionId, fotoAmpliada.id)}
+            <ProtectedEquipoImage
+              url={carpasService.getFotoUrl(revisionId, fotoAmpliada.id)}
               alt={fotoAmpliada.descripcion || 'Foto de revisión'}
               className="w-full h-full object-contain max-h-[85vh] rounded-lg"
             />
