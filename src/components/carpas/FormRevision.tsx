@@ -166,7 +166,6 @@ export function FormRevision({ open, onClose, carpaId, carpaNombre }: FormRevisi
             <div className="space-y-2">
               {componentes.map((comp, index) => {
                 const tipoConfig = TIPO_COMPONENTE_CONFIG[comp.tipoComponente];
-                const estadoConfig = ESTADO_COMPONENTE_CONFIG[comp.estado];
 
                 return (
                   <div
