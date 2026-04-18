@@ -25,6 +25,7 @@ import { Route as AuthDocumentosRouteImport } from './routes/_auth.documentos'
 import { Route as AuthDepartamentosRouteImport } from './routes/_auth.departamentos'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
 import { Route as AuthConfiguracionRouteImport } from './routes/_auth.configuracion'
+import { Route as AuthCarpasRouteImport } from './routes/_auth.carpas'
 import { Route as AuthCalendarioRouteImport } from './routes/_auth.calendario'
 import { Route as AuthDepartamentosIndexRouteImport } from './routes/_auth.departamentos.index'
 import { Route as AuthDepartamentosOperacionesRouteImport } from './routes/_auth.departamentos.operaciones'
@@ -116,6 +117,11 @@ const AuthConfiguracionRoute = AuthConfiguracionRouteImport.update({
   path: '/configuracion',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthCarpasRoute = AuthCarpasRouteImport.update({
+  id: '/carpas',
+  path: '/carpas',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthCalendarioRoute = AuthCalendarioRouteImport.update({
   id: '/calendario',
   path: '/calendario',
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/pago-resultado': typeof PagoResultadoRoute
   '/calendario': typeof AuthCalendarioRoute
+  '/carpas': typeof AuthCarpasRoute
   '/configuracion': typeof AuthConfiguracionRoute
   '/dashboard': typeof AuthDashboardRoute
   '/departamentos': typeof AuthDepartamentosRouteWithChildren
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/pago-resultado': typeof PagoResultadoRoute
   '/calendario': typeof AuthCalendarioRoute
+  '/carpas': typeof AuthCarpasRoute
   '/configuracion': typeof AuthConfiguracionRoute
   '/dashboard': typeof AuthDashboardRoute
   '/documentos': typeof AuthDocumentosRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/pago-resultado': typeof PagoResultadoRoute
   '/_auth/calendario': typeof AuthCalendarioRoute
+  '/_auth/carpas': typeof AuthCarpasRoute
   '/_auth/configuracion': typeof AuthConfiguracionRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/departamentos': typeof AuthDepartamentosRouteWithChildren
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/'
     | '/pago-resultado'
     | '/calendario'
+    | '/carpas'
     | '/configuracion'
     | '/dashboard'
     | '/departamentos'
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/'
     | '/pago-resultado'
     | '/calendario'
+    | '/carpas'
     | '/configuracion'
     | '/dashboard'
     | '/documentos'
@@ -326,6 +337,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/pago-resultado'
     | '/_auth/calendario'
+    | '/_auth/carpas'
     | '/_auth/configuracion'
     | '/_auth/dashboard'
     | '/_auth/departamentos'
@@ -471,6 +483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConfiguracionRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/carpas': {
+      id: '/_auth/carpas'
+      path: '/carpas'
+      fullPath: '/carpas'
+      preLoaderRoute: typeof AuthCarpasRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/calendario': {
       id: '/_auth/calendario'
       path: '/calendario'
@@ -596,6 +615,7 @@ const AuthDepartamentosRouteWithChildren =
 
 interface AuthRouteChildren {
   AuthCalendarioRoute: typeof AuthCalendarioRoute
+  AuthCarpasRoute: typeof AuthCarpasRoute
   AuthConfiguracionRoute: typeof AuthConfiguracionRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthDepartamentosRoute: typeof AuthDepartamentosRouteWithChildren
@@ -613,6 +633,7 @@ interface AuthRouteChildren {
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthCalendarioRoute: AuthCalendarioRoute,
+  AuthCarpasRoute: AuthCarpasRoute,
   AuthConfiguracionRoute: AuthConfiguracionRoute,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthDepartamentosRoute: AuthDepartamentosRouteWithChildren,

@@ -167,7 +167,6 @@ function DashboardComponent() {
               </div>
               <ChevronRight className="w-5 h-5 text-orange-400 group-hover:translate-x-1 transition-transform" />
             </Link>
-          </div>
 
             <Link
               to="/carpas"
