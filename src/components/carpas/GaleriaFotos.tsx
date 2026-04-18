@@ -5,7 +5,6 @@ import { useEliminarFotoRevision } from '../../hooks/useCarpas';
 import { carpasService } from '../../api/services/carpas';
 import type { FotoRevision } from '../../api/schemas/carpas';
 import { Button } from '../ui/button';
-import { useOidc } from '../../oidc';
 
 interface GaleriaFotosProps {
   fotos: FotoRevision[];
@@ -15,7 +14,6 @@ interface GaleriaFotosProps {
 export function GaleriaFotos({ fotos, revisionId }: GaleriaFotosProps) {
   const [fotoAmpliada, setFotoAmpliada] = useState<FotoRevision | null>(null);
   const { eliminarFoto, cargando: eliminando } = useEliminarFotoRevision();
-  const oidc = useOidc();
 
   const handleEliminar = async (fotoId: number) => {
     if (!window.confirm('¿Eliminar esta foto?')) return;
@@ -26,13 +24,6 @@ export function GaleriaFotos({ fotos, revisionId }: GaleriaFotosProps) {
     } catch {
       toast.error('Error al eliminar la foto');
     }
-  };
-
-  // Construir URL con token para autenticación
-  const buildAuthUrl = (url: string) => {
-    // Las fotos requieren autenticación, usamos la URL directamente
-    // y el interceptor de axios lo manejará
-    return url;
   };
 
   return (

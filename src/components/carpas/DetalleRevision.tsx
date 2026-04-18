@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ArrowLeft, Calendar, User, Upload } from 'lucide-react';
 import { useDetalleRevision, useSubirFotoRevision } from '../../hooks/useCarpas';
 import {
@@ -19,11 +18,9 @@ interface DetalleRevisionProps {
 export function DetalleRevision({ revisionId, onVolver }: DetalleRevisionProps) {
   const { revision, cargando } = useDetalleRevision(revisionId);
   const { subirFoto, cargando: subiendo } = useSubirFotoRevision();
-  const [subiendoFoto, setSubiendoFoto] = useState(false);
 
   const handleSubirFotos = async (files: FileList | null) => {
     if (!files || !revision) return;
-    setSubiendoFoto(true);
 
     try {
       for (const file of Array.from(files)) {
@@ -36,8 +33,6 @@ export function DetalleRevision({ revisionId, onVolver }: DetalleRevisionProps) 
       );
     } catch {
       toast.error('Error al subir foto');
-    } finally {
-      setSubiendoFoto(false);
     }
   };
 
