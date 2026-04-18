@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { Backpack, Building2, ChevronRight, FileText, KeyRound, Users } from "lucide-react";
+import { Backpack, Building2, ChevronRight, FileText, KeyRound, Tent, Users } from "lucide-react";
 import { toast } from "sonner";
 import { FamiliaWidget } from "../components/familia/FamiliaWidget";
 import { useDocumentosUsuario } from "../hooks/useDocumentos";
@@ -166,6 +166,25 @@ function DashboardComponent() {
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 text-orange-400 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+            <Link
+              to="/carpas"
+              className="flex items-center justify-between rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 p-4 transition-all hover:shadow-md group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/80">
+                  <Tent className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-emerald-900">Revisión de Carpas</h3>
+                  <p className="text-sm text-emerald-700">
+                    Registrá el estado de las carpas post-campamento
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-emerald-400 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </section>

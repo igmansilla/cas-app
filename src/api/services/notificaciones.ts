@@ -21,6 +21,19 @@ export type NotificacionEventoLog = {
   detalle: string | null;
 };
 
+export type EstadoDispositivo = {
+  token: string;
+  plataforma: string | null;
+  fechaCreacion: string | null;
+  ultimoVisto: string | null;
+};
+
+export type EstadoDispositivosResponse = {
+  userId: string;
+  total: number;
+  dispositivos: EstadoDispositivo[];
+};
+
 export const notificacionesService = {
   registrarTokenDispositivo: async (
     token: string,
@@ -52,10 +65,17 @@ export const notificacionesService = {
     return response.data as PreferenciasNotificacionUsuario;
   },
 
-  obtenerEventos: async (limit = 50): Promise<NotificacionEventoLog[]> => {
+  obtenerEventos: async (limit = 50, provider?: string): Promise<NotificacionEventoLog[]> => {
     const response = await client.get("/notificaciones/eventos", {
-      params: { limit },
+      params: { limit, provider: provider ?? undefined },
     });
     return response.data as NotificacionEventoLog[];
+  },
+
+  obtenerEstadoDispositivos: async (userId: string): Promise<EstadoDispositivosResponse> => {
+    const response = await client.get("/tokens-dispositivo/estado", {
+      params: { userId },
+    });
+    return response.data as EstadoDispositivosResponse;
   },
 };
