@@ -8,7 +8,7 @@ import { useMiFamilia } from "../hooks/useFamilia";
 import { useOidc } from "../oidc";
 
 // VIP roles that skip onboarding
-const VIP_ROLES = ["dirigente"];
+const VIP_ROLES = ["dirigente", "admin"];
 
 function getMobileHeaderTitle(pathname: string): string | undefined {
     if (pathname.startsWith("/calendario")) return "Calendario";
