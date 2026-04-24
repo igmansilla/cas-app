@@ -26,11 +26,13 @@ interface TablaUsuariosProps {
     usuarios: UsuarioAdmin[];
     cargando: boolean;
     onVerDetalle?: (usuario: UsuarioAdmin) => void;
+    /** Si es true, muestra todos los usuarios (no solo acampantes) */
+    mostrarTodos?: boolean;
 }
 
 const ALL_ROLES = ['ADMIN', 'DIRIGENTE', 'PADRE', 'ACAMPANTE'];
 
-export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuariosProps) {
+export function TablaUsuarios({ usuarios, cargando, onVerDetalle, mostrarTodos = false }: TablaUsuariosProps) {
     const [busqueda, setBusqueda] = useState('');
     const [filtroRol, setFiltroRol] = useState<string>('todos');
 
@@ -42,7 +44,12 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
                 u.email.toLowerCase().includes(busqueda.toLowerCase());
 
             // Filtro por rol
-            const matchRol = filtroRol === 'todos' || u.roles.includes(filtroRol);
+            let matchRol = true;
+            if (filtroRol === 'SIN_ROL') {
+                matchRol = u.roles.length === 0;
+            } else if (filtroRol !== 'todos') {
+                matchRol = u.roles.includes(filtroRol);
+            }
 
             return matchBusqueda && matchRol;
         });
@@ -95,6 +102,9 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="todos">Todos los roles</SelectItem>
+                        {mostrarTodos && (
+                            <SelectItem value="SIN_ROL">Sin rol asignado</SelectItem>
+                        )}
                         {ALL_ROLES.map(rol => (
                             <SelectItem key={rol} value={rol}>{rol}</SelectItem>
                         ))}
@@ -105,13 +115,13 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
             {/* Contador */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="w-4 h-4" />
-                <span>{usuariosFiltrados.length} acampantes</span>
+                <span>{usuariosFiltrados.length} {mostrarTodos ? 'usuarios' : 'acampantes'}</span>
             </div>
 
             <div className="space-y-3 md:hidden">
                 {usuariosFiltrados.length === 0 ? (
                     <div className="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
-                        No se encontraron acampantes
+                        No se encontraron {mostrarTodos ? 'usuarios' : 'acampantes'}
                     </div>
                 ) : (
                     usuariosFiltrados.map(usuario => (
@@ -181,7 +191,7 @@ export function TablaUsuarios({ usuarios, cargando, onVerDetalle }: TablaUsuario
                         {usuariosFiltrados.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                    No se encontraron acampantes
+                                    No se encontraron {mostrarTodos ? 'usuarios' : 'acampantes'}
                                 </TableCell>
                             </TableRow>
                         ) : (
